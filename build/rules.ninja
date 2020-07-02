@@ -1247,7 +1247,7 @@ rule CXX_STATIC_LIBRARY_LINKER____idf_main
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = D:\.espressif\tools\cmake\3.13.4\bin\cmake.exe -SD:\0_xitian\software\ESP32\0_code\uart_echo -BD:\0_xitian\software\ESP32\0_code\uart_echo\build
+  command = D:\.espressif\tools\cmake\3.13.4\bin\cmake.exe -SD:\0_xitian\software\ESP32\0_code\esp32_chuwugui -BD:\0_xitian\software\ESP32\0_code\esp32_chuwugui\build
   description = Re-running CMake...
   generator = 1
 

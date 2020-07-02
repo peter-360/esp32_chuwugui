@@ -1,4 +1,4 @@
-# Install script for directory: D:/0_xitian/software/ESP32/0_code/uart_echo/main
+# Install script for directory: D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/main
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

@@ -34,7 +34,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("D:/0_xitian/software/ESP32/0_code/uart_echo/build/bootloader/esp-idf/cmake_install.cmake")
+  include("D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/bootloader/esp-idf/cmake_install.cmake")
 
 endif()
 
@@ -46,5 +46,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "D:/0_xitian/software/ESP32/0_code/uart_echo/build/bootloader/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/bootloader/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

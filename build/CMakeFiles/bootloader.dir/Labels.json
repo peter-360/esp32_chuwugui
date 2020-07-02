@@ -2,34 +2,34 @@
 	"sources" : 
 	[
 		{
-			"file" : "D:/0_xitian/software/ESP32/0_code/uart_echo/build/CMakeFiles/bootloader"
+			"file" : "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/CMakeFiles/bootloader"
 		},
 		{
-			"file" : "D:/0_xitian/software/ESP32/0_code/uart_echo/build/CMakeFiles/bootloader.rule"
+			"file" : "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/CMakeFiles/bootloader.rule"
 		},
 		{
-			"file" : "D:/0_xitian/software/ESP32/0_code/uart_echo/build/CMakeFiles/bootloader-complete.rule"
+			"file" : "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/CMakeFiles/bootloader-complete.rule"
 		},
 		{
-			"file" : "D:/0_xitian/software/ESP32/0_code/uart_echo/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule"
+			"file" : "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule"
 		},
 		{
-			"file" : "D:/0_xitian/software/ESP32/0_code/uart_echo/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule"
+			"file" : "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule"
 		},
 		{
-			"file" : "D:/0_xitian/software/ESP32/0_code/uart_echo/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule"
+			"file" : "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule"
 		},
 		{
-			"file" : "D:/0_xitian/software/ESP32/0_code/uart_echo/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule"
+			"file" : "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule"
 		},
 		{
-			"file" : "D:/0_xitian/software/ESP32/0_code/uart_echo/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule"
+			"file" : "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule"
 		},
 		{
-			"file" : "D:/0_xitian/software/ESP32/0_code/uart_echo/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule"
+			"file" : "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule"
 		},
 		{
-			"file" : "D:/0_xitian/software/ESP32/0_code/uart_echo/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule"
+			"file" : "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule"
 		}
 	],
 	"target" : 

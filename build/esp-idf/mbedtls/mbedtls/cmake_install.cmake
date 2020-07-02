@@ -34,8 +34,8 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("D:/0_xitian/software/ESP32/0_code/uart_echo/build/esp-idf/mbedtls/mbedtls/library/cmake_install.cmake")
-  include("D:/0_xitian/software/ESP32/0_code/uart_echo/build/esp-idf/mbedtls/mbedtls/include/cmake_install.cmake")
+  include("D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/esp-idf/mbedtls/mbedtls/library/cmake_install.cmake")
+  include("D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/esp-idf/mbedtls/mbedtls/include/cmake_install.cmake")
 
 endif()
 

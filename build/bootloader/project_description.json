@@ -1,8 +1,8 @@
 {
     "project_name":       "bootloader",
     "project_path":       "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/bootloader/subproject",
-    "build_dir":          "D:/0_xitian/software/ESP32/0_code/uart_echo/build/bootloader",
-    "config_file":        "D:/0_xitian/software/ESP32/0_code/uart_echo/sdkconfig",
+    "build_dir":          "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/bootloader",
+    "config_file":        "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/sdkconfig",
     "config_defaults":    "",
     "app_elf":            "bootloader.elf",
     "app_bin":            "bootloader.bin",

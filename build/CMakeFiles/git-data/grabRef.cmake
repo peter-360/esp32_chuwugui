@@ -15,18 +15,18 @@
 
 set(HEAD_HASH)
 
-file(READ "D:/0_xitian/software/ESP32/0_code/uart_echo/build/CMakeFiles/git-data/HEAD" HEAD_CONTENTS LIMIT 1024)
+file(READ "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/CMakeFiles/git-data/HEAD" HEAD_CONTENTS LIMIT 1024)
 
 string(STRIP "${HEAD_CONTENTS}" HEAD_CONTENTS)
 if(HEAD_CONTENTS MATCHES "ref")
 	# named branch
 	string(REPLACE "ref: " "" HEAD_REF "${HEAD_CONTENTS}")
-	if(EXISTS "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/.git/${HEAD_REF}")
-		configure_file("D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/.git/${HEAD_REF}" "D:/0_xitian/software/ESP32/0_code/uart_echo/build/CMakeFiles/git-data/head-ref" COPYONLY)
+	if(EXISTS "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/.git/${HEAD_REF}")
+		configure_file("D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/.git/${HEAD_REF}" "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/CMakeFiles/git-data/head-ref" COPYONLY)
 	else()
-		if(EXISTS "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/.git/packed-refs")
-			configure_file("D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/.git/packed-refs" "D:/0_xitian/software/ESP32/0_code/uart_echo/build/CMakeFiles/git-data/packed-refs" COPYONLY)
-			file(READ "D:/0_xitian/software/ESP32/0_code/uart_echo/build/CMakeFiles/git-data/packed-refs" PACKED_REFS)
+		if(EXISTS "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/.git/packed-refs")
+			configure_file("D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/.git/packed-refs" "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/CMakeFiles/git-data/packed-refs" COPYONLY)
+			file(READ "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/CMakeFiles/git-data/packed-refs" PACKED_REFS)
 			if(${PACKED_REFS} MATCHES "([0-9a-z]*) ${HEAD_REF}")
 				set(HEAD_HASH "${CMAKE_MATCH_1}")
 			endif()
@@ -34,10 +34,10 @@ if(HEAD_CONTENTS MATCHES "ref")
 	endif()
 else()
 	# detached HEAD
-	configure_file("D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/.git/HEAD" "D:/0_xitian/software/ESP32/0_code/uart_echo/build/CMakeFiles/git-data/head-ref" COPYONLY)
+	configure_file("D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/.git/HEAD" "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/CMakeFiles/git-data/head-ref" COPYONLY)
 endif()
 
 if(NOT HEAD_HASH)
-	file(READ "D:/0_xitian/software/ESP32/0_code/uart_echo/build/CMakeFiles/git-data/head-ref" HEAD_HASH LIMIT 1024)
+	file(READ "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/CMakeFiles/git-data/head-ref" HEAD_HASH LIMIT 1024)
 	string(STRIP "${HEAD_HASH}" HEAD_HASH)
 endif()
