@@ -111,97 +111,47 @@ uint8_t data_rx2_m[BUF_SIZE] = {0};
 int len_rx2_m;
 uint8_t flag_rx2;
 
-static void echo_task()
+
+
+
+
+
+
+static void echo_task2()
 {
+
+    
+    // while(1)
+    // {
+    //     vTaskDelay(500 / portTICK_PERIOD_MS);
+
+    // }
     uint16_t bl_addr=0;//bianliang
-    /* Configure parameters of an UART driver,
-     * communication pins and install the driver */
-    uart_config_t uart_config = {
-        .baud_rate = 115200,
-        .data_bits = UART_DATA_8_BITS,
-        .parity    = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
-    };
-    // uart_config_t uart_config2 = {
-    //     .baud_rate = 9600,
-    //     .data_bits = UART_DATA_8_BITS,
-    //     .parity    = UART_PARITY_DISABLE,
-    //     .stop_bits = UART_STOP_BITS_1,
-    //     .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
-    // };
-    uart_config_t uart_config2 = {
-        .baud_rate = 57600,
-        .data_bits = UART_DATA_8_BITS,
-        .parity    = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
-    };
-
-
-        // Set UART log level
-    //Set UART log level
-    esp_log_level_set(TAG, ESP_LOG_INFO);
-    //Set UART pins (using UART0 default pins ie no changes.)
-    uart_set_pin(UART_NUM_0, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    //Install UART driver, and get the queue.
-    uart_driver_install(UART_NUM_0, BUF_SIZE * 2, 0, 0, NULL, 0);
-
-    // vTaskDelay(1000 / portTICK_PERIOD_MS);
-    // ESP_LOGI(TAG, "Start ttl application test and configure UART2.\r\n");
-
-    //1
-    uart_param_config(UART_NUM_1, &uart_config);
-    uart_set_pin(UART_NUM_1, ECHO_TEST_TXD, ECHO_TEST_RXD, ECHO_TEST_RTS, ECHO_TEST_CTS);
-    uart_driver_install(UART_NUM_1, BUF_SIZE * 2, 0, 0, NULL, 0);
-
-    //2
-    uart_param_config(UART_NUM_2, &uart_config2);
-    uart_set_pin(UART_NUM_2, ECHO_TEST2_TXD, ECHO_TEST2_RXD, ECHO_TEST2_RTS, ECHO_TEST2_CTS);
-    uart_driver_install(UART_NUM_2, BUF_SIZE * 2, 0, 0, NULL, 0);
-
-    // //3 io moni
-    // uart_param_config(UART_NUM_3, &uart_config3);
-    // uart_set_pin(UART_NUM_3, ECHO_TEST3_TXD, ECHO_TEST3_RXD, ECHO_TEST3_RTS, ECHO_TEST3_CTS);
-    // uart_driver_install(UART_NUM_3, BUF_SIZE * 2, 0, 0, NULL, 0);
-
-
-
-    // Configure a temporary buffer for the incoming data
-    //uint8_t *data_rx = (uint8_t *) malloc(BUF_SIZE);
-
-    //ESP_LOGI(TAG, "UART1 start recieve loop.\r\n");
-
-    while (1) {
-        // Read data from the UART
-        len_rx = uart_read_bytes(UART_NUM_1, data_rx, BUF_SIZE, 20 / portTICK_RATE_MS);
-        len_rx2 = uart_read_bytes(UART_NUM_2, data_rx2, BUF_SIZE, 20 / portTICK_RATE_MS);
-        // Write data back to the UART
-        
-        //uart_write_bytes(UART_NUM_1, (const char *) data_rx, len_rx);
-        //uart_write_bytes(UART_NUM_2, (const char *) data_rx, len_rx);
-        //&&(flag_rx2 ==0)
-        if ((len_rx2 > 0) ) {
-            flag_rx2 =1;
-            len_rx2_m = len_rx2;
-            memcpy(data_rx2_m,data_rx2,len_rx2_m);
-            ESP_LOGI(TAG, "uart2-Received %u bytes:", len_rx2_m);
-            for (int i = 0; i < len_rx2_m; i++) {
-                printf("0x%.2X ", (uint8_t)data_rx2_m[i]);
-            }
-            printf("] \n");
-        }
+    while(1)
+    {
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+                //&&(flag_rx2 ==0)
+        // if ((len_rx2 > 0) ) {
+        //     flag_rx2 =1;
+        //     len_rx2_m = len_rx2;
+        //     memcpy(data_rx2_m,data_rx2,len_rx2_m);
+        //     ESP_LOGI(TAG, "uart2-Received %u bytes:", len_rx2_m);
+        //     for (int i = 0; i < len_rx2_m; i++) {
+        //         printf("0x%.2X ", (uint8_t)data_rx2_m[i]);
+        //     }
+        //     printf("] \n");
+        // }
 
 								
 		
 
 
         if (len_rx > 0) {
-            ESP_LOGI(TAG, "uart1-Received %u bytes:", len_rx);
-            for (int i = 0; i < len_rx; i++) {
-                printf("0x%.2X ", (uint8_t)data_rx[i]);
-            }
-            printf("] \n");
+            // ESP_LOGI(TAG, "uart1-Received %u bytes:", len_rx);
+            // for (int i = 0; i < len_rx; i++) {
+            //     printf("0x%.2X ", (uint8_t)data_rx[i]);
+            // }
+            // printf("] \n");
             
             if((0x5A == data_rx[0])
                 &&(0xA5 == data_rx[1])
@@ -286,8 +236,121 @@ static void echo_task()
         // if(PS_Sta)	 //检测PS_Sta状态，如果有手指按下
 		// {
 		// 	press_FR();//刷指纹			
-		// }	
+		// }
     }
+    //vTaskDelay(1);
+    
+    vTaskDelete(NULL);
+
+}
+
+
+
+
+
+static void echo_task()
+{
+    
+    // while(1)
+    // {
+    //     vTaskDelay(50 / portTICK_PERIOD_MS);
+
+    // }
+    /* Configure parameters of an UART driver,
+     * communication pins and install the driver */
+    uart_config_t uart_config = {
+        .baud_rate = 115200,
+        .data_bits = UART_DATA_8_BITS,
+        .parity    = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
+    };
+    // uart_config_t uart_config2 = {
+    //     .baud_rate = 9600,
+    //     .data_bits = UART_DATA_8_BITS,
+    //     .parity    = UART_PARITY_DISABLE,
+    //     .stop_bits = UART_STOP_BITS_1,
+    //     .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
+    // };
+    uart_config_t uart_config2 = {
+        .baud_rate = 57600,
+        .data_bits = UART_DATA_8_BITS,
+        .parity    = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
+    };
+
+
+        // Set UART log level
+    //Set UART log level
+    esp_log_level_set(TAG, ESP_LOG_INFO);
+    //Set UART pins (using UART0 default pins ie no changes.)
+    uart_set_pin(UART_NUM_0, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    //Install UART driver, and get the queue.
+    uart_driver_install(UART_NUM_0, BUF_SIZE * 2, 0, 0, NULL, 0);
+
+    // vTaskDelay(1000 / portTICK_PERIOD_MS);
+    // ESP_LOGI(TAG, "Start ttl application test and configure UART2.\r\n");
+
+    //1
+    uart_param_config(UART_NUM_1, &uart_config);
+    uart_set_pin(UART_NUM_1, ECHO_TEST_TXD, ECHO_TEST_RXD, ECHO_TEST_RTS, ECHO_TEST_CTS);
+    uart_driver_install(UART_NUM_1, BUF_SIZE * 2, 0, 0, NULL, 0);
+
+    //2
+    uart_param_config(UART_NUM_2, &uart_config2);
+    uart_set_pin(UART_NUM_2, ECHO_TEST2_TXD, ECHO_TEST2_RXD, ECHO_TEST2_RTS, ECHO_TEST2_CTS);
+    uart_driver_install(UART_NUM_2, BUF_SIZE * 2, 0, 0, NULL, 0);
+
+    // //3 io moni
+    // uart_param_config(UART_NUM_3, &uart_config3);
+    // uart_set_pin(UART_NUM_3, ECHO_TEST3_TXD, ECHO_TEST3_RXD, ECHO_TEST3_RTS, ECHO_TEST3_CTS);
+    // uart_driver_install(UART_NUM_3, BUF_SIZE * 2, 0, 0, NULL, 0);
+
+
+
+    // Configure a temporary buffer for the incoming data
+    //uint8_t *data_rx = (uint8_t *) malloc(BUF_SIZE);
+
+    //ESP_LOGI(TAG, "UART1 start recieve loop.\r\n");
+
+    while (1) {
+        // Read data from the UART
+        len_rx = uart_read_bytes(UART_NUM_1, data_rx, BUF_SIZE, 20 / portTICK_RATE_MS);
+        len_rx2 = uart_read_bytes(UART_NUM_2, data_rx2, BUF_SIZE, 20 / portTICK_RATE_MS);
+        // Write data back to the UART
+        
+        //uart_write_bytes(UART_NUM_1, (const char *) data_rx, len_rx);
+        //uart_write_bytes(UART_NUM_2, (const char *) data_rx, len_rx);
+
+
+        if ((len_rx2 > 0) ) {
+            flag_rx2 =1;
+            len_rx2_m = len_rx2;
+            memcpy(data_rx2_m,data_rx2,len_rx2_m);
+            ESP_LOGI(TAG, "uart2-Received %u bytes:", len_rx2_m);
+            for (int i = 0; i < len_rx2_m; i++) {
+                printf("0x%.2X ", (uint8_t)data_rx2_m[i]);
+            }
+            printf("] \n");
+        }
+
+								
+		
+
+
+        if (len_rx > 0) {
+            ESP_LOGI(TAG, "uart1-Received %u bytes:", len_rx);
+            for (int i = 0; i < len_rx; i++) {
+                printf("0x%.2X ", (uint8_t)data_rx[i]);
+            }
+            printf("] \n");
+        }
+	
+    }
+    //vTaskDelay(1);
+    
+    vTaskDelete(NULL);
 }
 
 
@@ -309,6 +372,7 @@ void Add_FR(void)
 	//u16 ID;
 	while(1)
 	{
+        //vTaskDelay(100 / portTICK_PERIOD_MS);
 		switch (processnum)
 		{
 			case 0:
@@ -513,7 +577,10 @@ void Del_FR(u16 num)
 void app_main()
 {
     u8 ensure;
-    xTaskCreate(echo_task, "uart_echo_task", 1024, NULL, 10, NULL);
+
+    xTaskCreate(echo_task, "uart_echo_task", 4* 1024, NULL, 5, NULL);//1024 10
+    //vTaskDelay(70 / portTICK_PERIOD_MS);
+    xTaskCreate(echo_task2, "uart_echo_task2",4* 1024, NULL, 5, NULL);
 	
     vTaskDelay(1000 / portTICK_PERIOD_MS);
     ESP_LOGI(TAG, "与AS608模块握手....\r\n");
@@ -556,7 +623,13 @@ void app_main()
         ESP_LOGI(TAG,"2-ensure = %d\r\n",ensure);
         ShowErrMessage(ensure);	
     }
-		
 
+
+
+
+
+
+
+    
 
 }

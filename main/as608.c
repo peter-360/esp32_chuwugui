@@ -138,7 +138,7 @@ static u8 *JudgeStr(u16 waittime)
 		//if(USART2_RX_STA&0X8000)//接收到一次数据
 		ESP_LOGI(TAG,"flag_rx2 = %d\r\n",flag_rx2);
 		ESP_LOGI(TAG,"len_rx2_m = %d\r\n",len_rx2_m);
-		debug_uart1_write_bytes((const char*)data_rx2_m, len_rx2_m);
+		// debug_uart1_write_bytes((const char*)data_rx2_m, len_rx2_m);
 		if(flag_rx2 ==1)
 		{
 			//USART2_RX_STA=0;
