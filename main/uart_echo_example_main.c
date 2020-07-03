@@ -107,6 +107,8 @@ int len_rx;
 
 uint8_t data_rx2[BUF_SIZE] = {0};
 int len_rx2;
+uint8_t data_rx2_m[BUF_SIZE] = {0};
+int len_rx2_m;
 uint8_t flag_rx2;
 
 static void echo_task()
@@ -178,11 +180,14 @@ static void echo_task()
         
         //uart_write_bytes(UART_NUM_1, (const char *) data_rx, len_rx);
         //uart_write_bytes(UART_NUM_2, (const char *) data_rx, len_rx);
-        if ((len_rx2 > 0)&&(flag_rx2 ==0)) {
+        //&&(flag_rx2 ==0)
+        if ((len_rx2 > 0) ) {
             flag_rx2 =1;
-            ESP_LOGI(TAG, "uart2-Received %u bytes:", len_rx2);
-            for (int i = 0; i < len_rx2; i++) {
-                printf("0x%.2X ", (uint8_t)data_rx2[i]);
+            len_rx2_m = len_rx2;
+            memcpy(data_rx2_m,data_rx2,len_rx2_m);
+            ESP_LOGI(TAG, "uart2-Received %u bytes:", len_rx2_m);
+            for (int i = 0; i < len_rx2_m; i++) {
+                printf("0x%.2X ", (uint8_t)data_rx2_m[i]);
             }
             printf("] \n");
         }
@@ -520,9 +525,9 @@ void app_main()
         delay_ms(800);
         ESP_LOGI(TAG, "尝试连接模块...\r\n");	
 
-        u8 data = 0x35;
-        uart_write_bytes(UART_NUM_0, (const char *) &data, 1);//------UART_NUM_2------	  
-        uart_write_bytes(UART_NUM_1, (const char *) &data, 1);//------UART_NUM_2------	  
+        // u8 data = 0x35;
+        // uart_write_bytes(UART_NUM_0, (const char *) &data, 1);//------UART_NUM_2------	  
+        // uart_write_bytes(UART_NUM_1, (const char *) &data, 1);//------UART_NUM_2------	  
 	}
 
     ESP_LOGI(TAG,"通讯成功!!!\r\n");

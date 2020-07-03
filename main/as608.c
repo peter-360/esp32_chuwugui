@@ -25,10 +25,47 @@
 #include "esp_log.h"
 
 
+void debug_uart1_write_bytes(const char* src, size_t size)
+{
+	uart_write_bytes(UART_NUM_1, src, size);
+}
 
+void Uart1SendString(char* Str)
+{
+	while(*Str)
+	{
+		//while(!UART_GetFlagStatus(UART_FLAG_TXFE));
+		uart_write_bytes(UART_NUM_1, (const char *) Str, 1);
+		Str++;
+		//while(SdkEvalComUARTBusy() == SET);//203400
+	}
+}
 
+static void DEBUG_MYUSART1_Sendchar(u8 data)
+{
+	// //uart_write_bytes(UART_NUM_1, (const char *) &0xaa, 1);
+	// uart_write_bytes(UART_NUM_1, (const char *) &((u8)(data +0x30)), 1);//------UART_NUM_2------
+	// Uart1SendString("\r\n");
+	// //uart_write_bytes(UART_NUM_1, (const char *) &0xbb, 1);
 
+	u8 data1 = data + 0x30;
+	uart_write_bytes(UART_NUM_1, (const char *) &data1, 1);//------UART_NUM_2------	
+	Uart1SendString("\r\n");
+}
+static void DEBUG_MYUSART1_SendData(char data)
+{
+	// //uart_write_bytes(UART_NUM_1, (const char *) &0xaa, 1);
+	// uart_write_bytes(UART_NUM_1, (const char *) &((u8)(data +0x30)), 1);//------UART_NUM_2------
+	// Uart1SendString("\r\n");
+	// //uart_write_bytes(UART_NUM_1, (const char *) &0xbb, 1);
 
+	u8 data1 = 0xaa;
+	u8 data2 = 0xbb;
+	uart_write_bytes(UART_NUM_1, (const char *) &data1, 1);//------UART_NUM_2------	
+	uart_write_bytes(UART_NUM_1, (const char *) &data, 1);//------UART_NUM_2------	
+	uart_write_bytes(UART_NUM_1, (const char *) &data2, 1);//------UART_NUM_2------	
+
+}
 
 u32 AS608Addr = 0XFFFFFFFF; //默认
 
@@ -94,20 +131,31 @@ static u8 *JudgeStr(u16 waittime)
 	str[3]=AS608Addr>>16;str[4]=AS608Addr>>8;
 	str[5]=AS608Addr;str[6]=0x07;str[7]='\0';
 	//USART2_RX_STA=0;
-	while(--waittime)
+	delay_ms(50);//---------------------
+	while(--waittime)//--------------
 	{
 		delay_ms(1);
 		//if(USART2_RX_STA&0X8000)//接收到一次数据
+		ESP_LOGI(TAG,"flag_rx2 = %d\r\n",flag_rx2);
+		ESP_LOGI(TAG,"len_rx2_m = %d\r\n",len_rx2_m);
+		debug_uart1_write_bytes((const char*)data_rx2_m, len_rx2_m);
 		if(flag_rx2 ==1)
 		{
 			//USART2_RX_STA=0;
 			flag_rx2 =0;
-			data=strstr((const char*)data_rx2,(const char*)str);
-
+			data=strstr((const char*)data_rx2_m,(const char*)str);
+			
+			ESP_LOGI(TAG,"------ok-------!!!\r\n");
 			//ESP_LOGI(TAG,"data = %d\r\n",(u32)data);
 			if(data)
 				return (u8*)data;	
 		}
+		else
+		{
+			ESP_LOGI(TAG,"--------err--------!!!\r\n");
+		}
+		
+		
 	}
 	return 0;
 }
@@ -530,12 +578,35 @@ u8 PS_ValidTempleteNum(u16 *ValidN)
 	Sendcmd(0x1d);
 	temp = 0x01+0x03+0x1d;
 	SendCheck(temp);
+	//delay_ms(200);//---------------------
   data=JudgeStr(2000);
 
-	//printf("\r\n-----debug--指纹个数=%d",(data[10]<<8)+data[11]);
+	// ESP_LOGI(TAG,"\r\n-----data--指纹个数=%d",(u32)data);
+
+	// ESP_LOGI(TAG,"\r\n-----data--指纹个数=%d",data[9]);
+	// ESP_LOGI(TAG,"\r\n-----debug--指纹个数=%d",(data[10]<<8)+data[11]);
 
 
-	//printf("\r\n-----debug--指纹个数=%d",(data[10]<<8)+data[11]);
+	// Uart1SendString("data[9]=");
+	//DEBUG_MYUSART1_SendData((char)(data_rx2[9]));
+
+	// DEBUG_MYUSART1_SendData((char)(data));
+
+
+	// Uart1SendString("data[10]=");
+	// DEBUG_MYUSART1_SendData(data[10]);
+
+	// Uart1SendString("data[11]=");
+	// DEBUG_MYUSART1_SendData(data[11]);
+
+
+
+
+	// //u8 data1 = 0x35;
+	// Uart1SendString("data=");
+	// uart_write_bytes(UART_NUM_1, (const char *) &data, 1);//------UART_NUM_2------	
+	// Uart1SendString("\r\n");
+
 	if(data)
 	{
 		ensure=data[9];
