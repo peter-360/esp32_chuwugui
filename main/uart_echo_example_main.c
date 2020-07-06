@@ -85,21 +85,42 @@ const char *TAG = "uart_events";
  * - Pin assignment: see defines below
  */
 
-#define ECHO_TEST_TXD  (GPIO_NUM_4)
-#define ECHO_TEST_RXD  (GPIO_NUM_5)
+// #define ECHO_TEST_TXD  (GPIO_NUM_4)
+// #define ECHO_TEST_RXD  (GPIO_NUM_5)
+// #define ECHO_TEST_RTS  (UART_PIN_NO_CHANGE)
+// #define ECHO_TEST_CTS  (UART_PIN_NO_CHANGE)
+
+
+// #define ECHO_TEST2_TXD  (GPIO_NUM_17)
+// #define ECHO_TEST2_RXD  (GPIO_NUM_16)
+// #define ECHO_TEST2_RTS  (UART_PIN_NO_CHANGE)
+// #define ECHO_TEST2_CTS  (UART_PIN_NO_CHANGE)
+
+// #define ECHO_TEST3_TXD  (GPIO_NUM_19)
+// #define ECHO_TEST3_RXD  (GPIO_NUM_18)
+// #define ECHO_TEST3_RTS  (UART_PIN_NO_CHANGE)
+// #define ECHO_TEST3_CTS  (UART_PIN_NO_CHANGE)
+
+#define ECHO_TEST_TXD  (GPIO_NUM_33)
+#define ECHO_TEST_RXD  (GPIO_NUM_32)
 #define ECHO_TEST_RTS  (UART_PIN_NO_CHANGE)
 #define ECHO_TEST_CTS  (UART_PIN_NO_CHANGE)
 
 
-#define ECHO_TEST2_TXD  (GPIO_NUM_17)
-#define ECHO_TEST2_RXD  (GPIO_NUM_16)
+#define ECHO_TEST2_TXD  (GPIO_NUM_2)
+#define ECHO_TEST2_RXD  (GPIO_NUM_34)
 #define ECHO_TEST2_RTS  (UART_PIN_NO_CHANGE)
 #define ECHO_TEST2_CTS  (UART_PIN_NO_CHANGE)
 
-#define ECHO_TEST3_TXD  (GPIO_NUM_19)
-#define ECHO_TEST3_RXD  (GPIO_NUM_18)
-#define ECHO_TEST3_RTS  (UART_PIN_NO_CHANGE)
-#define ECHO_TEST3_CTS  (UART_PIN_NO_CHANGE)
+    #define ECHO_TEST3_TXD  (GPIO_NUM_19)
+    #define ECHO_TEST3_RXD  (GPIO_NUM_4)
+    #define ECHO_TEST3_RTS  (UART_PIN_NO_CHANGE)
+    #define ECHO_TEST3_CTS  (UART_PIN_NO_CHANGE)
+
+    #define ECHO_TEST4_TXD  (GPIO_NUM_21)
+    #define ECHO_TEST4_RXD  (GPIO_NUM_36)
+    #define ECHO_TEST4_RTS  (UART_PIN_NO_CHANGE)
+    #define ECHO_TEST4_CTS  (UART_PIN_NO_CHANGE)
 
 #define BUF_SIZE (1024)
 uint8_t data_rx[BUF_SIZE] = {0};
@@ -112,7 +133,7 @@ int len_rx2_m;
 uint8_t flag_rx2;
 
 
-
+#define TX1_LEN 10
 
 
 
@@ -129,7 +150,7 @@ static void echo_task2()
     uint16_t bl_addr=0;//bianliang
     while(1)
     {
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        vTaskDelay(50 / portTICK_PERIOD_MS);
                 //&&(flag_rx2 ==0)
         // if ((len_rx2 > 0) ) {
         //     flag_rx2 =1;
@@ -171,12 +192,206 @@ static void echo_task2()
                             ESP_LOGI(TAG, "----------------0x83---------------.\r\n");
                             bl_addr = (data_rx[4]<<8) + data_rx[5];
 
-                            uint8_t tx_Buffer[256]={0};  
+                            uint8_t tx_Buffer[50]={0};  
                             uint8_t bcc_temp=0;
                             switch (bl_addr)
                             {
+
+                            case 0x2010://zhiwen  or   mima
+                                ESP_LOGI(TAG, "----------------zhiwen or mima---------------.\r\n");   
+                                //if -> huise tupian?
+
+                                tx_Buffer[0] = 0x5A;
+                                tx_Buffer[1] = 0xA5;
+                                tx_Buffer[2] = 0x05;//len
+                                tx_Buffer[3] = 0x82;
+
+                                tx_Buffer[4] = 0x10;
+                                tx_Buffer[5] = 0x20;//dizhi
+
+                                tx_Buffer[6] = 0x00;
+                                tx_Buffer[7] = 0x11;//data shengyu dagezi
+                                uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, 8);
+
+                                tx_Buffer[0] = 0x5A;
+                                tx_Buffer[1] = 0xA5;
+                                tx_Buffer[2] = 0x05;//len
+                                tx_Buffer[3] = 0x82;
+
+                                tx_Buffer[4] = 0x10;
+                                tx_Buffer[5] = 0x30;//dizhi
+
+                                tx_Buffer[6] = 0x00;
+                                tx_Buffer[7] = 0x22;//data shengyu dagezi todo
+                                uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, 8);
+
+                                tx_Buffer[0] = 0x5A;
+                                tx_Buffer[1] = 0xA5;
+                                tx_Buffer[2] = 0x05;//len
+                                tx_Buffer[3] = 0x82;
+
+                                tx_Buffer[4] = 0x10;
+                                tx_Buffer[5] = 0x40;//dizhi
+
+                                tx_Buffer[6] = 0x00;
+                                tx_Buffer[7] = 0x33;//data shengyu dagezi
+                                uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, 8);
+
+
+
+
+                                tx_Buffer[0] = 0x5A;
+                                tx_Buffer[1] = 0xA5;
+                                tx_Buffer[2] = 0x07;
+                                tx_Buffer[3] = 0x82;
+
+                                tx_Buffer[4] = 0x00;
+                                tx_Buffer[5] = 0x84;//dizhi
+
+                                tx_Buffer[6] = 0x5A;
+                                tx_Buffer[7] = 0x01;//data guding
+
+                                tx_Buffer[8] = 0x00;
+                                if(01== data_rx[8])//zhiwen cun
+                                {
+                                    ESP_LOGI(TAG, "----------------zhiwen---------------.\r\n");  
+                                    tx_Buffer[9] = 0x04;//baocun
+                                }
+                                else if(02== data_rx[8])//mi ma
+                                {
+                                    tx_Buffer[9] = 0x03;
+                                    ESP_LOGI(TAG, "----------------mima---------------.\r\n");  
+
+                                }
+                                uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
+
+
+                                //zhiwen_num_id =0;
+                                //zhiwen_num_id = data_rx[7];
+                                //Add_FR();		//录指纹	
+                                break;
+                            case 0x2020://da zhong xiao
+                                ESP_LOGI(TAG, "----------------daxiao---------------.\r\n");   
+                                tx_Buffer[0] = 0x5A;
+                                tx_Buffer[1] = 0xA5;
+
+                                tx_Buffer[2] = 0x07;//len
+                                tx_Buffer[3] = 0x82;
+
+                                tx_Buffer[4] = 0x00;
+                                tx_Buffer[5] = 0x84;
+
+                                tx_Buffer[6] = 0x5A;
+                                tx_Buffer[7] = 0x01;
+                                if(1)//2010 密码
+                                {
+                                    tx_Buffer[8] = 0x00;
+                                    tx_Buffer[9] = 0x06;
+                                }
+                                else//2010 指纹 ->指纹
+                                {
+                                    tx_Buffer[8] = 0x00;
+                                    tx_Buffer[9] = 0x04;
+                                }
+                                
+
+                                //todo
+                                if(01== data_rx[8])//da
+                                {
+                                    ESP_LOGI(TAG, "----------------da---------------.\r\n");  
+                                    //cun qi lai   quanju yihuiyong
+                                    
+                                }
+                                else if(02== data_rx[8])//zhong
+                                {
+                                    ESP_LOGI(TAG, "----------------zhong---------------.\r\n");  
+
+
+                                }
+                                else if(03== data_rx[8])//xiao
+                                {
+                                    ESP_LOGI(TAG, "----------------xiao---------------.\r\n");  
+                                }
+                                
+                                uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
+                                break;
+
+
+
                             case 0x1050:
+                                //5A A5 10 83   10 50   06    31 32 33 34 35 36 37 38 39 30  31 00
                                 ESP_LOGI(TAG, "----------------phone number---------------.\r\n");
+                                //panduan   -  zan cun quanju
+                                //if has, todo
+
+                                //if weishu
+                                if(06== data_rx[6])
+                                {
+                                    //zancun
+                                }
+                                else
+                                {
+                                    tx_Buffer[0] = 0x5A;
+                                    tx_Buffer[1] = 0xA5;
+
+                                    tx_Buffer[2] = 0x07;//len
+                                    tx_Buffer[3] = 0x82;
+
+                                    tx_Buffer[4] = 0x00;
+                                    tx_Buffer[5] = 0x84;
+
+                                    tx_Buffer[6] = 0x5A;
+                                    tx_Buffer[7] = 0x01;
+
+                                    tx_Buffer[8] = 0x00;
+                                    tx_Buffer[9] = 0x07;
+                                }
+                                
+                                break;
+
+                            case 0x1060:
+                                //5A A5 0A 83   10 60   03   31 32 33 34 35 36 
+                                ESP_LOGI(TAG, "----------------password---------------.\r\n");
+                                tx_Buffer[0] = 0x5A;
+                                tx_Buffer[1] = 0xA5;
+
+                                tx_Buffer[2] = 0x07;//len
+                                tx_Buffer[3] = 0x82;
+
+                                tx_Buffer[4] = 0x00;
+                                tx_Buffer[5] = 0x84;
+
+                                tx_Buffer[6] = 0x5A;
+                                tx_Buffer[7] = 0x01;
+
+
+                                if(03== data_rx[6])
+                                {
+                                    //cun
+                                    tx_Buffer[8] = 0x00;
+                                    tx_Buffer[9] = 0x08;
+                                }
+                                else
+                                {
+                                    tx_Buffer[8] = 0x00;
+                                    tx_Buffer[9] = 0x07;
+                                }
+                                uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
+
+                                break;
+
+
+
+
+
+
+
+
+
+
+
+                            case 0x3050:
+                                ESP_LOGI(TAG, "----------------lock1 ts---------------.\r\n");
                                 memcpy(tx_Buffer,"star",4);
                                 tx_Buffer[4]= 0x8A;//m_data.opcode;
                                 tx_Buffer[5]= 0x01;//m_data.board_addr;
@@ -189,8 +404,8 @@ static void echo_task2()
                                 tx_Buffer[13]='\0';
                                 uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer, 13);
                                 break;
-                            case 0x1060:
-                                ESP_LOGI(TAG, "----------------password---------------.\r\n");
+                            case 0x3060:
+                                ESP_LOGI(TAG, "----------------lock2 ts---------------.\r\n");
 
                                 memcpy(tx_Buffer,"star",4);
                                 tx_Buffer[4]= 0x8A;//m_data.opcode;
@@ -205,17 +420,17 @@ static void echo_task2()
                                 uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer, 13);
                                 break;
 
-                            case 0x2020://da zhong xiao
-                                ESP_LOGI(TAG, "----------------zhiwen uart2test uart3 todo---------------.\r\n");   
+
+
+
+                            case 0x2090:
+                                ESP_LOGI(TAG, "----------------zhiwen uart2test uart3 todo---------------.\r\n");
                                 
                                 //zhiwen_num_id =0;
-                                zhiwen_num_id = data_rx[7];
-                                Add_FR();		//录指纹	
-                                break;
-
-                            case 0x1080:
-                                ESP_LOGI(TAG, "----------------zhiwen uart2test uart3 todo---------------.\r\n");
-                                Del_FR(0);		//删指纹
+                                //zhiwen_num_id = data_rx[7];
+                                //Add_FR();		//录指纹	
+                                
+                                //Del_FR(0);		//删指纹
                                 break;
 
 
@@ -315,6 +530,7 @@ static void echo_task()
     //ESP_LOGI(TAG, "UART1 start recieve loop.\r\n");
 
     while (1) {
+        vTaskDelay(10 / portTICK_PERIOD_MS);
         // Read data from the UART
         len_rx = uart_read_bytes(UART_NUM_1, data_rx, BUF_SIZE, 20 / portTICK_RATE_MS);
         len_rx2 = uart_read_bytes(UART_NUM_2, data_rx2, BUF_SIZE, 20 / portTICK_RATE_MS);
@@ -577,55 +793,73 @@ void Del_FR(u16 num)
 void app_main()
 {
     u8 ensure;
+    uint8_t tx_Buffer[50]={0};  
 
     xTaskCreate(echo_task, "uart_echo_task", 4* 1024, NULL, 5, NULL);//1024 10
     //vTaskDelay(70 / portTICK_PERIOD_MS);
     xTaskCreate(echo_task2, "uart_echo_task2",4* 1024, NULL, 5, NULL);
 	
     vTaskDelay(1000 / portTICK_PERIOD_MS);
-    ESP_LOGI(TAG, "与AS608模块握手....\r\n");
-
-	while(PS_HandShake(&AS608Addr))//与AS608模块握手
-	{
-		delay_ms(400);
-        ESP_LOGI(TAG, "未检测到模块!!!\r\n");
-        delay_ms(800);
-        ESP_LOGI(TAG, "尝试连接模块...\r\n");	
-
-        // u8 data = 0x35;
-        // uart_write_bytes(UART_NUM_0, (const char *) &data, 1);//------UART_NUM_2------	  
-        // uart_write_bytes(UART_NUM_1, (const char *) &data, 1);//------UART_NUM_2------	  
-	}
-
-    ESP_LOGI(TAG,"通讯成功!!!\r\n");
-    ESP_LOGI(TAG,"波特率:%d   地址:%x\r\n",usart2_baund,AS608Addr);
 
 
-	ensure=PS_ValidTempleteNum(&ValidN);//读库指纹个数
-	if(ensure!=0x00)
-    {
-        ESP_LOGI(TAG,"1-ensure = %d\r\n",ensure);
-        ShowErrMessage(ensure);//显示确认码错误信息	
-    }
+
+
+
+    // ESP_LOGI(TAG, "与AS608模块握手....\r\n");
+	// while(PS_HandShake(&AS608Addr))//与AS608模块握手
+	// {
+	// 	delay_ms(400);
+    //     ESP_LOGI(TAG, "未检测到模块!!!\r\n");
+    //     delay_ms(800);
+    //     ESP_LOGI(TAG, "尝试连接模块...\r\n");	
+
+    //     // u8 data = 0x35;
+    //     // uart_write_bytes(UART_NUM_0, (const char *) &data, 1);//------UART_NUM_2------	  
+    //     // uart_write_bytes(UART_NUM_1, (const char *) &data, 1);//------UART_NUM_2------	  
+	// }
+
+    // ESP_LOGI(TAG,"通讯成功!!!\r\n");
+    // ESP_LOGI(TAG,"波特率:%d   地址:%x\r\n",usart2_baund,AS608Addr);
+
+
+	// ensure=PS_ValidTempleteNum(&ValidN);//读库指纹个数
+	// if(ensure!=0x00)
+    // {
+    //     ESP_LOGI(TAG,"1-ensure = %d\r\n",ensure);
+    //     ShowErrMessage(ensure);//显示确认码错误信息	
+    // }
 		
-    delay_ms(100);
+    // delay_ms(100);
 
-	ensure=PS_ReadSysPara(&AS608Para);  //读参数 
-	if(ensure==0x00)
-	{
-			// mymemset(str,0,50);
-			// sprintf(str,"库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
-			// Show_Str(0,80,240,16,(u8*)str,16,0);
-        ESP_LOGI(TAG,"库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
-	}
-	else
-    {
-        ESP_LOGI(TAG,"2-ensure = %d\r\n",ensure);
-        ShowErrMessage(ensure);	
-    }
+	// ensure=PS_ReadSysPara(&AS608Para);  //读参数 
+	// if(ensure==0x00)
+	// {
+	// 		// mymemset(str,0,50);
+	// 		// sprintf(str,"库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
+	// 		// Show_Str(0,80,240,16,(u8*)str,16,0);
+    //     ESP_LOGI(TAG,"库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
+	// }
+	// else
+    // {
+    //     ESP_LOGI(TAG,"2-ensure = %d\r\n",ensure);
+    //     ShowErrMessage(ensure);	
+    // }
 
 
+    tx_Buffer[0] = 0x5A;
+    tx_Buffer[1] = 0xA5;
+    tx_Buffer[2] = 0x07;
+    tx_Buffer[3] = 0x82;
+    tx_Buffer[4] = 0x00;
+    tx_Buffer[5] = 0x84;
+    tx_Buffer[6] = 0x5A;
+    tx_Buffer[7] = 0x01;
+    tx_Buffer[8] = 0x00;
+    //todo
+    tx_Buffer[9] = 0x00;//kaiji
 
+    uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
+    ESP_LOGI(TAG,"切换到开机画面!!!\r\n");
 
 
 
