@@ -24,6 +24,66 @@
 #include "AS608.h" 
 #include <stdint.h>
 
+
+
+
+//static 
+const char *TAG = "uart_events";
+/**
+ * This is an example which echos any data it receives on UART1 back to the sender,
+ * with hardware flow control turned off. It does not use UART driver event queue.
+ *
+ * - Port: UART1
+ * - Receive (Rx) buffer: on
+ * - Transmit (Tx) buffer: off
+ * - Flow control: off
+ * - Event queue: off
+ * - Pin assignment: see defines below
+ */
+
+// #define ECHO_TEST_TXD  (GPIO_NUM_4)
+// #define ECHO_TEST_RXD  (GPIO_NUM_5)
+// #define ECHO_TEST_RTS  (UART_PIN_NO_CHANGE)
+// #define ECHO_TEST_CTS  (UART_PIN_NO_CHANGE)
+
+
+// #define ECHO_TEST2_TXD  (GPIO_NUM_17)
+// #define ECHO_TEST2_RXD  (GPIO_NUM_16)
+// #define ECHO_TEST2_RTS  (UART_PIN_NO_CHANGE)
+// #define ECHO_TEST2_CTS  (UART_PIN_NO_CHANGE)
+
+// #define ECHO_TEST3_TXD  (GPIO_NUM_19)
+// #define ECHO_TEST3_RXD  (GPIO_NUM_18)
+// #define ECHO_TEST3_RTS  (UART_PIN_NO_CHANGE)
+// #define ECHO_TEST3_CTS  (UART_PIN_NO_CHANGE)
+
+#define ECHO_TEST_TXD  (GPIO_NUM_33)//4
+#define ECHO_TEST_RXD  (GPIO_NUM_32)//5
+#define ECHO_TEST_RTS  (UART_PIN_NO_CHANGE)
+#define ECHO_TEST_CTS  (UART_PIN_NO_CHANGE)
+
+
+#define ECHO_TEST2_TXD  (GPIO_NUM_2)//2-deng    23
+#define ECHO_TEST2_RXD  (GPIO_NUM_34)//34        22
+#define ECHO_TEST2_RTS  (UART_PIN_NO_CHANGE)
+#define ECHO_TEST2_CTS  (UART_PIN_NO_CHANGE)
+#define RE_485_GPIO     (GPIO_NUM_18)
+
+    #define ECHO_TEST3_TXD  (GPIO_NUM_19)
+    #define ECHO_TEST3_RXD  (GPIO_NUM_4)
+    #define ECHO_TEST3_RTS  (UART_PIN_NO_CHANGE)
+    #define ECHO_TEST3_CTS  (UART_PIN_NO_CHANGE)
+
+    #define ECHO_TEST4_TXD  (GPIO_NUM_21)
+    #define ECHO_TEST4_RXD  (GPIO_NUM_36)
+    #define ECHO_TEST4_RTS  (UART_PIN_NO_CHANGE)
+    #define ECHO_TEST4_CTS  (UART_PIN_NO_CHANGE)
+
+
+
+
+
+
 #define usart2_baund  57600//串口2波特率，根据指纹模块波特率更改
 
 SysPara AS608Para;//指纹模块AS608参数
@@ -41,6 +101,20 @@ void delay_ms(u16 nms)
 {	 	
     vTaskDelay(nms / portTICK_PERIOD_MS);
 }
+
+
+
+static void RS485_delay(u32 nCount)
+{
+	for(; nCount != 0; nCount--);
+} 
+
+/*??????·?????*/
+//????????????,±??????????±????485???í?ê????
+#define RS485_RX_EN()			RS485_delay(1000); gpio_set_level(RE_485_GPIO, 0);//rx;  RS485_delay(1000);
+//????·???????,±??????????±????485???í?ê????
+#define RS485_TX_EN()			RS485_delay(1000); gpio_set_level(RE_485_GPIO, 1);//rx;  RS485_delay(1000);
+
 
 
 static const uint8_t auchCRCHi[] = {
@@ -103,12 +177,14 @@ uint16_t CRC16(uint8_t *puchMsg, uint16_t usDataLen)
 
 void uart0_debug_str(uint8_t* str,uint8_t len)
 {
+    printf("debug_str:");
     for(uint8_t i=0;i<len;i++)
         printf("%c ",str[i]);
     printf("\r\n");
 }
 void uart0_debug_data(uint8_t* data,uint8_t len)
 {
+    printf("debug_data:");
     for(uint8_t i=0;i<len;i++)
         printf("%02x ",data[i]);
     printf("\r\n");
@@ -143,56 +219,12 @@ uint8_t ComputXor(uint8_t *InData, uint16_t Len)
 	return Sum;
 }
 
-//static 
-const char *TAG = "uart_events";
-/**
- * This is an example which echos any data it receives on UART1 back to the sender,
- * with hardware flow control turned off. It does not use UART driver event queue.
- *
- * - Port: UART1
- * - Receive (Rx) buffer: on
- * - Transmit (Tx) buffer: off
- * - Flow control: off
- * - Event queue: off
- * - Pin assignment: see defines below
- */
-
-// #define ECHO_TEST_TXD  (GPIO_NUM_4)
-// #define ECHO_TEST_RXD  (GPIO_NUM_5)
-// #define ECHO_TEST_RTS  (UART_PIN_NO_CHANGE)
-// #define ECHO_TEST_CTS  (UART_PIN_NO_CHANGE)
 
 
-// #define ECHO_TEST2_TXD  (GPIO_NUM_17)
-// #define ECHO_TEST2_RXD  (GPIO_NUM_16)
-// #define ECHO_TEST2_RTS  (UART_PIN_NO_CHANGE)
-// #define ECHO_TEST2_CTS  (UART_PIN_NO_CHANGE)
-
-// #define ECHO_TEST3_TXD  (GPIO_NUM_19)
-// #define ECHO_TEST3_RXD  (GPIO_NUM_18)
-// #define ECHO_TEST3_RTS  (UART_PIN_NO_CHANGE)
-// #define ECHO_TEST3_CTS  (UART_PIN_NO_CHANGE)
-
-#define ECHO_TEST_TXD  (GPIO_NUM_33)
-#define ECHO_TEST_RXD  (GPIO_NUM_32)
-#define ECHO_TEST_RTS  (UART_PIN_NO_CHANGE)
-#define ECHO_TEST_CTS  (UART_PIN_NO_CHANGE)
 
 
-#define ECHO_TEST2_TXD  (GPIO_NUM_2)
-#define ECHO_TEST2_RXD  (GPIO_NUM_34)
-#define ECHO_TEST2_RTS  (UART_PIN_NO_CHANGE)
-#define ECHO_TEST2_CTS  (UART_PIN_NO_CHANGE)
 
-    #define ECHO_TEST3_TXD  (GPIO_NUM_19)
-    #define ECHO_TEST3_RXD  (GPIO_NUM_4)
-    #define ECHO_TEST3_RTS  (UART_PIN_NO_CHANGE)
-    #define ECHO_TEST3_CTS  (UART_PIN_NO_CHANGE)
 
-    #define ECHO_TEST4_TXD  (GPIO_NUM_21)
-    #define ECHO_TEST4_RXD  (GPIO_NUM_36)
-    #define ECHO_TEST4_RTS  (UART_PIN_NO_CHANGE)
-    #define ECHO_TEST4_CTS  (UART_PIN_NO_CHANGE)
 
 #define BUF_SIZE (1024)
 uint8_t data_rx[BUF_SIZE] = {0};
@@ -220,7 +252,7 @@ uint8_t shengyu_xiao_max=5;
 //shuliang
 uint8_t shengyu_da=1;
 uint8_t shengyu_zhong=2;
-uint8_t shengyu_xiao=2;
+uint8_t shengyu_xiao=3;
 
 //leixing
 uint8_t dzx_mode=00;
@@ -232,6 +264,92 @@ uint8_t mima_number[11]={0};
 
 //donn't need save
 uint8_t cunwu_mode;
+
+
+
+
+
+
+
+void tongbu_gekou_shuliang_d(uint8_t shengyu_da1)
+{
+    uint8_t tx_Buffer[50]={0};  
+    uint16_t crc16_temp=0;
+    //da
+    tx_Buffer[0] = 0x5A;
+    tx_Buffer[1] = 0xA5;
+    tx_Buffer[2] = 0x07;//len
+    tx_Buffer[3] = 0x82;
+
+    tx_Buffer[4] = 0x10;
+    tx_Buffer[5] = 0x20;//dizhi
+
+    tx_Buffer[6] = 0x00;
+    tx_Buffer[7] = shengyu_da1;//data shengyu dagezi
+
+    //crc
+    crc16_temp = CRC16(tx_Buffer+3, TX1_LEN_BL -5);
+    printf("tx1 CRC16 result:0x%04X\r\n",crc16_temp);
+
+    tx_Buffer[8] = crc16_temp&0xff;
+    tx_Buffer[9] = (crc16_temp>>8)&0xff;
+    uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN_BL);
+
+}
+
+void tongbu_gekou_shuliang_z(uint8_t shengyu_zhong1 )
+{
+    uint8_t tx_Buffer[50]={0};  
+    uint16_t crc16_temp=0;
+    //zhong
+    tx_Buffer[0] = 0x5A;
+    tx_Buffer[1] = 0xA5;
+    tx_Buffer[2] = 0x07;//len
+    tx_Buffer[3] = 0x82;
+
+    tx_Buffer[4] = 0x10;
+    tx_Buffer[5] = 0x30;//dizhi
+
+    tx_Buffer[6] = 0x00;
+    tx_Buffer[7] = shengyu_zhong1;//data shengyu zhong
+    //crc
+    crc16_temp = CRC16(tx_Buffer+3, TX1_LEN_BL -5);
+    printf("tx2 CRC16 result:0x%04X\r\n",crc16_temp);
+
+    tx_Buffer[8] = crc16_temp&0xff;
+    tx_Buffer[9] = (crc16_temp>>8)&0xff;
+    uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN_BL);
+
+
+
+}
+
+void tongbu_gekou_shuliang_x(uint8_t shengyu_xiao1)
+{
+    uint8_t tx_Buffer[50]={0};  
+    uint16_t crc16_temp=0;
+    //xiao
+    tx_Buffer[0] = 0x5A;
+    tx_Buffer[1] = 0xA5;
+    tx_Buffer[2] = 0x07;//len
+    tx_Buffer[3] = 0x82;
+
+    tx_Buffer[4] = 0x10;
+    tx_Buffer[5] = 0x40;//dizhi
+
+    tx_Buffer[6] = 0x00;
+    tx_Buffer[7] = shengyu_xiao1;//data shengyu xiao
+    //crc
+    crc16_temp = CRC16(tx_Buffer+3, TX1_LEN_BL -5);
+    printf("tx3 CRC16 result:0x%04X\r\n",crc16_temp);
+
+    tx_Buffer[8] = crc16_temp&0xff;
+    tx_Buffer[9] = (crc16_temp>>8)&0xff;
+    uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN_BL);
+
+}
+
+
 
 
 static void echo_task2()
@@ -247,7 +365,7 @@ static void echo_task2()
     uint16_t crc16_temp=0;
     while(1)
     {
-        vTaskDelay(50 / portTICK_PERIOD_MS);
+        vTaskDelay(40 / portTICK_PERIOD_MS);
                 //&&(flag_rx2 ==0)
         // if ((len_rx2 > 0) ) {
         //     flag_rx2 =1;
@@ -272,7 +390,7 @@ static void echo_task2()
             // printf("] \n");
             crc16_temp = CRC16(data_rx+3, data_rx[2] -2);
             printf("rx CRC16 result:0x%04X\r\n",crc16_temp);
-
+            
 
 
 
@@ -333,10 +451,10 @@ static void echo_task2()
                                     tx_Buffer[8] = 0x00;
                                     tx_Buffer[9] = 0x01;
                                 }
-                                else if(01 == cunwu_mode)//
+                                else//
                                 {
                                     tx_Buffer[8] = 0x00;
-                                    tx_Buffer[9] = 0x02;
+                                    tx_Buffer[9] = 0x02;//ji xu
                                 }
 
                                 //crc
@@ -459,14 +577,22 @@ static void echo_task2()
                                 //5A A5 10 83   10 50   06    31 32 33 34 35 36 37 38 39 30  31 00
                                 ESP_LOGI(TAG, "----------------phone number---------------.\r\n");
                                 //panduan   -  zan cun quanju
-                                //if has, todo
+                                //if has, todo  -----------------------------------
 
-                                //if weishu
-                                if(06== data_rx[6])//12
+                                // //if weishu    -------------------------------------
+                                // if(06== data_rx[6])//12
+                                // {
+                                //     //zancun
+                                //     phone_weishu_ok =1;
+                                //     memcpy( phone_number,data_rx+7 ,11);
+
+                                // }
+
+                                if(05== data_rx[6])//12
                                 {
                                     //zancun
                                     phone_weishu_ok =1;
-                                    memcpy( phone_number,data_rx+7 ,11);
+                                    memcpy( phone_number,data_rx+7 ,10);
 
                                 }
                                 else
@@ -490,6 +616,8 @@ static void echo_task2()
 
                                 tx_Buffer[6] = 0x5A;
                                 tx_Buffer[7] = 0x01;
+                                //存物的格口编号（123）、格口类型（1：小，2：中，3：大）
+                                //存物手机号（11位）密码（6位）            或者指纹(----)   
 
 
                                 if((1 == phone_weishu_ok)&&(03== data_rx[6]))//6   ok
@@ -509,6 +637,8 @@ static void echo_task2()
                                     uart0_debug_str(mima_number,11);
                                     if(1 == dzx_mode)
                                     {
+                                        tongbu_gekou_shuliang_d(shengyu_da);
+
                                         //suiji kaimen
                                         if(shengyu_da >0)
                                         {
@@ -524,7 +654,13 @@ static void echo_task2()
                                             memcpy(tx_Buffer2+9,"endo",4);
                                             
                                             tx_Buffer2[13]='\0';
+
+                                            RS485_TX_EN();
+
+                                            printf("tx_Buffer2=");
+                                            uart0_debug_data(tx_Buffer2, 13);
                                             uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
+                                            //RS485_RX_EN();
                                         }
                                         else
                                         {
@@ -534,6 +670,8 @@ static void echo_task2()
                                     }
                                     else if(2 == dzx_mode)
                                     {
+                                        tongbu_gekou_shuliang_z(shengyu_zhong);
+
                                         if(shengyu_zhong >0)
                                         {
                                             shengyu_zhong = shengyu_zhong -1;
@@ -549,7 +687,13 @@ static void echo_task2()
                                             memcpy(tx_Buffer2+9,"endo",4);
                                             
                                             tx_Buffer2[13]='\0';
+
+                                            RS485_TX_EN();
+
+                                            printf("tx_Buffer2=");
+                                            uart0_debug_data(tx_Buffer2, 13);
                                             uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
+                                            //RS485_RX_EN();
                                         }
                                         else
                                         {
@@ -559,6 +703,8 @@ static void echo_task2()
                                     }
                                     else if(3 == dzx_mode)
                                     {
+                                        tongbu_gekou_shuliang_x(shengyu_xiao);
+
                                         if(shengyu_xiao >0)
                                         {
                                             shengyu_xiao = shengyu_xiao -1;
@@ -684,71 +830,13 @@ static void echo_task2()
 static void echo_task()
 {
     
-    // while(1)
-    // {
-    //     vTaskDelay(50 / portTICK_PERIOD_MS);
-
-    // }
-    /* Configure parameters of an UART driver,
-     * communication pins and install the driver */
-    uart_config_t uart_config = {
-        .baud_rate = 115200,
-        .data_bits = UART_DATA_8_BITS,
-        .parity    = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
-    };
-    // uart_config_t uart_config2 = {
-    //     .baud_rate = 9600,
-    //     .data_bits = UART_DATA_8_BITS,
-    //     .parity    = UART_PARITY_DISABLE,
-    //     .stop_bits = UART_STOP_BITS_1,
-    //     .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
-    // };
-    uart_config_t uart_config2 = {
-        .baud_rate = 57600,
-        .data_bits = UART_DATA_8_BITS,
-        .parity    = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
-    };
-
-
-        // Set UART log level
-    //Set UART log level
-    esp_log_level_set(TAG, ESP_LOG_INFO);
-    //Set UART pins (using UART0 default pins ie no changes.)
-    uart_set_pin(UART_NUM_0, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    //Install UART driver, and get the queue.
-    uart_driver_install(UART_NUM_0, BUF_SIZE * 2, 0, 0, NULL, 0);
-
-    // vTaskDelay(1000 / portTICK_PERIOD_MS);
-    // ESP_LOGI(TAG, "Start ttl application test and configure UART2.\r\n");
-
-    //1
-    uart_param_config(UART_NUM_1, &uart_config);
-    uart_set_pin(UART_NUM_1, ECHO_TEST_TXD, ECHO_TEST_RXD, ECHO_TEST_RTS, ECHO_TEST_CTS);
-    uart_driver_install(UART_NUM_1, BUF_SIZE * 2, 0, 0, NULL, 0);
-
-    //2
-    uart_param_config(UART_NUM_2, &uart_config2);
-    uart_set_pin(UART_NUM_2, ECHO_TEST2_TXD, ECHO_TEST2_RXD, ECHO_TEST2_RTS, ECHO_TEST2_CTS);
-    uart_driver_install(UART_NUM_2, BUF_SIZE * 2, 0, 0, NULL, 0);
-
-    // //3 io moni
-    // uart_param_config(UART_NUM_3, &uart_config3);
-    // uart_set_pin(UART_NUM_3, ECHO_TEST3_TXD, ECHO_TEST3_RXD, ECHO_TEST3_RTS, ECHO_TEST3_CTS);
-    // uart_driver_install(UART_NUM_3, BUF_SIZE * 2, 0, 0, NULL, 0);
-
-
-
     // Configure a temporary buffer for the incoming data
     //uint8_t *data_rx = (uint8_t *) malloc(BUF_SIZE);
 
     //ESP_LOGI(TAG, "UART1 start recieve loop.\r\n");
 
     while (1) {
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        //vTaskDelay(10 / portTICK_PERIOD_MS);
         // Read data from the UART
         len_rx = uart_read_bytes(UART_NUM_1, data_rx, BUF_SIZE, 20 / portTICK_RATE_MS);
         len_rx2 = uart_read_bytes(UART_NUM_2, data_rx2, BUF_SIZE, 20 / portTICK_RATE_MS);
@@ -1003,8 +1091,69 @@ void Del_FR(u16 num)
 }
 
 
+void uart_init_all(void)
+{
+
+    // while(1)
+    // {
+    //     vTaskDelay(50 / portTICK_PERIOD_MS);
+
+    // }
+    /* Configure parameters of an UART driver,
+     * communication pins and install the driver */
+    uart_config_t uart_config = {
+        .baud_rate = 115200,
+        .data_bits = UART_DATA_8_BITS,
+        .parity    = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
+    };
+    uart_config_t uart_config2 = {
+        .baud_rate = 9600,//lock
+        .data_bits = UART_DATA_8_BITS,
+        .parity    = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
+    };
+
+    // uart_config_t uart_config3 = {
+    //     .baud_rate = 57600,//zhiwen
+    //     .data_bits = UART_DATA_8_BITS,
+    //     .parity    = UART_PARITY_DISABLE,
+    //     .stop_bits = UART_STOP_BITS_1,
+    //     .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
+    // };
 
 
+        // Set UART log level
+    //Set UART log level
+    esp_log_level_set(TAG, ESP_LOG_INFO);
+    //Set UART pins (using UART0 default pins ie no changes.)
+    uart_set_pin(UART_NUM_0, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    //Install UART driver, and get the queue.
+    uart_driver_install(UART_NUM_0, BUF_SIZE * 2, 0, 0, NULL, 0);
+
+    // vTaskDelay(1000 / portTICK_PERIOD_MS);
+    // ESP_LOGI(TAG, "Start ttl application test and configure UART2.\r\n");
+
+    //1
+    uart_param_config(UART_NUM_1, &uart_config);
+    uart_set_pin(UART_NUM_1, ECHO_TEST_TXD, ECHO_TEST_RXD, ECHO_TEST_RTS, ECHO_TEST_CTS);
+    uart_driver_install(UART_NUM_1, BUF_SIZE * 2, 0, 0, NULL, 0);
+
+    //2
+    uart_param_config(UART_NUM_2, &uart_config2);
+    uart_set_pin(UART_NUM_2, ECHO_TEST2_TXD, ECHO_TEST2_RXD, ECHO_TEST2_RTS, ECHO_TEST2_CTS);
+    uart_driver_install(UART_NUM_2, BUF_SIZE * 2, 0, 0, NULL, 0);
+
+    // //3 io moni
+    // uart_param_config(UART_NUM_3, &uart_config3);
+    // uart_set_pin(UART_NUM_3, ECHO_TEST3_TXD, ECHO_TEST3_RXD, ECHO_TEST3_RTS, ECHO_TEST3_CTS);
+    // uart_driver_install(UART_NUM_3, BUF_SIZE * 2, 0, 0, NULL, 0);
+
+
+
+}
 
 
 
@@ -1014,11 +1163,23 @@ void app_main()
     uint16_t crc16_temp=0;
     uint8_t tx_Buffer[50]={0};  
 
-    xTaskCreate(echo_task, "uart_echo_task", 4* 1024, NULL, 5, NULL);//1024 10
+    gpio_pad_select_gpio(RE_485_GPIO);
+    /* Set the GPIO as a push/pull output */
+    gpio_set_direction(RE_485_GPIO, GPIO_MODE_OUTPUT);
+    
+    RS485_TX_EN();
+
+
+
+    uart_init_all();
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+
+    //xTaskCreate(echo_task, "uart_echo_task", 1024, NULL, 10, NULL);
+    xTaskCreate(echo_task, "uart_echo_task", 2* 1024, NULL, 1, NULL);//1024 10
     //vTaskDelay(70 / portTICK_PERIOD_MS);
-    xTaskCreate(echo_task2, "uart_echo_task2",4* 1024, NULL, 5, NULL);
+    xTaskCreate(echo_task2, "uart_echo_task2",4* 1024, NULL, 2, NULL);
 	
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
 
 
 
@@ -1065,70 +1226,9 @@ void app_main()
     // }
 
 
-
-
-
-    //tongbu
-    //da
-    tx_Buffer[0] = 0x5A;
-    tx_Buffer[1] = 0xA5;
-    tx_Buffer[2] = 0x07;//len
-    tx_Buffer[3] = 0x82;
-
-    tx_Buffer[4] = 0x10;
-    tx_Buffer[5] = 0x20;//dizhi
-
-    tx_Buffer[6] = 0x00;
-    tx_Buffer[7] = shengyu_da;//data shengyu dagezi
-
-    //crc
-    crc16_temp = CRC16(tx_Buffer+3, TX1_LEN_BL -5);
-    printf("tx1 CRC16 result:0x%04X\r\n",crc16_temp);
-
-    tx_Buffer[8] = crc16_temp&0xff;
-    tx_Buffer[9] = (crc16_temp>>8)&0xff;
-    uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN_BL);
-
-    //zhong
-    tx_Buffer[0] = 0x5A;
-    tx_Buffer[1] = 0xA5;
-    tx_Buffer[2] = 0x07;//len
-    tx_Buffer[3] = 0x82;
-
-    tx_Buffer[4] = 0x10;
-    tx_Buffer[5] = 0x30;//dizhi
-
-    tx_Buffer[6] = 0x00;
-    tx_Buffer[7] = shengyu_zhong;//data shengyu zhong
-    //crc
-    crc16_temp = CRC16(tx_Buffer+3, TX1_LEN_BL -5);
-    printf("tx2 CRC16 result:0x%04X\r\n",crc16_temp);
-
-    tx_Buffer[8] = crc16_temp&0xff;
-    tx_Buffer[9] = (crc16_temp>>8)&0xff;
-    uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN_BL);
-
-    //xiao
-    tx_Buffer[0] = 0x5A;
-    tx_Buffer[1] = 0xA5;
-    tx_Buffer[2] = 0x07;//len
-    tx_Buffer[3] = 0x82;
-
-    tx_Buffer[4] = 0x10;
-    tx_Buffer[5] = 0x40;//dizhi
-
-    tx_Buffer[6] = 0x00;
-    tx_Buffer[7] = shengyu_xiao;//data shengyu xiao
-    //crc
-    crc16_temp = CRC16(tx_Buffer+3, TX1_LEN_BL -5);
-    printf("tx3 CRC16 result:0x%04X\r\n",crc16_temp);
-
-    tx_Buffer[8] = crc16_temp&0xff;
-    tx_Buffer[9] = (crc16_temp>>8)&0xff;
-    uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN_BL);
-
-
-
+    tongbu_gekou_shuliang_d(shengyu_da);
+    tongbu_gekou_shuliang_z(shengyu_zhong);
+    tongbu_gekou_shuliang_x(shengyu_xiao);
 
 
     //kaijie huamian
