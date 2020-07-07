@@ -22,6 +22,7 @@
 #include "freertos/queue.h"
 
 #include "AS608.h" 
+#include <stdint.h>
 
 #define usart2_baund  57600//串口2波特率，根据指纹模块波特率更改
 
@@ -41,6 +42,77 @@ void delay_ms(u16 nms)
     vTaskDelay(nms / portTICK_PERIOD_MS);
 }
 
+
+static const uint8_t auchCRCHi[] = {
+0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81,
+0x40, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0,
+0x80, 0x41, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x00, 0xC1, 0x81, 0x40, 0x01,
+0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41,
+0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x00, 0xC1, 0x81,
+0x40, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0,
+0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01,
+0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40,
+0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81,
+0x40, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0,
+0x80, 0x41, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x00, 0xC1, 0x81, 0x40, 0x01,
+0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41,
+0x00, 0xC1, 0x81, 0x40, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81,
+0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0,
+0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01,
+0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41,
+0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81,
+0x40
+};
+ 
+static const uint8_t auchCRCLo[] = {
+0x00, 0xC0, 0xC1, 0x01, 0xC3, 0x03, 0x02, 0xC2, 0xC6, 0x06, 0x07, 0xC7, 0x05, 0xC5, 0xC4,
+0x04, 0xCC, 0x0C, 0x0D, 0xCD, 0x0F, 0xCF, 0xCE, 0x0E, 0x0A, 0xCA, 0xCB, 0x0B, 0xC9, 0x09,
+0x08, 0xC8, 0xD8, 0x18, 0x19, 0xD9, 0x1B, 0xDB, 0xDA, 0x1A, 0x1E, 0xDE, 0xDF, 0x1F, 0xDD,
+0x1D, 0x1C, 0xDC, 0x14, 0xD4, 0xD5, 0x15, 0xD7, 0x17, 0x16, 0xD6, 0xD2, 0x12, 0x13, 0xD3,
+0x11, 0xD1, 0xD0, 0x10, 0xF0, 0x30, 0x31, 0xF1, 0x33, 0xF3, 0xF2, 0x32, 0x36, 0xF6, 0xF7,
+0x37, 0xF5, 0x35, 0x34, 0xF4, 0x3C, 0xFC, 0xFD, 0x3D, 0xFF, 0x3F, 0x3E, 0xFE, 0xFA, 0x3A,
+0x3B, 0xFB, 0x39, 0xF9, 0xF8, 0x38, 0x28, 0xE8, 0xE9, 0x29, 0xEB, 0x2B, 0x2A, 0xEA, 0xEE,
+0x2E, 0x2F, 0xEF, 0x2D, 0xED, 0xEC, 0x2C, 0xE4, 0x24, 0x25, 0xE5, 0x27, 0xE7, 0xE6, 0x26,
+0x22, 0xE2, 0xE3, 0x23, 0xE1, 0x21, 0x20, 0xE0, 0xA0, 0x60, 0x61, 0xA1, 0x63, 0xA3, 0xA2,
+0x62, 0x66, 0xA6, 0xA7, 0x67, 0xA5, 0x65, 0x64, 0xA4, 0x6C, 0xAC, 0xAD, 0x6D, 0xAF, 0x6F,
+0x6E, 0xAE, 0xAA, 0x6A, 0x6B, 0xAB, 0x69, 0xA9, 0xA8, 0x68, 0x78, 0xB8, 0xB9, 0x79, 0xBB,
+0x7B, 0x7A, 0xBA, 0xBE, 0x7E, 0x7F, 0xBF, 0x7D, 0xBD, 0xBC, 0x7C, 0xB4, 0x74, 0x75, 0xB5,
+0x77, 0xB7, 0xB6, 0x76, 0x72, 0xB2, 0xB3, 0x73, 0xB1, 0x71, 0x70, 0xB0, 0x50, 0x90, 0x91,
+0x51, 0x93, 0x53, 0x52, 0x92, 0x96, 0x56, 0x57, 0x97, 0x55, 0x95, 0x94, 0x54, 0x9C, 0x5C,
+0x5D, 0x9D, 0x5F, 0x9F, 0x9E, 0x5E, 0x5A, 0x9A, 0x9B, 0x5B, 0x99, 0x59, 0x58, 0x98, 0x88,
+0x48, 0x49, 0x89, 0x4B, 0x8B, 0x8A, 0x4A, 0x4E, 0x8E, 0x8F, 0x4F, 0x8D, 0x4D, 0x4C, 0x8C,
+0x44, 0x84, 0x85, 0x45, 0x87, 0x47, 0x46, 0x86, 0x82, 0x42, 0x43, 0x83, 0x41, 0x81, 0x80,
+0x40
+};
+ 
+uint16_t CRC16(uint8_t *puchMsg, uint16_t usDataLen)
+{
+  uint8_t uchCRCHi = 0xFF; // 高CRC字节初始化
+  uint8_t uchCRCLo = 0xFF; // 低CRC 字节初始化
+  uint32_t uIndex; // CRC循环中的索引
+  while (usDataLen--) // 传输消息缓冲区
+  {
+    uIndex = uchCRCHi ^ *puchMsg++; // 计算CRC
+    uchCRCHi = uchCRCLo ^ auchCRCHi[uIndex];
+    uchCRCLo = auchCRCLo[uIndex];
+  }
+  return (((uint16_t)uchCRCLo << 8u) | uchCRCHi);
+}
+//版权声明：本文为CSDN博主「lhsfly」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+//原文链接：https://blog.csdn.net/lhsfly/java/article/details/84072316
+
+void uart0_debug_str(uint8_t* str,uint8_t len)
+{
+    for(uint8_t i=0;i<len;i++)
+        printf("%c ",str[i]);
+    printf("\r\n");
+}
+void uart0_debug_data(uint8_t* data,uint8_t len)
+{
+    for(uint8_t i=0;i<len;i++)
+        printf("%02x ",data[i]);
+    printf("\r\n");
+}
 
 
 ///command struct
@@ -138,6 +210,25 @@ uint8_t flag_rx2;
 
 
 
+
+//need save
+//shuliang
+uint8_t shengyu_da=11;
+uint8_t shengyu_zhong=22;
+uint8_t shengyu_xiao=33;
+
+//leixing
+uint8_t dzx_mode=00;
+
+uint8_t phone_weishu_ok=00;
+uint8_t phone_number[11]={0};  
+uint8_t mima_number[11]={0};  
+
+
+//donn't need save
+uint8_t cunwu_mode;
+
+
 static void echo_task2()
 {
 
@@ -148,6 +239,7 @@ static void echo_task2()
 
     // }
     uint16_t bl_addr=0;//bianliang
+    uint16_t crc16_temp=0;
     while(1)
     {
         vTaskDelay(50 / portTICK_PERIOD_MS);
@@ -173,10 +265,28 @@ static void echo_task2()
             //     printf("0x%.2X ", (uint8_t)data_rx[i]);
             // }
             // printf("] \n");
+            crc16_temp = CRC16(data_rx+3, data_rx[2] -2);
+            printf("CRC16 result:0x%04X\r\n",crc16_temp);
+
+
+
+
+            // printf("data_rx[0]:0x%02X, data_rx[1]:0x%02X\r\n",data_rx[0], data_rx[1]);
+
+            // printf("(len_rx-3):0x%02X,data_rx[2]:0x%02X\r\n",(len_rx-3),data_rx[2]);
+
+            // printf("data_rx[data_rx[2] +2 -1]0x%02X\r\n",data_rx[data_rx[2] +2 -1]);
+            // printf("(crc16_temp & 0xff):0x%02X\r\n",(crc16_temp & 0xff));
+
+            // printf("data_rx[data_rx[2] +2 -1+1]0x%02X\r\n",data_rx[data_rx[2] +2 -1+1]);
+            // printf("((crc16_temp>>8) & 0xff):0x%02X\r\n",((crc16_temp>>8) & 0xff));
+
             
             if((0x5A == data_rx[0])
                 &&(0xA5 == data_rx[1])
-                &&((len_rx-3) == data_rx[2]))
+                &&((len_rx-3) == data_rx[2])
+                &&(data_rx[data_rx[2]+2-1]==(crc16_temp&0xff))
+                &&(data_rx[data_rx[2]+2-1+1]==((crc16_temp>>8)&0xff)))
                 {
                     switch (data_rx[3])
                     {
@@ -186,21 +296,53 @@ static void echo_task2()
                         break;
 
                     case 0x83:
-                        if( data_rx[6] == (len_rx-7)/2)
+                        if( data_rx[6] == (len_rx-7 -2)/2)
                         {
                             //uart_write_bytes(UART_NUM_2, (const char *) (data_rx+4), len_rx-4);
                             ESP_LOGI(TAG, "----------------0x83---------------.\r\n");
                             bl_addr = (data_rx[4]<<8) + data_rx[5];
 
                             uint8_t tx_Buffer[50]={0};  
+                            uint8_t tx_Buffer2[50]={0};  
                             uint8_t bcc_temp=0;
                             switch (bl_addr)
                             {
+                            case 0x2080://
+                                ESP_LOGI(TAG, "----------------cunwu---------------.\r\n");   
+                                tx_Buffer[0] = 0x5A;
+                                tx_Buffer[1] = 0xA5;
+
+                                tx_Buffer[2] = 0x07;//len
+                                tx_Buffer[3] = 0x82;
+
+                                tx_Buffer[4] = 0x00;
+                                tx_Buffer[5] = 0x84;
+
+                                tx_Buffer[6] = 0x5A;
+                                tx_Buffer[7] = 0x01;
+                                if((0== shengyu_da)
+                                    &&(0== shengyu_zhong)
+                                    &&(0== shengyu_xiao))
+                                {
+                                    ESP_LOGI(TAG, "----------------zanwu kongxiang---------------.\r\n");   
+                                    tx_Buffer[8] = 0x00;
+                                    tx_Buffer[9] = 0x01;
+                                }
+                                else if(01 == cunwu_mode)//
+                                {
+                                    tx_Buffer[8] = 0x00;
+                                    tx_Buffer[9] = 0x02;
+                                }
+                                
+                                uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
+
+
+                                break;
 
                             case 0x2010://zhiwen  or   mima
                                 ESP_LOGI(TAG, "----------------zhiwen or mima---------------.\r\n");   
                                 //if -> huise tupian?
-
+                                //da
                                 tx_Buffer[0] = 0x5A;
                                 tx_Buffer[1] = 0xA5;
                                 tx_Buffer[2] = 0x05;//len
@@ -210,9 +352,10 @@ static void echo_task2()
                                 tx_Buffer[5] = 0x20;//dizhi
 
                                 tx_Buffer[6] = 0x00;
-                                tx_Buffer[7] = 0x11;//data shengyu dagezi
+                                tx_Buffer[7] = shengyu_da;//data shengyu dagezi
                                 uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, 8);
 
+                                //zhong
                                 tx_Buffer[0] = 0x5A;
                                 tx_Buffer[1] = 0xA5;
                                 tx_Buffer[2] = 0x05;//len
@@ -222,9 +365,10 @@ static void echo_task2()
                                 tx_Buffer[5] = 0x30;//dizhi
 
                                 tx_Buffer[6] = 0x00;
-                                tx_Buffer[7] = 0x22;//data shengyu dagezi todo
+                                tx_Buffer[7] = shengyu_zhong;//data shengyu zhong
                                 uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, 8);
 
+                                //xiao
                                 tx_Buffer[0] = 0x5A;
                                 tx_Buffer[1] = 0xA5;
                                 tx_Buffer[2] = 0x05;//len
@@ -234,7 +378,7 @@ static void echo_task2()
                                 tx_Buffer[5] = 0x40;//dizhi
 
                                 tx_Buffer[6] = 0x00;
-                                tx_Buffer[7] = 0x33;//data shengyu dagezi
+                                tx_Buffer[7] = shengyu_xiao;//data shengyu xiao
                                 uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, 8);
 
 
@@ -252,15 +396,18 @@ static void echo_task2()
                                 tx_Buffer[7] = 0x01;//data guding
 
                                 tx_Buffer[8] = 0x00;
+                                tx_Buffer[9] = 0x03;//tiao 选择格子类型
                                 if(01== data_rx[8])//zhiwen cun
                                 {
                                     ESP_LOGI(TAG, "----------------zhiwen---------------.\r\n");  
-                                    tx_Buffer[9] = 0x04;//baocun
+                                    //baocun 1
+                                    cunwu_mode = 1;
                                 }
                                 else if(02== data_rx[8])//mi ma
                                 {
-                                    tx_Buffer[9] = 0x03;
                                     ESP_LOGI(TAG, "----------------mima---------------.\r\n");  
+                                    //baocun 2
+                                    cunwu_mode = 2;
 
                                 }
                                 uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
@@ -270,6 +417,7 @@ static void echo_task2()
                                 //zhiwen_num_id = data_rx[7];
                                 //Add_FR();		//录指纹	
                                 break;
+
                             case 0x2020://da zhong xiao
                                 ESP_LOGI(TAG, "----------------daxiao---------------.\r\n");   
                                 tx_Buffer[0] = 0x5A;
@@ -283,12 +431,12 @@ static void echo_task2()
 
                                 tx_Buffer[6] = 0x5A;
                                 tx_Buffer[7] = 0x01;
-                                if(1)//2010 密码
+                                if(02 == cunwu_mode)//2010 密码
                                 {
                                     tx_Buffer[8] = 0x00;
                                     tx_Buffer[9] = 0x06;
                                 }
-                                else//2010 指纹 ->指纹
+                                else if(01 == cunwu_mode)//2010 指纹 ->指纹判断 0005 todo
                                 {
                                     tx_Buffer[8] = 0x00;
                                     tx_Buffer[9] = 0x04;
@@ -300,17 +448,19 @@ static void echo_task2()
                                 {
                                     ESP_LOGI(TAG, "----------------da---------------.\r\n");  
                                     //cun qi lai   quanju yihuiyong
+                                    dzx_mode = 1;
                                     
                                 }
                                 else if(02== data_rx[8])//zhong
                                 {
                                     ESP_LOGI(TAG, "----------------zhong---------------.\r\n");  
-
+                                    dzx_mode = 2;
 
                                 }
                                 else if(03== data_rx[8])//xiao
                                 {
                                     ESP_LOGI(TAG, "----------------xiao---------------.\r\n");  
+                                    dzx_mode = 3;
                                 }
                                 
                                 uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
@@ -325,26 +475,16 @@ static void echo_task2()
                                 //if has, todo
 
                                 //if weishu
-                                if(06== data_rx[6])
+                                if(06== data_rx[6])//12
                                 {
                                     //zancun
+                                    phone_weishu_ok =1;
+                                    memcpy( phone_number,data_rx+7 ,11);
+
                                 }
                                 else
                                 {
-                                    tx_Buffer[0] = 0x5A;
-                                    tx_Buffer[1] = 0xA5;
-
-                                    tx_Buffer[2] = 0x07;//len
-                                    tx_Buffer[3] = 0x82;
-
-                                    tx_Buffer[4] = 0x00;
-                                    tx_Buffer[5] = 0x84;
-
-                                    tx_Buffer[6] = 0x5A;
-                                    tx_Buffer[7] = 0x01;
-
-                                    tx_Buffer[8] = 0x00;
-                                    tx_Buffer[9] = 0x07;
+                                    ESP_LOGI(TAG, "----------------1 - shoujihao weishu err---------------.\r\n");
                                 }
                                 
                                 break;
@@ -365,14 +505,93 @@ static void echo_task2()
                                 tx_Buffer[7] = 0x01;
 
 
-                                if(03== data_rx[6])
+                                if((1 == phone_weishu_ok)&&(03== data_rx[6]))//6   ok
                                 {
+                            
+                                    phone_weishu_ok =0;
                                     //cun
                                     tx_Buffer[8] = 0x00;
                                     tx_Buffer[9] = 0x08;
+
+                                    memcpy( mima_number,data_rx+7 ,6);
+
+                                    printf("phone_number=");
+                                    uart0_debug_str(phone_number,11);
+
+                                    printf("mima_number=");
+                                    uart0_debug_str(mima_number,11);
+                                    if(1 == dzx_mode)
+                                    {
+                                        //suiji kaimen
+                                        if(shengyu_da >0)
+                                        {
+                                            shengyu_da = shengyu_da -1;
+                                            ESP_LOGI(TAG, "----------------lock1 ts---------------.\r\n");
+                                            memcpy(tx_Buffer2,"star",4);
+                                            tx_Buffer2[4]= 0x8A;//m_data.opcode;
+                                            tx_Buffer2[5]= 0x01;//m_data.board_addr;
+                                            tx_Buffer2[6]= 0x02;//m_data.lock_addr;
+                                            tx_Buffer2[7]= 0x11;//guding
+                                            bcc_temp = ComputXor(tx_Buffer2+4,4);
+                                            tx_Buffer2[8]= bcc_temp;
+                                            memcpy(tx_Buffer2+9,"endo",4);
+                                            
+                                            tx_Buffer2[13]='\0';
+                                            uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
+                                        }
+                                        else
+                                        {
+                                            ESP_LOGI(TAG, "----------------lock1  da   no---------------.\r\n");
+                                        }
+
+                                    }
+                                    else if(2 == dzx_mode)
+                                    {
+                                        if(shengyu_zhong >0)
+                                        {
+                                            shengyu_zhong = shengyu_zhong -1;
+                                            ESP_LOGI(TAG, "----------------lock2 ts---------------.\r\n");
+
+                                            memcpy(tx_Buffer2,"star",4);
+                                            tx_Buffer2[4]= 0x8A;//m_data.opcode;
+                                            tx_Buffer2[5]= 0x01;//m_data.board_addr;
+                                            tx_Buffer2[6]= 0x01;//m_data.lock_addr;
+                                            tx_Buffer2[7]= 0x11;//guding
+                                            bcc_temp = ComputXor(tx_Buffer2+4,4);
+                                            tx_Buffer2[8]= bcc_temp;
+                                            memcpy(tx_Buffer2+9,"endo",4);
+                                            
+                                            tx_Buffer2[13]='\0';
+                                            uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
+                                        }
+                                        else
+                                        {
+                                            ESP_LOGI(TAG, "----------------lock2  zhong  no---------------.\r\n");
+                                        }  
+
+                                    }
+                                    else if(3 == dzx_mode)
+                                    {
+                                        if(shengyu_xiao >0)
+                                        {
+                                            shengyu_xiao = shengyu_xiao -1;
+                                            ESP_LOGI(TAG, "----------------lock3 ts---------------.\r\n");
+                                        }
+                                        else
+                                        {
+                                            ESP_LOGI(TAG, "----------------lock3  xiao  no---------------.\r\n");
+                                        } 
+                                            
+                                    }
+
                                 }
                                 else
                                 {
+                                    if(03!= data_rx[6])
+                                    {
+                                      ESP_LOGI(TAG, "----------------2 - mima weishu err---------------.\r\n");  
+                                    }
+                                    
                                     tx_Buffer[8] = 0x00;
                                     tx_Buffer[9] = 0x07;
                                 }
@@ -390,35 +609,35 @@ static void echo_task2()
 
 
 
-                            case 0x3050:
-                                ESP_LOGI(TAG, "----------------lock1 ts---------------.\r\n");
-                                memcpy(tx_Buffer,"star",4);
-                                tx_Buffer[4]= 0x8A;//m_data.opcode;
-                                tx_Buffer[5]= 0x01;//m_data.board_addr;
-                                tx_Buffer[6]= 0x02;//m_data.lock_addr;
-                                tx_Buffer[7]= 0x11;//guding
-                                bcc_temp = ComputXor(tx_Buffer+4,4);
-                                tx_Buffer[8]= bcc_temp;
-                                memcpy(tx_Buffer+9,"endo",4);
+                            // case 0x3050:
+                            //     ESP_LOGI(TAG, "----------------lock1 ts---------------.\r\n");
+                            //     memcpy(tx_Buffer2,"star",4);
+                            //     tx_Buffer2[4]= 0x8A;//m_data.opcode;
+                            //     tx_Buffer2[5]= 0x01;//m_data.board_addr;
+                            //     tx_Buffer2[6]= 0x02;//m_data.lock_addr;
+                            //     tx_Buffer2[7]= 0x11;//guding
+                            //     bcc_temp = ComputXor(tx_Buffer2+4,4);
+                            //     tx_Buffer2[8]= bcc_temp;
+                            //     memcpy(tx_Buffer2+9,"endo",4);
                                 
-                                tx_Buffer[13]='\0';
-                                uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer, 13);
-                                break;
-                            case 0x3060:
-                                ESP_LOGI(TAG, "----------------lock2 ts---------------.\r\n");
+                            //     tx_Buffer2[13]='\0';
+                            //     uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
+                            //     break;
+                            // case 0x3060:
+                            //     ESP_LOGI(TAG, "----------------lock2 ts---------------.\r\n");
 
-                                memcpy(tx_Buffer,"star",4);
-                                tx_Buffer[4]= 0x8A;//m_data.opcode;
-                                tx_Buffer[5]= 0x01;//m_data.board_addr;
-                                tx_Buffer[6]= 0x01;//m_data.lock_addr;
-                                tx_Buffer[7]= 0x11;//guding
-                                bcc_temp = ComputXor(tx_Buffer+4,4);
-                                tx_Buffer[8]= bcc_temp;
-                                memcpy(tx_Buffer+9,"endo",4);
+                            //     memcpy(tx_Buffer2,"star",4);
+                            //     tx_Buffer2[4]= 0x8A;//m_data.opcode;
+                            //     tx_Buffer2[5]= 0x01;//m_data.board_addr;
+                            //     tx_Buffer2[6]= 0x01;//m_data.lock_addr;
+                            //     tx_Buffer2[7]= 0x11;//guding
+                            //     bcc_temp = ComputXor(tx_Buffer2+4,4);
+                            //     tx_Buffer2[8]= bcc_temp;
+                            //     memcpy(tx_Buffer2+9,"endo",4);
                                 
-                                tx_Buffer[13]='\0';
-                                uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer, 13);
-                                break;
+                            //     tx_Buffer2[13]='\0';
+                            //     uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
+                            //     break;
 
 
 
