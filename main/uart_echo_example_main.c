@@ -205,17 +205,22 @@ int len_rx2_m;
 uint8_t flag_rx2;
 
 
-#define TX1_LEN 10
+#define TX1_LEN 12//10 tupian
+
+#define TX1_LEN_BL 10//8 bianliang
 
 
-
-
+//admin 
+//and cun de yong
+uint8_t shengyu_da_max=3;//
+uint8_t shengyu_zhong_max=4;
+uint8_t shengyu_xiao_max=5;
 
 //need save
 //shuliang
-uint8_t shengyu_da=11;
-uint8_t shengyu_zhong=22;
-uint8_t shengyu_xiao=33;
+uint8_t shengyu_da=1;
+uint8_t shengyu_zhong=2;
+uint8_t shengyu_xiao=2;
 
 //leixing
 uint8_t dzx_mode=00;
@@ -266,7 +271,7 @@ static void echo_task2()
             // }
             // printf("] \n");
             crc16_temp = CRC16(data_rx+3, data_rx[2] -2);
-            printf("CRC16 result:0x%04X\r\n",crc16_temp);
+            printf("rx CRC16 result:0x%04X\r\n",crc16_temp);
 
 
 
@@ -312,7 +317,7 @@ static void echo_task2()
                                 tx_Buffer[0] = 0x5A;
                                 tx_Buffer[1] = 0xA5;
 
-                                tx_Buffer[2] = 0x07;//len
+                                tx_Buffer[2] = 0x09;//len
                                 tx_Buffer[3] = 0x82;
 
                                 tx_Buffer[4] = 0x00;
@@ -333,6 +338,13 @@ static void echo_task2()
                                     tx_Buffer[8] = 0x00;
                                     tx_Buffer[9] = 0x02;
                                 }
+
+                                //crc
+                                crc16_temp = CRC16(tx_Buffer+3, TX1_LEN-5);
+                                printf("tx CRC16 result:0x%04X\r\n",crc16_temp);
+
+                                tx_Buffer[10] = crc16_temp&0xff;
+                                tx_Buffer[11] = (crc16_temp>>8)&0xff;
                                 
                                 uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
 
@@ -342,51 +354,10 @@ static void echo_task2()
                             case 0x2010://zhiwen  or   mima
                                 ESP_LOGI(TAG, "----------------zhiwen or mima---------------.\r\n");   
                                 //if -> huise tupian?
-                                //da
-                                tx_Buffer[0] = 0x5A;
-                                tx_Buffer[1] = 0xA5;
-                                tx_Buffer[2] = 0x05;//len
-                                tx_Buffer[3] = 0x82;
-
-                                tx_Buffer[4] = 0x10;
-                                tx_Buffer[5] = 0x20;//dizhi
-
-                                tx_Buffer[6] = 0x00;
-                                tx_Buffer[7] = shengyu_da;//data shengyu dagezi
-                                uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, 8);
-
-                                //zhong
-                                tx_Buffer[0] = 0x5A;
-                                tx_Buffer[1] = 0xA5;
-                                tx_Buffer[2] = 0x05;//len
-                                tx_Buffer[3] = 0x82;
-
-                                tx_Buffer[4] = 0x10;
-                                tx_Buffer[5] = 0x30;//dizhi
-
-                                tx_Buffer[6] = 0x00;
-                                tx_Buffer[7] = shengyu_zhong;//data shengyu zhong
-                                uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, 8);
-
-                                //xiao
-                                tx_Buffer[0] = 0x5A;
-                                tx_Buffer[1] = 0xA5;
-                                tx_Buffer[2] = 0x05;//len
-                                tx_Buffer[3] = 0x82;
-
-                                tx_Buffer[4] = 0x10;
-                                tx_Buffer[5] = 0x40;//dizhi
-
-                                tx_Buffer[6] = 0x00;
-                                tx_Buffer[7] = shengyu_xiao;//data shengyu xiao
-                                uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, 8);
-
-
-
 
                                 tx_Buffer[0] = 0x5A;
                                 tx_Buffer[1] = 0xA5;
-                                tx_Buffer[2] = 0x07;
+                                tx_Buffer[2] = 0x09;//len
                                 tx_Buffer[3] = 0x82;
 
                                 tx_Buffer[4] = 0x00;
@@ -410,6 +381,15 @@ static void echo_task2()
                                     cunwu_mode = 2;
 
                                 }
+
+
+                                //crc
+                                crc16_temp = CRC16(tx_Buffer+3, TX1_LEN-5);
+                                printf("tx CRC16 result:0x%04X\r\n",crc16_temp);
+
+                                tx_Buffer[10] = crc16_temp&0xff;
+                                tx_Buffer[11] = (crc16_temp>>8)&0xff;
+
                                 uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
 
 
@@ -423,7 +403,7 @@ static void echo_task2()
                                 tx_Buffer[0] = 0x5A;
                                 tx_Buffer[1] = 0xA5;
 
-                                tx_Buffer[2] = 0x07;//len
+                                tx_Buffer[2] = 0x09;//len
                                 tx_Buffer[3] = 0x82;
 
                                 tx_Buffer[4] = 0x00;
@@ -462,6 +442,13 @@ static void echo_task2()
                                     ESP_LOGI(TAG, "----------------xiao---------------.\r\n");  
                                     dzx_mode = 3;
                                 }
+
+                                //crc
+                                crc16_temp = CRC16(tx_Buffer+3, TX1_LEN-5);
+                                printf("tx CRC16 result:0x%04X\r\n",crc16_temp);
+
+                                tx_Buffer[10] = crc16_temp&0xff;
+                                tx_Buffer[11] = (crc16_temp>>8)&0xff;
                                 
                                 uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
                                 break;
@@ -495,7 +482,7 @@ static void echo_task2()
                                 tx_Buffer[0] = 0x5A;
                                 tx_Buffer[1] = 0xA5;
 
-                                tx_Buffer[2] = 0x07;//len
+                                tx_Buffer[2] = 0x09;//len
                                 tx_Buffer[3] = 0x82;
 
                                 tx_Buffer[4] = 0x00;
@@ -595,6 +582,13 @@ static void echo_task2()
                                     tx_Buffer[8] = 0x00;
                                     tx_Buffer[9] = 0x07;
                                 }
+
+                                //crc
+                                crc16_temp = CRC16(tx_Buffer+3, TX1_LEN-5);
+                                printf("tx CRC16 result:0x%04X\r\n",crc16_temp);
+
+                                tx_Buffer[10] = crc16_temp&0xff;
+                                tx_Buffer[11] = (crc16_temp>>8)&0xff;
                                 uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
 
                                 break;
@@ -658,6 +652,11 @@ static void echo_task2()
                             }
 
                         }
+                        else
+                        {
+                            ESP_LOGI(TAG, "----------------len2 err---------------.\r\n");
+                        }
+                        
 
                         break;
                 
@@ -1012,6 +1011,7 @@ void Del_FR(u16 num)
 void app_main()
 {
     u8 ensure;
+    uint16_t crc16_temp=0;
     uint8_t tx_Buffer[50]={0};  
 
     xTaskCreate(echo_task, "uart_echo_task", 4* 1024, NULL, 5, NULL);//1024 10
@@ -1065,9 +1065,76 @@ void app_main()
     // }
 
 
+
+
+
+    //tongbu
+    //da
     tx_Buffer[0] = 0x5A;
     tx_Buffer[1] = 0xA5;
-    tx_Buffer[2] = 0x07;
+    tx_Buffer[2] = 0x07;//len
+    tx_Buffer[3] = 0x82;
+
+    tx_Buffer[4] = 0x10;
+    tx_Buffer[5] = 0x20;//dizhi
+
+    tx_Buffer[6] = 0x00;
+    tx_Buffer[7] = shengyu_da;//data shengyu dagezi
+
+    //crc
+    crc16_temp = CRC16(tx_Buffer+3, TX1_LEN_BL -5);
+    printf("tx1 CRC16 result:0x%04X\r\n",crc16_temp);
+
+    tx_Buffer[8] = crc16_temp&0xff;
+    tx_Buffer[9] = (crc16_temp>>8)&0xff;
+    uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN_BL);
+
+    //zhong
+    tx_Buffer[0] = 0x5A;
+    tx_Buffer[1] = 0xA5;
+    tx_Buffer[2] = 0x07;//len
+    tx_Buffer[3] = 0x82;
+
+    tx_Buffer[4] = 0x10;
+    tx_Buffer[5] = 0x30;//dizhi
+
+    tx_Buffer[6] = 0x00;
+    tx_Buffer[7] = shengyu_zhong;//data shengyu zhong
+    //crc
+    crc16_temp = CRC16(tx_Buffer+3, TX1_LEN_BL -5);
+    printf("tx2 CRC16 result:0x%04X\r\n",crc16_temp);
+
+    tx_Buffer[8] = crc16_temp&0xff;
+    tx_Buffer[9] = (crc16_temp>>8)&0xff;
+    uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN_BL);
+
+    //xiao
+    tx_Buffer[0] = 0x5A;
+    tx_Buffer[1] = 0xA5;
+    tx_Buffer[2] = 0x07;//len
+    tx_Buffer[3] = 0x82;
+
+    tx_Buffer[4] = 0x10;
+    tx_Buffer[5] = 0x40;//dizhi
+
+    tx_Buffer[6] = 0x00;
+    tx_Buffer[7] = shengyu_xiao;//data shengyu xiao
+    //crc
+    crc16_temp = CRC16(tx_Buffer+3, TX1_LEN_BL -5);
+    printf("tx3 CRC16 result:0x%04X\r\n",crc16_temp);
+
+    tx_Buffer[8] = crc16_temp&0xff;
+    tx_Buffer[9] = (crc16_temp>>8)&0xff;
+    uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN_BL);
+
+
+
+
+
+    //kaijie huamian
+    tx_Buffer[0] = 0x5A;
+    tx_Buffer[1] = 0xA5;
+    tx_Buffer[2] = 0x09;//len
     tx_Buffer[3] = 0x82;
     tx_Buffer[4] = 0x00;
     tx_Buffer[5] = 0x84;
@@ -1076,8 +1143,14 @@ void app_main()
     tx_Buffer[8] = 0x00;
     //todo
     tx_Buffer[9] = 0x00;//kaiji
+    //crc
+    crc16_temp = CRC16(tx_Buffer+3, TX1_LEN-5);
+    printf("tx CRC16 result:0x%04X\r\n",crc16_temp);
 
+    tx_Buffer[10] = crc16_temp&0xff;
+    tx_Buffer[11] = (crc16_temp>>8)&0xff;
     uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
+
     ESP_LOGI(TAG,"切换到开机画面!!!\r\n");
 
 
