@@ -971,6 +971,11 @@ bool spear_uart_process_data(uint8_t byt)
 				{
                     ESP_LOGI(TAG,"处理数据1-pass\r\n");
 					r = true;
+
+                    if(len_rx!= g_data.len +3)
+                    {
+                        len_rx = g_data.len +3;
+                    }
 				}
 				else
 				{
