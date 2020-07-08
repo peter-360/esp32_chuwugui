@@ -41,21 +41,22 @@ const char *TAG = "uart_events";
  * - Pin assignment: see defines below
  */
 
-// #define ECHO_TEST_TXD  (GPIO_NUM_4)
-// #define ECHO_TEST_RXD  (GPIO_NUM_5)
-// #define ECHO_TEST_RTS  (UART_PIN_NO_CHANGE)
-// #define ECHO_TEST_CTS  (UART_PIN_NO_CHANGE)
+    // #define ECHO_TEST_TXD  (GPIO_NUM_4)
+    // #define ECHO_TEST_RXD  (GPIO_NUM_5)
+    // #define ECHO_TEST_RTS  (UART_PIN_NO_CHANGE)
+    // #define ECHO_TEST_CTS  (UART_PIN_NO_CHANGE)
 
 
-// #define ECHO_TEST2_TXD  (GPIO_NUM_17)
-// #define ECHO_TEST2_RXD  (GPIO_NUM_16)
-// #define ECHO_TEST2_RTS  (UART_PIN_NO_CHANGE)
-// #define ECHO_TEST2_CTS  (UART_PIN_NO_CHANGE)
+    // #define ECHO_TEST2_TXD  (GPIO_NUM_17)
+    // #define ECHO_TEST2_RXD  (GPIO_NUM_16)
+    // #define ECHO_TEST2_RTS  (UART_PIN_NO_CHANGE)
+    // #define ECHO_TEST2_CTS  (UART_PIN_NO_CHANGE)
 
-// #define ECHO_TEST3_TXD  (GPIO_NUM_19)
-// #define ECHO_TEST3_RXD  (GPIO_NUM_18)
-// #define ECHO_TEST3_RTS  (UART_PIN_NO_CHANGE)
-// #define ECHO_TEST3_CTS  (UART_PIN_NO_CHANGE)
+    // #define ECHO_TEST3_TXD  (GPIO_NUM_19)
+    // #define ECHO_TEST3_RXD  (GPIO_NUM_18)
+    // #define ECHO_TEST3_RTS  (UART_PIN_NO_CHANGE)
+    // #define ECHO_TEST3_CTS  (UART_PIN_NO_CHANGE)
+
 
 #define ECHO_TEST_TXD  (GPIO_NUM_33)//4
 #define ECHO_TEST_RXD  (GPIO_NUM_32)//5
@@ -75,7 +76,7 @@ const char *TAG = "uart_events";
     #define ECHO_TEST3_CTS  (UART_PIN_NO_CHANGE)
 
     #define ECHO_TEST4_TXD  (GPIO_NUM_21)
-    #define ECHO_TEST4_RXD  (GPIO_NUM_36)
+    #define ECHO_TEST4_RXD  (GPIO_NUM_36)//SVP
     #define ECHO_TEST4_RTS  (UART_PIN_NO_CHANGE)
     #define ECHO_TEST4_CTS  (UART_PIN_NO_CHANGE)
 
@@ -363,9 +364,9 @@ static void echo_task2()
     // }
     uint16_t bl_addr=0;//bianliang
     uint16_t crc16_temp=0;
-    while(1)
+    //while(1)
     {
-        vTaskDelay(40 / portTICK_PERIOD_MS);
+        //vTaskDelay(40 / portTICK_PERIOD_MS);
                 //&&(flag_rx2 ==0)
         // if ((len_rx2 > 0) ) {
         //     flag_rx2 =1;
@@ -637,12 +638,12 @@ static void echo_task2()
                                     uart0_debug_str(mima_number,11);
                                     if(1 == dzx_mode)
                                     {
-                                        tongbu_gekou_shuliang_d(shengyu_da);
-
+                                        
                                         //suiji kaimen
                                         if(shengyu_da >0)
                                         {
                                             shengyu_da = shengyu_da -1;
+                                            tongbu_gekou_shuliang_d(shengyu_da);
                                             ESP_LOGI(TAG, "----------------lock1 ts---------------.\r\n");
                                             memcpy(tx_Buffer2,"star",4);
                                             tx_Buffer2[4]= 0x8A;//m_data.opcode;
@@ -670,11 +671,10 @@ static void echo_task2()
                                     }
                                     else if(2 == dzx_mode)
                                     {
-                                        tongbu_gekou_shuliang_z(shengyu_zhong);
-
                                         if(shengyu_zhong >0)
                                         {
                                             shengyu_zhong = shengyu_zhong -1;
+                                            tongbu_gekou_shuliang_z(shengyu_zhong);
                                             ESP_LOGI(TAG, "----------------lock2 ts---------------.\r\n");
 
                                             memcpy(tx_Buffer2,"star",4);
@@ -708,6 +708,7 @@ static void echo_task2()
                                         if(shengyu_xiao >0)
                                         {
                                             shengyu_xiao = shengyu_xiao -1;
+                                            tongbu_gekou_shuliang_x(shengyu_xiao);
                                             ESP_LOGI(TAG, "----------------lock3 ts---------------.\r\n");
                                         }
                                         else
@@ -824,6 +825,167 @@ static void echo_task2()
 }
 
 
+///command struct
+typedef struct
+{
+	//uint8_t type;
+	uint8_t len;
+	uint8_t opcode;
+	uint16_t sum;
+	uint8_t dIndx;
+	uint8_t data[256];
+	
+}command_struct;
+
+command_struct g_data;
+
+
+#define CMD_SUCCESS 0x01
+#define CMD_FAIL	     0x00
+
+/////start process the data in
+uint8_t uState = 0;
+// static void user_cmd_buffer_clear(void)
+// {
+// 	uState = 0;
+// 	g_data.len = 0;
+// 	g_data.type = 0;
+// 	g_data.opcode = 0;
+// 	g_data.sum = 0;
+// 	g_data.dIndx = 0;
+// }
+
+///command enum
+typedef enum
+{
+	UART_IDLE =0,
+	UART_HEADER,
+	UART_HEADER2,
+	// UART_TYPE,
+	UART_LENGTH,
+	UART_OPCODE,
+	UART_PAYLOAD,
+	UART_CHECKSUM,
+	UART_RESERVE,
+}UART_STATE_ENUM;
+
+void user_send_cmd_response(uint8_t opCode, uint8_t rsp)
+{
+	// uint8_t sum = 0;
+	// uint8_t responseBuffer[32] = {0};
+	// responseBuffer[0] = 0x55;
+	// responseBuffer[1] = 0x02;
+	// responseBuffer[2] = 4;
+	// responseBuffer[3] = opCode;
+	// responseBuffer[4] = rsp;
+
+	// sum += responseBuffer[2];
+	// sum += responseBuffer[3];
+	// sum += responseBuffer[4];
+
+	// responseBuffer[5] = sum;
+
+    //uart_write_bytes(UART_NUM_1, (const char *) data_rx, len_rx);
+	//spear_uart_send_datas(responseBuffer, 6);
+}
+bool spear_uart_process_data(uint8_t byt)
+{
+	bool r = false;
+    uint8_t data_t[128];
+    uint8_t data_crc1=0;
+    uint8_t data_crc2=0;
+	ESP_LOGI(TAG, " %x: ", byt);
+	switch(uState)
+	{
+		case UART_IDLE:
+		case UART_HEADER:
+			if(byt == 0x5A)
+			{
+				uState = UART_HEADER2;
+				//user_start_cmd_receive(true);
+			}
+			ESP_LOGI(TAG, "header = %02x\r\n", byt);
+			break;
+
+		case UART_HEADER2:
+			if(byt == 0xA5)
+			{
+				uState = UART_LENGTH;
+				//user_start_cmd_receive(true);
+			}
+			ESP_LOGI(TAG, "header = %02x\r\n", byt);
+			break;
+
+		case UART_LENGTH:
+			g_data.len = byt;//-3   no jiaoyan len
+			g_data.dIndx = 0;
+			
+			uState++;
+			ESP_LOGI(TAG, "length = %02x\r\n", byt);
+			break;
+		case UART_OPCODE:
+			g_data.opcode = byt;
+			//g_data.sum += byt;
+            //g_data.sum = byt;
+			uState++;
+			ESP_LOGI(TAG, "opcode = %02x\r\n", byt);
+			break;
+		case UART_PAYLOAD:
+
+
+
+            if(g_data.dIndx == g_data.len-3 )//crc1   2
+            {
+                g_data.data[g_data.dIndx] = byt;
+                ESP_LOGI(TAG, "crc data[%d] = %02x\r\n",g_data.dIndx, byt);
+                g_data.dIndx++;
+            }
+			else if(g_data.dIndx < g_data.len-3 )//<   1
+			{
+				g_data.data[g_data.dIndx] = byt;
+				//g_data.sum += byt;
+				ESP_LOGI(TAG, "data[%d] = %02x\r\n",g_data.dIndx, byt);
+                g_data.dIndx++;
+			}
+			else//crc2
+			{
+                g_data.data[g_data.dIndx] = byt;
+                ESP_LOGI(TAG, "crc data[%d] = %02x\r\n",g_data.dIndx, byt);
+                g_data.dIndx++;
+				//user_start_cmd_receive(false);
+				uState = 0;
+                data_t[0] = g_data.opcode;
+                memcpy(data_t+1,g_data.data,g_data.len -3);
+
+                g_data.sum = CRC16(data_t, g_data.len -3 +1);
+				ESP_LOGI(TAG, "sum = %04x\r\n",g_data.sum);
+
+                ESP_LOGI(TAG, "g_data.data[g_data.dIndx -2] = %02x, g_data.data[g_data.dIndx-1] = %02x\r\n",\
+                                g_data.data[g_data.dIndx -2], g_data.data[g_data.dIndx-1]);
+                ESP_LOGI(TAG, "g_data.sum &0xff = %02x, (g_data.sum>>8)&0xff = %02x\r\n",\
+                                g_data.sum &0xff, (g_data.sum>>8)&0xff);
+
+
+				if( ((g_data.sum &0xff) == g_data.data[g_data.dIndx -2])
+                    &&(((g_data.sum>>8)&0xff) == g_data.data[g_data.dIndx-1]) )//byt
+				{
+                    ESP_LOGI(TAG,"处理数据1-pass\r\n");
+					r = true;
+				}
+				else
+				{
+                    ESP_LOGI(TAG,"处理数据1-fail\r\n");
+					user_send_cmd_response(g_data.opcode, CMD_FAIL);
+				}
+			}
+			break;
+		case UART_RESERVE:
+		default:
+			break;
+	}
+
+	return r;
+}
 
 
 
@@ -842,7 +1004,7 @@ static void echo_task()
         len_rx2 = uart_read_bytes(UART_NUM_2, data_rx2, BUF_SIZE, 20 / portTICK_RATE_MS);
         // Write data back to the UART
         
-        //uart_write_bytes(UART_NUM_1, (const char *) data_rx, len_rx);
+        //uart_write_bytes(UART_NUM_1, (const char *) data_rx, len_rx);//len =0 budayin
         //uart_write_bytes(UART_NUM_2, (const char *) data_rx, len_rx);
 
 
@@ -855,6 +1017,8 @@ static void echo_task()
                 printf("0x%.2X ", (uint8_t)data_rx2_m[i]);
             }
             printf("] \n");
+
+            //uart_write_bytes(UART_NUM_2, (const char *) data_rx2, len_rx2);
         }
 
 								
@@ -865,8 +1029,18 @@ static void echo_task()
             ESP_LOGI(TAG, "uart1-Received %u bytes:", len_rx);
             for (int i = 0; i < len_rx; i++) {
                 printf("0x%.2X ", (uint8_t)data_rx[i]);
+                if(spear_uart_process_data(data_rx[i]))
+                {
+                    ////send event to 
+                    //spear_sched_set_evt(NULL, 0,user_cmd_process_event_handle);
+
+                    ESP_LOGI(TAG,"处理数据2-start\r\n");
+                    xTaskCreate(echo_task2, "uart_echo_task2",4* 1024, NULL, 2, NULL);
+                }
             }
             printf("] \n");
+
+            //uart_write_bytes(UART_NUM_1, (const char *) data_rx, len_rx);
         }
 	
     }
@@ -1102,14 +1276,14 @@ void uart_init_all(void)
     /* Configure parameters of an UART driver,
      * communication pins and install the driver */
     uart_config_t uart_config = {
-        .baud_rate = 115200,
+        .baud_rate = 115200,// lcd
         .data_bits = UART_DATA_8_BITS,
         .parity    = UART_PARITY_DISABLE,
         .stop_bits = UART_STOP_BITS_1,
         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
     };
     uart_config_t uart_config2 = {
-        .baud_rate = 9600,//lock
+        .baud_rate = 9600,// lock
         .data_bits = UART_DATA_8_BITS,
         .parity    = UART_PARITY_DISABLE,
         .stop_bits = UART_STOP_BITS_1,
@@ -1117,7 +1291,7 @@ void uart_init_all(void)
     };
 
     // uart_config_t uart_config3 = {
-    //     .baud_rate = 57600,//zhiwen
+    //     .baud_rate = 57600,// zhiwen
     //     .data_bits = UART_DATA_8_BITS,
     //     .parity    = UART_PARITY_DISABLE,
     //     .stop_bits = UART_STOP_BITS_1,
@@ -1177,7 +1351,7 @@ void app_main()
     //xTaskCreate(echo_task, "uart_echo_task", 1024, NULL, 10, NULL);
     xTaskCreate(echo_task, "uart_echo_task", 2* 1024, NULL, 1, NULL);//1024 10
     //vTaskDelay(70 / portTICK_PERIOD_MS);
-    xTaskCreate(echo_task2, "uart_echo_task2",4* 1024, NULL, 2, NULL);
+    
 	
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
