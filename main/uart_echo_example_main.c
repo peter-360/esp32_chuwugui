@@ -58,8 +58,8 @@ const char *TAG = "uart_events";
     // #define ECHO_TEST3_CTS  (UART_PIN_NO_CHANGE)
 
 
-#define ECHO_TEST_TXD  (GPIO_NUM_33)//4
-#define ECHO_TEST_RXD  (GPIO_NUM_32)//5
+#define ECHO_TEST_TXD  GPIO_NUM_33//(GPIO_NUM_33)//GPIO_NUM_4
+#define ECHO_TEST_RXD  GPIO_NUM_32//(GPIO_NUM_32)//GPIO_NUM_5
 #define ECHO_TEST_RTS  (UART_PIN_NO_CHANGE)
 #define ECHO_TEST_CTS  (UART_PIN_NO_CHANGE)
 
@@ -229,7 +229,7 @@ uint8_t ComputXor(uint8_t *InData, uint16_t Len)
 
 #define BUF_SIZE (1024)
 uint8_t data_rx[BUF_SIZE] = {0};
-int len_rx;
+uint16_t len_rx;
 
 uint8_t data_rx2[BUF_SIZE] = {0};
 int len_rx2;
@@ -251,9 +251,9 @@ uint8_t shengyu_xiao_max=5;
 
 //need save
 //shuliang
-uint8_t shengyu_da=1;
-uint8_t shengyu_zhong=2;
-uint8_t shengyu_xiao=3;
+uint8_t shengyu_da=8;
+uint8_t shengyu_zhong=4;
+uint8_t shengyu_xiao=2;
 
 //leixing
 uint8_t dzx_mode=00;
@@ -288,6 +288,7 @@ void tongbu_gekou_shuliang_d(uint8_t shengyu_da1)
     tx_Buffer[6] = 0x00;
     tx_Buffer[7] = shengyu_da1;//data shengyu dagezi
 
+    printf("shengyu_da1:0x%02X\r\n",shengyu_da1);
     //crc
     crc16_temp = CRC16(tx_Buffer+3, TX1_LEN_BL -5);
     printf("tx1 CRC16 result:0x%04X\r\n",crc16_temp);
@@ -313,6 +314,7 @@ void tongbu_gekou_shuliang_z(uint8_t shengyu_zhong1 )
 
     tx_Buffer[6] = 0x00;
     tx_Buffer[7] = shengyu_zhong1;//data shengyu zhong
+    printf("shengyu_zhong1:0x%02X\r\n",shengyu_zhong1);
     //crc
     crc16_temp = CRC16(tx_Buffer+3, TX1_LEN_BL -5);
     printf("tx2 CRC16 result:0x%04X\r\n",crc16_temp);
@@ -340,6 +342,7 @@ void tongbu_gekou_shuliang_x(uint8_t shengyu_xiao1)
 
     tx_Buffer[6] = 0x00;
     tx_Buffer[7] = shengyu_xiao1;//data shengyu xiao
+    printf("shengyu_xiao1:0x%02X\r\n",shengyu_xiao1);
     //crc
     crc16_temp = CRC16(tx_Buffer+3, TX1_LEN_BL -5);
     printf("tx3 CRC16 result:0x%04X\r\n",crc16_temp);
@@ -364,6 +367,11 @@ static void echo_task2()
     // }
     uint16_t bl_addr=0;//bianliang
     uint16_t crc16_temp=0;
+    
+    uint8_t data_rx_t[BUF_SIZE] = {0};
+    uint16_t len_rx_t= len_rx;
+
+    memcpy(data_rx_t,data_rx,len_rx_t);
     //while(1)
     {
         //vTaskDelay(40 / portTICK_PERIOD_MS);
@@ -383,48 +391,48 @@ static void echo_task2()
 		
 
 
-        if (len_rx > 0) {
-            // ESP_LOGI(TAG, "uart1-Received %u bytes:", len_rx);
-            // for (int i = 0; i < len_rx; i++) {
-            //     printf("0x%.2X ", (uint8_t)data_rx[i]);
+        if (len_rx_t > 0) {
+            // ESP_LOGI(TAG, "uart1-Received %u bytes:", len_rx_t);
+            // for (int i = 0; i < len_rx_t; i++) {
+            //     printf("0x%.2X ", (uint8_t)data_rx_t[i]);
             // }
             // printf("] \n");
-            crc16_temp = CRC16(data_rx+3, data_rx[2] -2);
+            crc16_temp = CRC16(data_rx_t+3, data_rx_t[2] -2);
             printf("rx CRC16 result:0x%04X\r\n",crc16_temp);
             
 
 
 
-            // printf("data_rx[0]:0x%02X, data_rx[1]:0x%02X\r\n",data_rx[0], data_rx[1]);
+            // printf("data_rx_t[0]:0x%02X, data_rx_t[1]:0x%02X\r\n",data_rx_t[0], data_rx_t[1]);
 
-            // printf("(len_rx-3):0x%02X,data_rx[2]:0x%02X\r\n",(len_rx-3),data_rx[2]);
+            // printf("(len_rx_t-3):0x%02X,data_rx_t[2]:0x%02X\r\n",(len_rx_t-3),data_rx_t[2]);
 
-            // printf("data_rx[data_rx[2] +2 -1]0x%02X\r\n",data_rx[data_rx[2] +2 -1]);
+            // printf("data_rx_t[data_rx_t[2] +2 -1]0x%02X\r\n",data_rx_t[data_rx_t[2] +2 -1]);
             // printf("(crc16_temp & 0xff):0x%02X\r\n",(crc16_temp & 0xff));
 
-            // printf("data_rx[data_rx[2] +2 -1+1]0x%02X\r\n",data_rx[data_rx[2] +2 -1+1]);
+            // printf("data_rx_t[data_rx_t[2] +2 -1+1]0x%02X\r\n",data_rx_t[data_rx_t[2] +2 -1+1]);
             // printf("((crc16_temp>>8) & 0xff):0x%02X\r\n",((crc16_temp>>8) & 0xff));
 
             
-            if((0x5A == data_rx[0])
-                &&(0xA5 == data_rx[1])
-                &&((len_rx-3) == data_rx[2])
-                &&(data_rx[data_rx[2]+2-1]==(crc16_temp&0xff))
-                &&(data_rx[data_rx[2]+2-1+1]==((crc16_temp>>8)&0xff)))
+            if((0x5A == data_rx_t[0])
+                &&(0xA5 == data_rx_t[1])
+                &&((len_rx_t-3) == data_rx_t[2])
+                &&(data_rx_t[data_rx_t[2]+2-1]==(crc16_temp&0xff))
+                &&(data_rx_t[data_rx_t[2]+2-1+1]==((crc16_temp>>8)&0xff)))
                 {
-                    switch (data_rx[3])
+                    switch (data_rx_t[3])
                     {
                     case 0x82:
-                        //uart_write_bytes(UART_NUM_2, (const char *) (data_rx+4), len_rx-4);
+                        //uart_write_bytes(UART_NUM_2, (const char *) (data_rx_t+4), len_rx_t-4);
                         ESP_LOGI(TAG, "----------------0x82---------------.\r\n");
                         break;
 
                     case 0x83:
-                        if( data_rx[6] == (len_rx-7 -2)/2)
+                        if( data_rx_t[6] == (len_rx_t-7 -2)/2)
                         {
-                            //uart_write_bytes(UART_NUM_2, (const char *) (data_rx+4), len_rx-4);
+                            //uart_write_bytes(UART_NUM_2, (const char *) (data_rx_t+4), len_rx_t-4);
                             ESP_LOGI(TAG, "----------------0x83---------------.\r\n");
-                            bl_addr = (data_rx[4]<<8) + data_rx[5];
+                            bl_addr = (data_rx_t[4]<<8) + data_rx_t[5];
 
                             uint8_t tx_Buffer[50]={0};  
                             uint8_t tx_Buffer2[50]={0};  
@@ -487,13 +495,13 @@ static void echo_task2()
 
                                 tx_Buffer[8] = 0x00;
                                 tx_Buffer[9] = 0x03;//tiao 选择格子类型
-                                if(01== data_rx[8])//zhiwen cun
+                                if(01== data_rx_t[8])//zhiwen cun
                                 {
                                     ESP_LOGI(TAG, "----------------zhiwen---------------.\r\n");  
                                     //baocun 1
                                     cunwu_mode = 1;
                                 }
-                                else if(02== data_rx[8])//mi ma
+                                else if(02== data_rx_t[8])//mi ma
                                 {
                                     ESP_LOGI(TAG, "----------------mima---------------.\r\n");  
                                     //baocun 2
@@ -513,7 +521,7 @@ static void echo_task2()
 
 
                                 //zhiwen_num_id =0;
-                                //zhiwen_num_id = data_rx[7];
+                                //zhiwen_num_id = data_rx_t[7];
                                 //Add_FR();		//录指纹	
                                 break;
 
@@ -543,20 +551,20 @@ static void echo_task2()
                                 
 
                                 //todo
-                                if(01== data_rx[8])//da
+                                if(01== data_rx_t[8])//da
                                 {
                                     ESP_LOGI(TAG, "----------------da---------------.\r\n");  
                                     //cun qi lai   quanju yihuiyong
                                     dzx_mode = 1;
                                     
                                 }
-                                else if(02== data_rx[8])//zhong
+                                else if(02== data_rx_t[8])//zhong
                                 {
                                     ESP_LOGI(TAG, "----------------zhong---------------.\r\n");  
                                     dzx_mode = 2;
 
                                 }
-                                else if(03== data_rx[8])//xiao
+                                else if(03== data_rx_t[8])//xiao
                                 {
                                     ESP_LOGI(TAG, "----------------xiao---------------.\r\n");  
                                     dzx_mode = 3;
@@ -581,19 +589,21 @@ static void echo_task2()
                                 //if has, todo  -----------------------------------
 
                                 // //if weishu    -------------------------------------
-                                // if(06== data_rx[6])//12
+                                // if(06== data_rx_t[6])//12
                                 // {
                                 //     //zancun
                                 //     phone_weishu_ok =1;
-                                //     memcpy( phone_number,data_rx+7 ,11);
+                                //     memcpy( phone_number,data_rx_t+7 ,11);
 
                                 // }
 
-                                if(05== data_rx[6])//12
+                                ESP_LOGI(TAG, "data_rx_t[6]=%d---.\r\n",data_rx_t[6]);
+                                if(05== data_rx_t[6])//12
                                 {
                                     //zancun
                                     phone_weishu_ok =1;
-                                    memcpy( phone_number,data_rx+7 ,10);
+                                    memcpy( phone_number,data_rx_t+7 ,10);
+                                    ESP_LOGI(TAG, "---phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
 
                                 }
                                 else
@@ -606,6 +616,7 @@ static void echo_task2()
                             case 0x1060:
                                 //5A A5 0A 83   10 60   03   31 32 33 34 35 36 
                                 ESP_LOGI(TAG, "----------------password---------------.\r\n");
+                                ESP_LOGI(TAG, "---phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
                                 tx_Buffer[0] = 0x5A;
                                 tx_Buffer[1] = 0xA5;
 
@@ -621,15 +632,13 @@ static void echo_task2()
                                 //存物手机号（11位）密码（6位）            或者指纹(----)   
 
 
-                                if((1 == phone_weishu_ok)&&(03== data_rx[6]))//6   ok
+                                if((1 == phone_weishu_ok)&&(03== data_rx_t[6]))//6   ok
                                 {
-                            
-                                    phone_weishu_ok =0;
                                     //cun
                                     tx_Buffer[8] = 0x00;
                                     tx_Buffer[9] = 0x08;
 
-                                    memcpy( mima_number,data_rx+7 ,6);
+                                    memcpy( mima_number,data_rx_t+7 ,6);
 
                                     printf("phone_number=");
                                     uart0_debug_str(phone_number,11);
@@ -661,7 +670,7 @@ static void echo_task2()
                                             printf("tx_Buffer2=");
                                             uart0_debug_data(tx_Buffer2, 13);
                                             uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
-                                            //RS485_RX_EN();
+                                            RS485_RX_EN();
                                         }
                                         else
                                         {
@@ -693,7 +702,7 @@ static void echo_task2()
                                             printf("tx_Buffer2=");
                                             uart0_debug_data(tx_Buffer2, 13);
                                             uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
-                                            //RS485_RX_EN();
+                                            RS485_RX_EN();
                                         }
                                         else
                                         {
@@ -721,7 +730,7 @@ static void echo_task2()
                                 }
                                 else
                                 {
-                                    if(03!= data_rx[6])
+                                    if(03!= data_rx_t[6])
                                     {
                                       ESP_LOGI(TAG, "----------------2 - mima weishu err---------------.\r\n");  
                                     }
@@ -729,6 +738,8 @@ static void echo_task2()
                                     tx_Buffer[8] = 0x00;
                                     tx_Buffer[9] = 0x07;
                                 }
+
+                                phone_weishu_ok =0;
 
                                 //crc
                                 crc16_temp = CRC16(tx_Buffer+3, TX1_LEN-5);
@@ -787,7 +798,7 @@ static void echo_task2()
                                 ESP_LOGI(TAG, "----------------zhiwen uart2test uart3 todo---------------.\r\n");
                                 
                                 //zhiwen_num_id =0;
-                                //zhiwen_num_id = data_rx[7];
+                                //zhiwen_num_id = data_rx_t[7];
                                 //Add_FR();		//录指纹	
                                 
                                 //Del_FR(0);		//删指纹
@@ -904,7 +915,7 @@ bool spear_uart_process_data(uint8_t byt)
 				uState = UART_HEADER2;
 				//user_start_cmd_receive(true);
 			}
-			ESP_LOGI(TAG, "header = %02x\r\n", byt);
+			//ESP_LOGI(TAG, "header = %02x\r\n", byt);
 			break;
 
 		case UART_HEADER2:
@@ -913,7 +924,7 @@ bool spear_uart_process_data(uint8_t byt)
 				uState = UART_LENGTH;
 				//user_start_cmd_receive(true);
 			}
-			ESP_LOGI(TAG, "header = %02x\r\n", byt);
+			//ESP_LOGI(TAG, "header = %02x\r\n", byt);
 			break;
 
 		case UART_LENGTH:
@@ -921,14 +932,14 @@ bool spear_uart_process_data(uint8_t byt)
 			g_data.dIndx = 0;
 			
 			uState++;
-			ESP_LOGI(TAG, "length = %02x\r\n", byt);
+			//ESP_LOGI(TAG, "length = %02x\r\n", byt);
 			break;
 		case UART_OPCODE:
 			g_data.opcode = byt;
 			//g_data.sum += byt;
             //g_data.sum = byt;
 			uState++;
-			ESP_LOGI(TAG, "opcode = %02x\r\n", byt);
+			//ESP_LOGI(TAG, "opcode = %02x\r\n", byt);
 			break;
 		case UART_PAYLOAD:
 
@@ -937,20 +948,20 @@ bool spear_uart_process_data(uint8_t byt)
             if(g_data.dIndx == g_data.len-3 )//crc1   2
             {
                 g_data.data[g_data.dIndx] = byt;
-                ESP_LOGI(TAG, "crc data[%d] = %02x\r\n",g_data.dIndx, byt);
+                //ESP_LOGI(TAG, "crc data[%d] = %02x\r\n",g_data.dIndx, byt);
                 g_data.dIndx++;
             }
 			else if(g_data.dIndx < g_data.len-3 )//<   1
 			{
 				g_data.data[g_data.dIndx] = byt;
 				//g_data.sum += byt;
-				ESP_LOGI(TAG, "data[%d] = %02x\r\n",g_data.dIndx, byt);
+				//ESP_LOGI(TAG, "data[%d] = %02x\r\n",g_data.dIndx, byt);
                 g_data.dIndx++;
 			}
 			else//crc2
 			{
                 g_data.data[g_data.dIndx] = byt;
-                ESP_LOGI(TAG, "crc data[%d] = %02x\r\n",g_data.dIndx, byt);
+                // ESP_LOGI(TAG, "crc data[%d] = %02x\r\n",g_data.dIndx, byt);
                 g_data.dIndx++;
 				//user_start_cmd_receive(false);
 				uState = 0;
@@ -958,12 +969,10 @@ bool spear_uart_process_data(uint8_t byt)
                 memcpy(data_t+1,g_data.data,g_data.len -3);
 
                 g_data.sum = CRC16(data_t, g_data.len -3 +1);
-				ESP_LOGI(TAG, "sum = %04x\r\n",g_data.sum);
+				// ESP_LOGI(TAG, "sum = %04x\r\n",g_data.sum);
 
-                ESP_LOGI(TAG, "g_data.data[g_data.dIndx -2] = %02x, g_data.data[g_data.dIndx-1] = %02x\r\n",\
-                                g_data.data[g_data.dIndx -2], g_data.data[g_data.dIndx-1]);
-                ESP_LOGI(TAG, "g_data.sum &0xff = %02x, (g_data.sum>>8)&0xff = %02x\r\n",\
-                                g_data.sum &0xff, (g_data.sum>>8)&0xff);
+                // ESP_LOGI(TAG, "g_data.data[g_data.dIndx -2] = %02x, g_data.data[g_data.dIndx-1] = %02x\r\n",g_data.data[g_data.dIndx -2], g_data.data[g_data.dIndx-1]);
+                // ESP_LOGI(TAG, "g_data.sum &0xff = %02x, (g_data.sum>>8)&0xff = %02x\r\n",g_data.sum &0xff, (g_data.sum>>8)&0xff);
 
 
 				if( ((g_data.sum &0xff) == g_data.data[g_data.dIndx -2])
@@ -971,11 +980,6 @@ bool spear_uart_process_data(uint8_t byt)
 				{
                     ESP_LOGI(TAG,"处理数据1-pass\r\n");
 					r = true;
-
-                    if(len_rx!= g_data.len +3)
-                    {
-                        len_rx = g_data.len +3;
-                    }
 				}
 				else
 				{
@@ -1031,19 +1035,32 @@ static void echo_task()
 
 
         if (len_rx > 0) {
+
+            // if(len_rx!= g_data.len +3)
+            // {
+            //     len_rx = g_data.len +3;
+            // }
+
+            // if(len_rx!= data_rx[2] +3)
+            // {
+            //     len_rx = data_rx[2] +3;
+            // }
+
             ESP_LOGI(TAG, "uart1-Received %u bytes:", len_rx);
             for (int i = 0; i < len_rx; i++) {
                 printf("0x%.2X ", (uint8_t)data_rx[i]);
-                if(spear_uart_process_data(data_rx[i]))
-                {
-                    ////send event to 
-                    //spear_sched_set_evt(NULL, 0,user_cmd_process_event_handle);
+                // if(spear_uart_process_data(data_rx[i]))
+                // {
+                //     ////send event to 
+                //     //spear_sched_set_evt(NULL, 0,user_cmd_process_event_handle);
 
-                    ESP_LOGI(TAG,"处理数据2-start\r\n");
-                    xTaskCreate(echo_task2, "uart_echo_task2",4* 1024, NULL, 2, NULL);
-                }
+                //     ESP_LOGI(TAG,"处理数据2-start\r\n");
+                //     xTaskCreate(echo_task2, "uart_echo_task2",4* 1024, NULL, 2, NULL);
+                // }
             }
             printf("] \n");
+
+            xTaskCreate(echo_task2, "uart_echo_task2",4* 1024, NULL, 2, NULL);
 
             //uart_write_bytes(UART_NUM_1, (const char *) data_rx, len_rx);
         }
@@ -1346,19 +1363,18 @@ void app_main()
     /* Set the GPIO as a push/pull output */
     gpio_set_direction(RE_485_GPIO, GPIO_MODE_OUTPUT);
     
-    RS485_TX_EN();
+    RS485_RX_EN();
 
 
 
     uart_init_all();
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    //vTaskDelay(500 / portTICK_PERIOD_MS);
 
     //xTaskCreate(echo_task, "uart_echo_task", 1024, NULL, 10, NULL);
     xTaskCreate(echo_task, "uart_echo_task", 2* 1024, NULL, 1, NULL);//1024 10
-    //vTaskDelay(70 / portTICK_PERIOD_MS);
-    
+
 	
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
 
 
 
@@ -1405,10 +1421,8 @@ void app_main()
     // }
 
 
-    tongbu_gekou_shuliang_d(shengyu_da);
-    tongbu_gekou_shuliang_z(shengyu_zhong);
-    tongbu_gekou_shuliang_x(shengyu_xiao);
 
+    
 
     //kaijie huamian
     tx_Buffer[0] = 0x5A;
@@ -1421,7 +1435,7 @@ void app_main()
     tx_Buffer[7] = 0x01;
     tx_Buffer[8] = 0x00;
     //todo
-    tx_Buffer[9] = 0x00;//kaiji
+    tx_Buffer[9] = 0x26;//kaiji
     //crc
     crc16_temp = CRC16(tx_Buffer+3, TX1_LEN-5);
     printf("tx CRC16 result:0x%04X\r\n",crc16_temp);
@@ -1433,6 +1447,12 @@ void app_main()
     ESP_LOGI(TAG,"切换到开机画面!!!\r\n");
 
 
+    tongbu_gekou_shuliang_d(shengyu_da);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    tongbu_gekou_shuliang_z(shengyu_zhong);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    tongbu_gekou_shuliang_x(shengyu_xiao);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
 
 
     
