@@ -118,6 +118,19 @@ uint8_t shengyu_da=8;
 uint8_t shengyu_zhong=4;
 uint8_t shengyu_xiao=2;
 
+typedef struct
+{
+    uint8_t state; //zaiyong 是否
+    // bool lock;
+    // bool changqi;
+}shujuku_struct_gz;//柜子
+
+shujuku_struct_gz database_gz[300];
+// shujuku_struct_gz database_gz=
+// {
+//     .state = 0 ,
+// };
+
 
 // //zhiwen mima
 // uint8_t cunwu_mode;
@@ -160,13 +173,12 @@ typedef struct
 	bool sta_flag;
 
 
-
     //取物唯一编号 time
     uint16_t unique_number;
-}shujuku_struct;
+}shujuku_struct_user;//用户
 
-shujuku_struct database_cw;
-// =
+shujuku_struct_user database_cw;
+// shujuku_struct_user database_cw=
 // {
 //     .dxz_mode = 0 ,
 // };
@@ -211,7 +223,7 @@ shujuku_struct database_cw;
 
 
 //
-esp_err_t save_ui16_value(char* key, uint16_t out_value, bool flag)
+esp_err_t save_u16_value(char* key, uint16_t out_value)
 {
     nvs_handle_t my_handle;
     esp_err_t err;
@@ -226,17 +238,7 @@ esp_err_t save_ui16_value(char* key, uint16_t out_value, bool flag)
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
     // Write
-
-    if(flag == 0)
-    {
-        err = nvs_set_u16(my_handle, key, out_value);
-    }
-    else
-    {
-        err = nvs_set_i16(my_handle, key, (int16_t)out_value);
-    }
-    
-
+    err = nvs_set_u16(my_handle, key, out_value);
     if (err != ESP_OK) return err;
 
     // Commit written value.
@@ -251,35 +253,28 @@ esp_err_t save_ui16_value(char* key, uint16_t out_value, bool flag)
     return ESP_OK;
 }
 
-// esp_err_t read_ui16_value(char* key, uint16_t out_value, bool flag)
-// {
-//     nvs_handle_t my_handle;
-//     esp_err_t err;
+esp_err_t read_u16_value(char* key, uint16_t* out_value)
+{
+    nvs_handle_t my_handle;
+    esp_err_t err;
 
-//     // Open
-//     err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
-//     if (err != ESP_OK) return err;
+    // Open
+    err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
+    if (err != ESP_OK) return err;
 
-//     // Read
-//     //int32_t restart_counter = 0; // value will default to 0, if not set yet in NVS
-//     if(0 == flag)
-//     {
-//         err = nvs_get_u16(my_handle, key, &out_value);
-//     }
-//     else
-//     {
-//         err = nvs_get_i16(my_handle, key, &((int16_t)out_value));
-//     }
-    
-//     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+    // Read
+    //int32_t restart_counter = 0; // value will default to 0, if not set yet in NVS
+
+    err = nvs_get_u16(my_handle, key, out_value);
+    if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
 
-//     printf("%s=%d\r\n",key,out_value);
+    printf("%s=%u\r\n",key,(uint16_t)(*out_value));
 
-//     // Close
-//     nvs_close(my_handle);
-//     return ESP_OK;
-// }
+    // Close
+    nvs_close(my_handle);
+    return ESP_OK;
+}
 
 
 
@@ -973,11 +968,11 @@ static void echo_task2()
                                             
                                     }
 
-                                    database_cw.dIndx ++;
+                                    database_cw.dIndx ++;//随机获取哪个门没用
                                     database_cw.sta_flag=1;
 
     
-                                    save_ui16_value("dIndx",database_cw.dIndx,0);
+                                    save_u16_value("dIndx",database_cw.dIndx);
 
                                     esp_err_t err = print_what_saved();//dayin
                                     if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
@@ -987,12 +982,12 @@ static void echo_task2()
 
 
 
-                                    // save_ui16_value("1_2",database_cw.sta_flag,0);
-                                    // save_ui16_value("1_3",database_cw.cunwu_mode,0);
-                                    // save_ui16_value("1_4",database_cw.dzx_mode,0);
+                                    // save_u16_value("1_2",database_cw.sta_flag);
+                                    // save_u16_value("1_3",database_cw.cunwu_mode);
+                                    // save_u16_value("1_4",database_cw.dzx_mode);
 
-                                    // save_ui16_value("1_5",database_cw.phone_number,0);
-                                    // save_ui16_value("1_6",database_cw.mima_number,0);
+                                    // save_u16_value("1_5",database_cw.phone_number);
+                                    // save_u16_value("1_6",database_cw.mima_number);
 
 
                                 }
@@ -1741,7 +1736,8 @@ void app_main()
     }
     ESP_ERROR_CHECK( err );
 
-    err = print_what_saved();//dayin
+    //err = print_what_saved();//dayin
+    err = read_u16_value("dIndx", (uint16_t*)(&database_cw.dIndx));
     if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
 
