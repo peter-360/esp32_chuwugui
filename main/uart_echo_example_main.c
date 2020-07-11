@@ -162,9 +162,9 @@ typedef struct
     //gekou leixing
     uint8_t dzx_mode;
 
-    //yonghu xinxi
-    uint8_t phone_number[11];  //temp
-    uint8_t mima_number[6];  //temp
+        //yonghu xinxi
+        uint8_t phone_number[11];  //temp
+        uint8_t mima_number[6];  //temp
     uint64_t phone_number_nvs;  //temp
     uint32_t mima_number_nvs;  //temp
 
@@ -345,6 +345,67 @@ esp_err_t read_u32_value(char* key, uint32_t* out_value)
     return ESP_OK;
 }
 
+
+
+
+
+
+
+//64
+esp_err_t save_u64_value(char* key, uint64_t out_value)
+{
+    nvs_handle_t my_handle;
+    esp_err_t err;
+
+    // Open
+    err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
+    if (err != ESP_OK) return err;
+
+    // Read
+    uint64_t out_value_t = 0; // value will default to 0, if not set yet in NVS
+    err = nvs_get_u64(my_handle, key, &out_value_t);
+    if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+
+    printf("wr_64-%s=%llu\r\n",key,(out_value_t));
+
+    // Write
+    err = nvs_set_u64(my_handle, key, out_value);
+    if (err != ESP_OK) return err;
+
+    // Commit written value.
+    // After setting any values, nvs_commit() must be called to ensure changes are written
+    // to flash storage. Implementations may write to storage at other times,
+    // but this is not guaranteed.
+    err = nvs_commit(my_handle);
+    if (err != ESP_OK) return err;
+
+    // Close
+    nvs_close(my_handle);
+    return ESP_OK;
+}
+
+esp_err_t read_u64_value(char* key, uint64_t* out_value)
+{
+    nvs_handle_t my_handle;
+    esp_err_t err;
+
+    // Open
+    err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
+    if (err != ESP_OK) return err;
+
+    // Read
+    //int32_t restart_counter = 0; // value will default to 0, if not set yet in NVS
+
+    err = nvs_get_u64(my_handle, key, out_value);
+    if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+
+
+    printf("r64-%s=%llu\r\n",key,(*out_value));
+
+    // Close
+    nvs_close(my_handle);
+    return ESP_OK;
+}
 
 
 // /* Save the number of module restarts in NVS
@@ -1043,10 +1104,6 @@ static void echo_task2()
                                     esp_err_t err = save_u16_value("dw_dIndx",database_cw.dIndx);
                                     if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
 
-
-                                    // esp_err_t err = print_what_saved();//dayin
-                                    // if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
-                                    
                                     err = read_u16_value("dw_dIndx", (uint16_t*)(&database_cw.dIndx));
                                     if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
@@ -1061,6 +1118,15 @@ static void echo_task2()
                                     // save_u16_value("1_4",database_cw.dzx_mode);
 
                                     // save_u16_value("1_5",database_cw.phone_number);
+
+                                    database_cw.phone_number_nvs = atoi((const char*)database_cw.phone_number);
+                                    err = save_u64_value("dw_phone_number",database_cw.phone_number_nvs);
+                                    if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+                                    
+                                    err = read_u64_value("dw_phone_number",&database_cw.phone_number_nvs);
+                                    if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
 
 
                                     database_cw.mima_number_nvs = atoi((const char*)database_cw.mima_number);
@@ -1820,6 +1886,10 @@ void app_main()
 
     // //err = print_what_saved();//dayin
     err = read_u16_value("dw_dIndx", (uint16_t*)(&database_cw.dIndx));
+    if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+    err = read_u64_value("dw_phone_number",&database_cw.phone_number_nvs);
     if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
 
