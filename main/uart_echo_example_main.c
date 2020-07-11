@@ -163,8 +163,10 @@ typedef struct
     uint8_t dzx_mode;
 
     //yonghu xinxi
-    uint8_t phone_number[11];  
-    uint8_t mima_number[6];  
+    uint8_t phone_number[11];  //temp
+    uint8_t mima_number[6];  //temp
+    uint64_t phone_number_nvs;  //temp
+    uint32_t mima_number_nvs;  //temp
 
     //格口编号
 	uint16_t dIndx;
@@ -222,7 +224,7 @@ shujuku_struct_user database_cw;
 
 
 
-//
+//16
 esp_err_t save_u16_value(char* key, uint16_t out_value)
 {
     nvs_handle_t my_handle;
@@ -236,6 +238,8 @@ esp_err_t save_u16_value(char* key, uint16_t out_value)
     uint16_t out_value_t = 0; // value will default to 0, if not set yet in NVS
     err = nvs_get_u16(my_handle, key, &out_value_t);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+
+    printf("w_r16-%s=%u\r\n",key,(uint16_t)(out_value_t));
 
     // Write
     err = nvs_set_u16(my_handle, key, out_value);
@@ -269,7 +273,7 @@ esp_err_t read_u16_value(char* key, uint16_t* out_value)
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
 
-    printf("%s=%u\r\n",key,(uint16_t)(*out_value));
+    printf("rd16-%s=%u\r\n",key,(uint16_t)(*out_value));
 
     // Close
     nvs_close(my_handle);
@@ -279,13 +283,14 @@ esp_err_t read_u16_value(char* key, uint16_t* out_value)
 
 
 
-/* Save the number of module restarts in NVS
-   by first reading and then incrementing
-   the number that has been saved previously.
-   Return an error if anything goes wrong
-   during this process.
- */
-esp_err_t save_restart_counter(void)
+
+
+
+
+
+
+//32
+esp_err_t save_u32_value(char* key, uint32_t out_value)
 {
     nvs_handle_t my_handle;
     esp_err_t err;
@@ -295,14 +300,14 @@ esp_err_t save_restart_counter(void)
     if (err != ESP_OK) return err;
 
     // Read
-    int32_t dIndx_t = 0; // value will default to 0, if not set yet in NVS
-    err = nvs_get_u16(my_handle, "dIndx", &dIndx_t);
+    uint32_t out_value_t = 0; // value will default to 0, if not set yet in NVS
+    err = nvs_get_u32(my_handle, key, &out_value_t);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
+    printf("wr_32-%s=%u\r\n",key,(out_value_t));
+
     // Write
-    //restart_counter++;
-    //database_cw.dIndx ++;
-    err = nvs_set_u16(my_handle, "dIndx", database_cw.dIndx);
+    err = nvs_set_u32(my_handle, key, out_value);
     if (err != ESP_OK) return err;
 
     // Commit written value.
@@ -317,9 +322,7 @@ esp_err_t save_restart_counter(void)
     return ESP_OK;
 }
 
-
-
-esp_err_t print_what_saved(void)
+esp_err_t read_u32_value(char* key, uint32_t* out_value)
 {
     nvs_handle_t my_handle;
     esp_err_t err;
@@ -328,47 +331,112 @@ esp_err_t print_what_saved(void)
     err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
     if (err != ESP_OK) return err;
 
+    // Read
+    //int32_t restart_counter = 0; // value will default to 0, if not set yet in NVS
 
-
-    // // Read restart counter
-    // int32_t restart_counter = 0; // value will default to 0, if not set yet in NVS
-    // err = nvs_get_i32(my_handle, "restart_conter", &restart_counter);
-    // if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
-    // printf("Restart counter = %d\n", restart_counter);
-
-
-
-    err = nvs_get_u16(my_handle, "dIndx", &database_cw.dIndx);
+    err = nvs_get_u32(my_handle, key, out_value);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
-    printf("dIndx = %d\n", database_cw.dIndx);
 
 
-
-    // // Read run time blob
-    // size_t required_size = 0;  // value will default to 0, if not set yet in NVS
-    // // obtain required memory space to store blob being read from NVS
-    // err = nvs_get_blob(my_handle, "run_time", NULL, &required_size);
-    // if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
-    // printf("Run time:\n");
-    // if (required_size == 0) {
-    //     printf("Nothing saved yet!\n");
-    // } else {
-    //     uint32_t* run_time = malloc(required_size);
-    //     err = nvs_get_blob(my_handle, "run_time", run_time, &required_size);
-    //     if (err != ESP_OK) {
-    //         free(run_time);
-    //         return err;
-    //     }
-    //     for (int i = 0; i < required_size / sizeof(uint32_t); i++) {
-    //         printf("%d: %d\n", i + 1, run_time[i]);
-    //     }
-    //     free(run_time);
-    // }
+    printf("r32-%s=%u\r\n",key,(*out_value));
 
     // Close
     nvs_close(my_handle);
     return ESP_OK;
 }
+
+
+
+// /* Save the number of module restarts in NVS
+//    by first reading and then incrementing
+//    the number that has been saved previously.
+//    Return an error if anything goes wrong
+//    during this process.
+//  */
+// esp_err_t save_restart_counter(void)
+// {
+//     nvs_handle_t my_handle;
+//     esp_err_t err;
+
+//     // Open
+//     err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
+//     if (err != ESP_OK) return err;
+
+//     // Read
+//     int32_t dIndx_t = 0; // value will default to 0, if not set yet in NVS
+//     err = nvs_get_u16(my_handle, "dw_dIndx", &dIndx_t);
+//     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+
+//     // Write
+//     //restart_counter++;
+//     //database_cw.dIndx ++;
+//     err = nvs_set_u16(my_handle, "dw_dIndx", database_cw.dIndx);
+//     if (err != ESP_OK) return err;
+
+//     // Commit written value.
+//     // After setting any values, nvs_commit() must be called to ensure changes are written
+//     // to flash storage. Implementations may write to storage at other times,
+//     // but this is not guaranteed.
+//     err = nvs_commit(my_handle);
+//     if (err != ESP_OK) return err;
+
+//     // Close
+//     nvs_close(my_handle);
+//     return ESP_OK;
+// }
+
+
+
+// esp_err_t print_what_saved(void)
+// {
+//     nvs_handle_t my_handle;
+//     esp_err_t err;
+
+//     // Open
+//     err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
+//     if (err != ESP_OK) return err;
+
+
+
+//     // // Read restart counter
+//     // int32_t restart_counter = 0; // value will default to 0, if not set yet in NVS
+//     // err = nvs_get_i32(my_handle, "restart_conter", &restart_counter);
+//     // if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+//     // printf("Restart counter = %d\n", restart_counter);
+
+
+
+//     err = nvs_get_u16(my_handle, "dw_dIndx", &database_cw.dIndx);
+//     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+//     printf("dIndx = %d\n", database_cw.dIndx);
+
+
+
+//     // // Read run time blob
+//     // size_t required_size = 0;  // value will default to 0, if not set yet in NVS
+//     // // obtain required memory space to store blob being read from NVS
+//     // err = nvs_get_blob(my_handle, "run_time", NULL, &required_size);
+//     // if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+//     // printf("Run time:\n");
+//     // if (required_size == 0) {
+//     //     printf("Nothing saved yet!\n");
+//     // } else {
+//     //     uint32_t* run_time = malloc(required_size);
+//     //     err = nvs_get_blob(my_handle, "run_time", run_time, &required_size);
+//     //     if (err != ESP_OK) {
+//     //         free(run_time);
+//     //         return err;
+//     //     }
+//     //     for (int i = 0; i < required_size / sizeof(uint32_t); i++) {
+//     //         printf("%d: %d\n", i + 1, run_time[i]);
+//     //     }
+//     //     free(run_time);
+//     // }
+
+//     // Close
+//     nvs_close(my_handle);
+//     return ESP_OK;
+// }
 
 
 #define usart2_baund  57600//串口2波特率，根据指纹模块波特率更改
@@ -972,11 +1040,17 @@ static void echo_task2()
                                     database_cw.sta_flag=1;
 
     
-                                    save_u16_value("dIndx",database_cw.dIndx);
+                                    esp_err_t err = save_u16_value("dw_dIndx",database_cw.dIndx);
+                                    if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
 
-                                    esp_err_t err = print_what_saved();//dayin
-                                    if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+                                    // esp_err_t err = print_what_saved();//dayin
+                                    // if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
                                     
+                                    err = read_u16_value("dw_dIndx", (uint16_t*)(&database_cw.dIndx));
+                                    if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
 
                                     
 
@@ -987,7 +1061,15 @@ static void echo_task2()
                                     // save_u16_value("1_4",database_cw.dzx_mode);
 
                                     // save_u16_value("1_5",database_cw.phone_number);
-                                    // save_u16_value("1_6",database_cw.mima_number);
+
+
+                                    database_cw.mima_number_nvs = atoi((const char*)database_cw.mima_number);
+                                    err = save_u32_value("dw_mima_number",database_cw.mima_number_nvs);
+                                    if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+
+                                    err = read_u32_value("dw_mima_number",&database_cw.mima_number_nvs);
+                                    if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
 
                                 }
@@ -1736,10 +1818,13 @@ void app_main()
     }
     ESP_ERROR_CHECK( err );
 
-    //err = print_what_saved();//dayin
-    err = read_u16_value("dIndx", (uint16_t*)(&database_cw.dIndx));
+    // //err = print_what_saved();//dayin
+    err = read_u16_value("dw_dIndx", (uint16_t*)(&database_cw.dIndx));
     if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
+
+    err = read_u32_value("dw_mima_number",&database_cw.mima_number_nvs);
+    if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
 
     // err = save_restart_counter();
