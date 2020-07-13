@@ -102,30 +102,65 @@ uint8_t flag_rx2;
 #define TX1_LEN_BL 10//8 bianliang
 
 
+
+#define SHENYU_GEZI_MAX 40
 //admin 
 //and cun de yong
-uint8_t shengyu_da_max=3;//
-uint8_t shengyu_zhong_max=4;
-uint8_t shengyu_xiao_max=5;
+    uint16_t shengyu_da_max=20;//
+    uint16_t shengyu_zhong_max=10;
+    uint16_t shengyu_xiao_max=10;
 
+int16_t guimen1_gk_max=16;
+int16_t guimen2_gk_max=16;
+int16_t guimen3_gk_max=16;//8
 
+int16_t guimen4_gk_max=16;
+int16_t guimen5_gk_max=16;
+int16_t guimen6_gk_max=16;
+int16_t guimen7_gk_max=16;
+int16_t guimen8_gk_max=16;
+int16_t guimen9_gk_max=16;
+int16_t guimen10_gk_max=16;
+int16_t guimen11_gk_max=16;
+int16_t guimen12_gk_max=16;
+int16_t guimen13_gk_max=16;
+int16_t guimen14_gk_max=16;
+int16_t guimen15_gk_max=16;
+int16_t guimen16_gk_max=16;
+int16_t guimen17_gk_max=16;
+int16_t guimen18_gk_max=16;
+int16_t guimen19_gk_max=16;
 
 
 
 //need save
 //shuliang
-uint8_t shengyu_da=8;
-uint8_t shengyu_zhong=4;
-uint8_t shengyu_xiao=2;
+uint8_t shengyu_da=20;
+uint8_t shengyu_zhong=10;
+uint8_t shengyu_xiao=10;
 
 typedef struct
 {
     uint8_t state; //zaiyong 是否
-    // bool lock;
-    // bool changqi;
-}shujuku_struct_gz;//柜子
+    bool lock;
+    bool changqi;
+    uint8_t dzx_mode_gz;//default
 
-shujuku_struct_gz database_gz[300];
+
+
+    //zhiwen mima
+    uint8_t cunwu_mode_gz;
+    //yonghu xin xi
+    uint64_t phone_number_nvs_gz;  //
+    uint32_t mima_number_nvs_gz;  //
+
+
+    // //格口编号
+	// uint16_t dIndx_gz;
+}shujuku_struct_gz;
+//={0,0,0,3};//柜子
+
+shujuku_struct_gz database_gz[SHENYU_GEZI_MAX];
 // shujuku_struct_gz database_gz=
 // {
 //     .state = 0 ,
@@ -138,8 +173,7 @@ shujuku_struct_gz database_gz[300];
 // uint8_t dzx_mode=00;
 
 uint8_t phone_weishu_ok=00;
-// uint8_t phone_number[11]={0};  
-// uint8_t mima_number[6]={0};  
+
 
 //lock 格口编号
 
@@ -162,11 +196,9 @@ typedef struct
     //gekou leixing
     uint8_t dzx_mode;
 
-        //yonghu xinxi
-        uint8_t phone_number[11];  //temp
-        uint8_t mima_number[6];  //temp
-    uint64_t phone_number_nvs;  //temp
-    uint32_t mima_number_nvs;  //temp
+    //yonghu xin xi
+    uint64_t phone_number_nvs;  //
+    uint32_t mima_number_nvs;  //
 
     //格口编号
 	uint16_t dIndx;
@@ -605,7 +637,13 @@ void uart0_debug_data(uint8_t* data,uint8_t len)
         printf("%02x ",data[i]);
     printf("\r\n");
 }
-
+void uart0_debug_data_dec(uint16_t* data,uint16_t len)
+{
+    printf("debug_data:");
+    for(uint16_t i=0;i<len;i++)
+        printf("%02d ",data[i]);
+    printf("\r\n");
+}
 
 ///command struct
 typedef struct
@@ -725,17 +763,12 @@ void tongbu_gekou_shuliang_x(uint8_t shengyu_xiao1)
 }
 
 
+uint8_t phone_number[11]={0};  
+uint8_t mima_number[6]={0};  
 
 static void echo_task2()
 {
-
-    
-    // while(1)
-    // {
-    //     vTaskDelay(500 / portTICK_PERIOD_MS);
-
-    // }
-    uint16_t bl_addr=0;//bianliang
+    uint16_t bl_addr=0;//bianliang lcd
     uint16_t crc16_temp=0;
     
     uint8_t data_rx_t[BUF_SIZE] = {0};
@@ -826,7 +859,7 @@ static void echo_task2()
                                     &&(0== shengyu_zhong)
                                     &&(0== shengyu_xiao))
                                 {
-                                    ESP_LOGI(TAG, "--zanwu kongxiang--.\r\n");   
+                                    ESP_LOGI(TAG, "--zanwu kongxiang--.\r\n"); // houbian sheng  
                                     tx_Buffer[8] = 0x00;
                                     tx_Buffer[9] = 0x01;
                                 }
@@ -863,22 +896,82 @@ static void echo_task2()
                                 tx_Buffer[6] = 0x5A;
                                 tx_Buffer[7] = 0x01;//data guding
 
-                                tx_Buffer[8] = 0x00;
-                                tx_Buffer[9] = 0x03;//tiao 选择格子类型
-                                if(01== data_rx_t[8])//zhiwen cun
-                                {
-                                    ESP_LOGI(TAG, "--zhiwen--.\r\n");  
-                                    //baocun 1
-                                    database_cw.cunwu_mode = 1;
-                                }
-                                else if(02== data_rx_t[8])//mi ma
-                                {
-                                    ESP_LOGI(TAG, "--mima--.\r\n");  
-                                    //baocun 2
-                                    database_cw.cunwu_mode = 2;
 
+                                if((shengyu_xiao==0) && (shengyu_zhong==0))
+                                {
+                                    if(01== data_rx_t[8])//zhiwen cun
+                                    {
+                                        ESP_LOGI(TAG, "--2 zhiwen--.\r\n");  
+                                        //baocun 1
+                                        tx_Buffer[8] = 0x00;
+                                        tx_Buffer[9] = 0x04;//tiao 选择格子类型
+                                    }
+                                    else if(02== data_rx_t[8])//mi ma
+                                    {
+                                        ESP_LOGI(TAG, "--2 mima--.\r\n");  
+                                        //baocun 2
+                                        tx_Buffer[8] = 0x00;
+                                        tx_Buffer[9] = 0x06;//tiao 选择格子类型
+                                    }
+                                    ESP_LOGI(TAG, "---2 da---.\r\n");  
+                                    database_cw.dzx_mode = 1;
                                 }
+                                else if((shengyu_da==0) && (shengyu_xiao==0))
+                                {
+                                    if(01== data_rx_t[8])//zhiwen cun
+                                    {
+                                        ESP_LOGI(TAG, "--2 zhiwen--.\r\n");  
+                                        //baocun 1
+                                        tx_Buffer[8] = 0x00;
+                                        tx_Buffer[9] = 0x04;//tiao 选择格子类型
+                                    }
+                                    else if(02== data_rx_t[8])//mi ma
+                                    {
+                                        ESP_LOGI(TAG, "--2 mima--.\r\n");  
+                                        //baocun 2
+                                        tx_Buffer[8] = 0x00;
+                                        tx_Buffer[9] = 0x06;//tiao 选择格子类型
+                                    }
+                                    ESP_LOGI(TAG, "---2 zhong---.\r\n");  
+                                    database_cw.dzx_mode = 2;
+                                }
+                                else if((shengyu_da==0) && (shengyu_zhong==0))
+                                {
+                                    if(01== data_rx_t[8])//zhiwen cun
+                                    {
+                                        ESP_LOGI(TAG, "--2zhiwen--.\r\n");  
+                                        //baocun 1
+                                        tx_Buffer[8] = 0x00;
+                                        tx_Buffer[9] = 0x04;//tiao 选择格子类型
+                                    }
+                                    else if(02== data_rx_t[8])//mi ma
+                                    {
+                                        ESP_LOGI(TAG, "--2 mima--.\r\n");  
+                                        //baocun 2
+                                        tx_Buffer[8] = 0x00;
+                                        tx_Buffer[9] = 0x06;//tiao 选择格子类型
+                                    }
+                                    ESP_LOGI(TAG, "---2xiao---.\r\n");  
+                                    database_cw.dzx_mode = 3;
+                                }
+                                else
+                                {
+                                    tx_Buffer[8] = 0x00;
+                                    tx_Buffer[9] = 0x03;//tiao 选择格子类型
+                                    if(01== data_rx_t[8])//zhiwen cun
+                                    {
+                                        ESP_LOGI(TAG, "--zhiwen--.\r\n");  
+                                        //baocun 1
+                                        database_cw.cunwu_mode = 1;
+                                    }
+                                    else if(02== data_rx_t[8])//mi ma
+                                    {
+                                        ESP_LOGI(TAG, "--mima--.\r\n");  
+                                        //baocun 2
+                                        database_cw.cunwu_mode = 2;
 
+                                    }
+                                }
 
                                 //crc
                                 crc16_temp = CRC16(tx_Buffer+3, TX1_LEN-5);
@@ -895,7 +988,7 @@ static void echo_task2()
                                 //Add_FR();		//录指纹	
                                 break;
 
-                            case 0x2020://da zhong xiao
+                            case 0x2020://da zhong xiao    ke sheng
                                 ESP_LOGI(TAG, "----------------daxiao---------------.\r\n");   
                                 tx_Buffer[0] = 0x5A;
                                 tx_Buffer[1] = 0xA5;
@@ -918,27 +1011,6 @@ static void echo_task2()
                                     tx_Buffer[8] = 0x00;
                                     tx_Buffer[9] = 0x04;
                                 }
-                                
-
-                                //todo
-                                if(01== data_rx_t[8])//da
-                                {
-                                    ESP_LOGI(TAG, "---da---.\r\n");  
-                                    //cun qi lai   quanju yihuiyong
-                                    database_cw.dzx_mode = 1;
-                                    
-                                }
-                                else if(02== data_rx_t[8])//zhong
-                                {
-                                    ESP_LOGI(TAG, "---zhong---.\r\n");  
-                                    database_cw.dzx_mode = 2;
-
-                                }
-                                else if(03== data_rx_t[8])//xiao
-                                {
-                                    ESP_LOGI(TAG, "---xiao---.\r\n");  
-                                    database_cw.dzx_mode = 3;
-                                }
 
                                 //crc
                                 crc16_temp = CRC16(tx_Buffer+3, TX1_LEN-5);
@@ -947,7 +1019,28 @@ static void echo_task2()
                                 tx_Buffer[10] = crc16_temp&0xff;
                                 tx_Buffer[11] = (crc16_temp>>8)&0xff;
                                 
-                                uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
+
+                                //todo
+                                if((01== data_rx_t[8])&&(0!=shengyu_da))//da
+                                {
+                                    ESP_LOGI(TAG, "---da---.\r\n");  
+                                    //cun qi lai   quanju yihuiyong
+                                    database_cw.dzx_mode = 1;
+                                    uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
+                                }
+                                else if((02== data_rx_t[8])&&(0!=shengyu_zhong))//zhong
+                                {
+                                    ESP_LOGI(TAG, "---zhong---.\r\n");  
+                                    database_cw.dzx_mode = 2;
+                                    uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
+                                }
+                                else if((03== data_rx_t[8])&&(0!=shengyu_xiao))//xiao
+                                {
+                                    ESP_LOGI(TAG, "---xiao---.\r\n");  
+                                    database_cw.dzx_mode = 3;
+                                    uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
+                                }
+
                                 break;
 
 
@@ -963,7 +1056,7 @@ static void echo_task2()
                                 // {
                                 //     //zancun
                                 //     phone_weishu_ok =1;
-                                //     memcpy( database_cw.phone_number,data_rx_t+7 ,11);
+                                //     memcpy( phone_number,data_rx_t+7 ,11);
 
                                 // }
 
@@ -972,20 +1065,21 @@ static void echo_task2()
                                 {
                                     //zancun
                                     phone_weishu_ok =1;
-                                    memcpy( database_cw.phone_number,data_rx_t+7 ,10);
+                                    memcpy( phone_number,data_rx_t+7 ,10);
                                     ESP_LOGI(TAG, "---phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
 
                                 }
                                 else
                                 {
-                                    ESP_LOGI(TAG, "----------------1 - shoujihao weishu err---------------.\r\n");
+                                    ESP_LOGI(TAG, "-------1 - shoujihao weishu err--------.\r\n");
                                 }
                                 
                                 break;
 
                             case 0x1060:
+
                                 //5A A5 0A 83   10 60   03   31 32 33 34 35 36 
-                                ESP_LOGI(TAG, "--password---.\r\n");
+                                ESP_LOGI(TAG, "--password--.\r\n");
                                 //ESP_LOGI(TAG, "---phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
                                 tx_Buffer[0] = 0x5A;
                                 tx_Buffer[1] = 0xA5;
@@ -1008,52 +1102,118 @@ static void echo_task2()
                                     tx_Buffer[8] = 0x00;
                                     tx_Buffer[9] = 0x08;
 
-                                    memcpy( database_cw.mima_number,data_rx_t+7 ,6);
+                                    memcpy( mima_number,data_rx_t+7 ,6);
 
-                                    printf("database_cw.phone_number=");
-                                    uart0_debug_str(database_cw.phone_number,11);
+                                    printf("phone_number=");
+                                    uart0_debug_str(phone_number,11);
 
-                                    printf("database_cw.mima_number=");
-                                    uart0_debug_str(database_cw.mima_number,11);
+                                    printf("mima_number=");
+                                    uart0_debug_str(mima_number,11);
+
+                                    uint16_t j=0,k=0;
+                                    uint16_t database_gz_temp[SHENYU_GEZI_MAX]={0};
+                                    uint16_t database_gz_temp_onuse[SHENYU_GEZI_MAX]={0};
                                     if(1 == database_cw.dzx_mode)
                                     {
                                         
-                                        //suiji kaimen
-                                        if(shengyu_da >0)
+                                        for (uint16_t i = 0; i < SHENYU_GEZI_MAX; i++)
                                         {
-                                            shengyu_da = shengyu_da -1;
-                                            tongbu_gekou_shuliang_d(shengyu_da);
-                                            ESP_LOGI(TAG, "--lock1 ok--.\r\n");
-                                            memcpy(tx_Buffer2,"star",4);
-                                            tx_Buffer2[4]= 0x8A;//m_data.opcode;
-                                            tx_Buffer2[5]= 0x01;//m_data.board_addr;
-                                            tx_Buffer2[6]= 0x02;//m_data.lock_addr;
-                                            tx_Buffer2[7]= 0x11;//guding
-                                            bcc_temp = ComputXor(tx_Buffer2+4,4);
-                                            tx_Buffer2[8]= bcc_temp;
-                                            memcpy(tx_Buffer2+9,"endo",4);
-                                            
-                                            tx_Buffer2[13]='\0';
+                                            if((database_gz[i].state ==0) 
+                                                &&(database_gz[i].dzx_mode_gz ==1))
+                                            {
+                                                database_gz_temp[j++] =i;//no use
+                                            }
+                                            else if((database_gz[i].state ==1) 
+                                                &&(database_gz[i].dzx_mode_gz ==1))//zhong xiao use, no use + da use
+                                            {
+                                                database_gz_temp_onuse[k++] =i;
+                                            }
+                                            printf("shengyu index=%d, database_gz[i].dzx_mode_gz=%d, state =%d\r\n",
+                                                    i, database_gz[i].dzx_mode_gz, database_gz[i].state);
+                                        }
+                                        printf("shengyu j=%d, onuse k=%d\r\n",j,k);
+                                        uart0_debug_data_dec(database_gz_temp,j);
+                                        uart0_debug_data_dec(database_gz_temp_onuse,k);
+                                        database_cw.dIndx = database_gz_temp[rand()%j];//随机获取哪个门没用
+                                        database_gz[database_cw.dIndx].state =1;
+                                        printf("database_cw.dIndx=%u\r\n",database_cw.dIndx);
 
-                                            RS485_TX_EN();
 
-                                            printf("tx_Buffer2=");
-                                            uart0_debug_data(tx_Buffer2, 13);
-                                            uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
-                                            RS485_RX_EN();
+
+
+                                        uint8_t j=0,k=0;
+                                        //j=5; k=0;
+
+                                        // suiji kaimen
+                                        // if(shengyu_da >0)
+                                        if(((int16_t)database_cw.dIndx-guimen1_gk_max)>0)
+                                        {
+                                            k++;//board
                                         }
                                         else
                                         {
-                                            ESP_LOGI(TAG, "----------------lock1  da   no---------------.\r\n");
+                                            j=database_cw.dIndx;//lock
                                         }
+
+                                        if(((int16_t)database_cw.dIndx-
+                                            guimen2_gk_max-
+                                            guimen1_gk_max)>0)
+                                        {
+                                            k++;
+                                        }
+                                        else
+                                        {
+                                            j=database_cw.dIndx;
+                                        }
+
+                                        if(((int16_t)database_cw.dIndx-
+                                            guimen3_gk_max-
+                                            guimen2_gk_max-
+                                            guimen1_gk_max)>0)
+                                        {
+                                            k++;
+                                        }
+                                        else
+                                        {
+                                            j=database_cw.dIndx;
+                                        }
+                                        printf("--open- board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
+
+                        
+                                        shengyu_da = shengyu_da -1;
+                                        tongbu_gekou_shuliang_d(shengyu_da);
+
+
+                                        ESP_LOGI(TAG, "--lock:%d ok--.\r\n",j);
+                                        memcpy(tx_Buffer2,"star",4);
+                                        tx_Buffer2[4]= 0x8A;//m_data.opcode;
+                                        tx_Buffer2[5]= (uint8_t)(k+1);//m_data.board_addr;
+                                        tx_Buffer2[6]= (uint8_t)j;//m_data.lock_addr;
+                                        tx_Buffer2[7]= 0x11;//guding
+                                        bcc_temp = ComputXor(tx_Buffer2+4,4);
+                                        tx_Buffer2[8]= bcc_temp;
+                                        memcpy(tx_Buffer2+9,"endo",4);
+                                        
+                                        tx_Buffer2[13]='\0';
+
+                                        RS485_TX_EN();
+
+                                        printf("tx_Buffer2=");
+                                        uart0_debug_data(tx_Buffer2, 13);
+                                        uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
+                                        RS485_RX_EN();
+                                            
+                                        
+
 
                                     }
                                     else if(2 == database_cw.dzx_mode)
                                     {
-                                        if(shengyu_zhong >0)
+                                        //if(shengyu_zhong >0)
                                         {
                                             shengyu_zhong = shengyu_zhong -1;
                                             tongbu_gekou_shuliang_z(shengyu_zhong);
+
                                             ESP_LOGI(TAG, "--lock2 ok--.\r\n");
 
                                             memcpy(tx_Buffer2,"star",4);
@@ -1074,69 +1234,68 @@ static void echo_task2()
                                             uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
                                             RS485_RX_EN();
                                         }
-                                        else
-                                        {
-                                            ESP_LOGI(TAG, "----------------lock2  zhong  no---------------.\r\n");
-                                        }  
+                                        // else
+                                        // {
+                                        //     ESP_LOGI(TAG, "----------------lock2  zhong  no---------------.\r\n");
+                                        // }  
 
                                     }
                                     else if(3 == database_cw.dzx_mode)
                                     {
                                         tongbu_gekou_shuliang_x(shengyu_xiao);
 
-                                        if(shengyu_xiao >0)
+                                        //if(shengyu_xiao >0)
                                         {
                                             shengyu_xiao = shengyu_xiao -1;
                                             tongbu_gekou_shuliang_x(shengyu_xiao);
                                             ESP_LOGI(TAG, "----------------lock3 ts---------------.\r\n");
                                         }
-                                        else
-                                        {
-                                            ESP_LOGI(TAG, "----------------lock3  xiao  no---------------.\r\n");
-                                        } 
+                                        // else
+                                        // {
+                                        //     ESP_LOGI(TAG, "----------------lock3  xiao  no---------------.\r\n");
+                                        // } 
                                             
                                     }
 
-                                    database_cw.dIndx ++;//随机获取哪个门没用
-                                    database_cw.sta_flag=1;
-
-    
-                                    esp_err_t err = save_u16_value("dw_dIndx",database_cw.dIndx);
-                                    if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
-
-                                    err = read_u16_value("dw_dIndx", (uint16_t*)(&database_cw.dIndx));
-                                    if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
 
+                                    ESP_LOGI(TAG, "----test--.\r\n");  
+                                    //database_cw.sta_flag=1;
 
+                                    //if()
+                                    {
+                                        esp_err_t err = save_u16_value("dw_dIndx",database_cw.dIndx);
+                                        if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        err = read_u16_value("dw_dIndx", (uint16_t*)(&database_cw.dIndx));
+                                        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+                                        // save_u16_value("1_2",database_cw.sta_flag);
+                                        // save_u16_value("1_3",database_cw.cunwu_mode);
+                                        // save_u16_value("1_4",database_cw.dzx_mode);
+
+
+                                        database_cw.phone_number_nvs = atoi((const char*)phone_number);
+                                        err = save_u64_value("dw_phone_number",database_cw.phone_number_nvs);
+                                        if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+                                        
+                                        err = read_u64_value("dw_phone_number",&database_cw.phone_number_nvs);
+                                        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+
+
+                                        database_cw.mima_number_nvs = atoi((const char*)mima_number);
+                                        err = save_u32_value("dw_mima_number",database_cw.mima_number_nvs);
+                                        if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        err = read_u32_value("dw_mima_number",&database_cw.mima_number_nvs);
+                                        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+                                    }
                                     
-
-
-
-                                    // save_u16_value("1_2",database_cw.sta_flag);
-                                    // save_u16_value("1_3",database_cw.cunwu_mode);
-                                    // save_u16_value("1_4",database_cw.dzx_mode);
-
-                                    // save_u16_value("1_5",database_cw.phone_number);
-
-                                    database_cw.phone_number_nvs = atoi((const char*)database_cw.phone_number);
-                                    err = save_u64_value("dw_phone_number",database_cw.phone_number_nvs);
-                                    if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
-                                    
-                                    err = read_u64_value("dw_phone_number",&database_cw.phone_number_nvs);
-                                    if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
-
-
-
-
-                                    database_cw.mima_number_nvs = atoi((const char*)database_cw.mima_number);
-                                    err = save_u32_value("dw_mima_number",database_cw.mima_number_nvs);
-                                    if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
-
-
-                                    err = read_u32_value("dw_mima_number",&database_cw.mima_number_nvs);
-                                    if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
-
 
                                 }
                                 else
@@ -1150,8 +1309,6 @@ static void echo_task2()
                                     tx_Buffer[9] = 0x07;
                                 }
 
-                                phone_weishu_ok =0;
-
                                 //crc
                                 crc16_temp = CRC16(tx_Buffer+3, TX1_LEN-5);
                                 //printf("tx CRC16 result:0x%04X\r\n",crc16_temp);
@@ -1160,10 +1317,11 @@ static void echo_task2()
                                 tx_Buffer[11] = (crc16_temp>>8)&0xff;
                                 uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
 
+
+
+                                phone_weishu_ok =0;
+                                database_cw.dzx_mode = 0 ;
                                 break;
-
-
-
 
 
 
@@ -1314,8 +1472,8 @@ bool spear_uart_process_data(uint8_t byt)
 {
 	bool r = false;
     uint8_t data_t[128];
-    uint8_t data_crc1=0;
-    uint8_t data_crc2=0;
+    // uint8_t data_crc1=0;
+    // uint8_t data_crc2=0;
 	ESP_LOGI(TAG, " %x: ", byt);
 	switch(uState)
 	{
@@ -1863,6 +2021,14 @@ void app_main()
     ESP_LOGI(TAG,"切换到开机画面!!!\r\n");
 
 
+
+
+
+    // shengyu_da=shengyu_da_max;//read
+    // shengyu_zhong=shengyu_zhong_max;
+    // shengyu_xiao=shengyu_xiao_max;
+
+
     tongbu_gekou_shuliang_d(shengyu_da);
     vTaskDelay(100 / portTICK_PERIOD_MS);
     tongbu_gekou_shuliang_z(shengyu_zhong);
@@ -1896,6 +2062,52 @@ void app_main()
     err = read_u32_value("dw_mima_number",&database_cw.mima_number_nvs);
     if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+    for (uint16_t i = 0; i < SHENYU_GEZI_MAX; i++)
+    {
+        database_gz[i].dzx_mode_gz =3;
+    }
+
+    // database_gz[1].dzx_mode_gz =2;//z
+    // database_gz[2].dzx_mode_gz =2;
+    // database_gz[3].dzx_mode_gz =2;
+    // database_gz[4].dzx_mode_gz =2;
+    // database_gz[5].dzx_mode_gz =2;
+
+
+
+    // database_gz[11].dzx_mode_gz =1;//da
+    // database_gz[12].dzx_mode_gz =1;
+    // database_gz[13].dzx_mode_gz =1;
+    // database_gz[14].dzx_mode_gz =1;
+    // database_gz[15].dzx_mode_gz =1;
+    // database_gz[16].dzx_mode_gz =1;
+
+
+    for (uint16_t i = 11; i < 21; i++)
+    {
+        database_gz[i].dzx_mode_gz =1;
+    }
+    for (uint16_t i = 21; i < 31; i++)
+    {
+        database_gz[i].dzx_mode_gz =2;
+    }
+
+
+
+    //database_gz[0].state =1;
 
     // err = save_restart_counter();
     //  if (err != ESP_OK) printf("Error (%s) saving restart counter to NVS!\n", esp_err_to_name(err));
