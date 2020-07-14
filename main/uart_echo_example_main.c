@@ -167,7 +167,7 @@ typedef struct
 }shujuku_struct_gz;
 //={0,0,0,3};//Йёзг
 
-shujuku_struct_gz database_gz[SHENYU_GEZI_MAX];
+shujuku_struct_gz database_gz[SHENYU_GEZI_MAX];//i
 // shujuku_struct_gz database_gz=
 // {
 //     .state = 0 ,
@@ -1223,7 +1223,7 @@ static void echo_task2()
                                     if(1 == database_cw.dzx_mode)
                                     {
                                         
-                                        for (uint16_t i = 0; i < shengyu_all_max; i++)//todo changqi and suoding
+                                        for (uint16_t i = 1; i <= shengyu_all_max; i++)//todo changqi and suoding
                                         {
                                             if((database_gz[i].state_gz ==0) 
                                                 &&(database_gz[i].dzx_mode_gz ==1))
@@ -1235,7 +1235,7 @@ static void echo_task2()
                                             {
                                                 database_gz_temp_onuse[k++] =i;
                                             }
-                                            printf("shengyu index=%d, database_gz[i].dzx_mode_gz=%d, state =%d\r\n",
+                                            printf("shengyu index=%03d, database_gz[i].dzx_mode_gz=%d, state =%d\r\n",
                                                     i, database_gz[i].dzx_mode_gz, database_gz[i].state_gz);
                                         }
                                         printf("shengyu j=%d, onuse k=%d\r\n",j,k);
@@ -1245,7 +1245,7 @@ static void echo_task2()
 
                                         database_cw.state=1;
                                         // database_gz[database_cw.dIndx].state_gz =database_cw.state;
-                                        printf("database_cw.dIndx=%u\r\n",database_cw.dIndx);
+                                        printf("---add---database_cw.dIndx=%u\r\n",database_cw.dIndx);
 
 
 
@@ -2172,7 +2172,7 @@ void read_nvs_guizi_all()
     esp_err_t err;
 
     shengyu_all_max = shengyu_da_max + shengyu_zhong_max + shengyu_xiao_max;
-    for(uint16_t i=0;i<shengyu_all_max;i++)
+    for(uint16_t i=1;i<=shengyu_all_max;i++)
     {
 
 
@@ -2261,10 +2261,19 @@ void read_nvs_guizi_all()
     }
 
 
-    for(uint16_t i=0;i<shengyu_all_max;i++)
+    for(uint16_t i=1;i<=shengyu_all_max;i++)
     {
-        printf("shengyu index=%03d, database_gz[i].dzx_mode_gz=%d, state =%d\r\n",
-                i, database_gz[i].dzx_mode_gz, database_gz[i].state_gz);
+        printf("shengyu index =%03d,cunwu_mode_gz =%d,dzx_mode_gz =%d,",\
+                i, database_gz[i].cunwu_mode_gz,database_gz[i].dzx_mode_gz);
+
+
+        printf("phone?=%11llu,mima?=%6u,", database_gz[i].phone_number_nvs_gz, database_gz[i].mima_number_nvs_gz);
+
+        printf("state?=%d,lock?=%d,changqi?=%d\r\n",\
+                database_gz[i].state_gz,\
+                database_gz[i].lock,\
+                database_gz[i].changqi);
+
     }
 
 }
@@ -2396,7 +2405,7 @@ void app_main()
     read_nvs_guizi_all();
 
 
-    for (uint16_t i = 0; i < SHENYU_GEZI_MAX; i++)
+    for (uint16_t i = 1; i <= SHENYU_GEZI_MAX; i++)
     {
         database_gz[i].dzx_mode_gz =1;
     }
