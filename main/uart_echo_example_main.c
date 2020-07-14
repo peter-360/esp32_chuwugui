@@ -103,12 +103,12 @@ uint8_t flag_rx2;
 
 
 
-#define SHENYU_GEZI_MAX 40//shengyu kong
+#define SHENYU_GEZI_MAX 50//shengyu kong
 //admin 
 //and cun de yong
-    uint16_t shengyu_all_max=40;//
+    uint16_t shengyu_all_max=30;//
 
-    uint16_t shengyu_da_max=20;//
+    uint16_t shengyu_da_max=10;//
     uint16_t shengyu_zhong_max=10;
     uint16_t shengyu_xiao_max=10;
 
@@ -317,7 +317,7 @@ esp_err_t read_u8_value(char* key, uint8_t* out_value)
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
 
-    printf("rd8-%s=%u\r\n",key,(uint8_t)(*out_value));
+    printf("rd8-%s=%u\r\n\r\n",key,(uint8_t)(*out_value));
 
     // Close
     nvs_close(my_handle);
@@ -383,7 +383,7 @@ esp_err_t read_u16_value(char* key, uint16_t* out_value)
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
 
-    printf("rd16-%s=%u\r\n",key,(uint16_t)(*out_value));
+    printf("rd16-%s=%u\r\n\r\n",key,(uint16_t)(*out_value));
 
     // Close
     nvs_close(my_handle);
@@ -510,7 +510,7 @@ esp_err_t read_u64_value(char* key, uint64_t* out_value)
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
 
-    printf("r64-%s=%llu\r\n",key,(*out_value));
+    printf("r64-%s=%llu\r\n\r\n",key,(*out_value));
 
     // Close
     nvs_close(my_handle);
@@ -1223,15 +1223,15 @@ static void echo_task2()
                                     if(1 == database_cw.dzx_mode)
                                     {
                                         
-                                        for (uint16_t i = 0; i < SHENYU_GEZI_MAX; i++)//todo changqi and suoding
+                                        for (uint16_t i = 0; i < shengyu_all_max; i++)//todo changqi and suoding
                                         {
                                             if((database_gz[i].state_gz ==0) 
                                                 &&(database_gz[i].dzx_mode_gz ==1))
                                             {
-                                                database_gz_temp[j++] =i;//no use
+                                                database_gz_temp[j++] =i;//da no use
                                             }
                                             else if((database_gz[i].state_gz ==1) 
-                                                &&(database_gz[i].dzx_mode_gz ==1))// da use
+                                                &&(database_gz[i].dzx_mode_gz ==1))// da used
                                             {
                                                 database_gz_temp_onuse[k++] =i;
                                             }
@@ -1244,7 +1244,7 @@ static void echo_task2()
                                         database_cw.dIndx = database_gz_temp[rand()%j];//随机获取哪个门没用
 
                                         database_cw.state=1;
-                                        database_gz[database_cw.dIndx].state_gz =database_cw.state;
+                                        // database_gz[database_cw.dIndx].state_gz =database_cw.state;
                                         printf("database_cw.dIndx=%u\r\n",database_cw.dIndx);
 
 
@@ -1378,7 +1378,7 @@ static void echo_task2()
                                         esp_err_t err;
 
                                         database_gz[database_cw.dIndx].cunwu_mode_gz = database_cw.cunwu_mode;
-                                        sprintf(key_name, "%d_dz_cw_md", database_cw.dIndx);
+                                        sprintf(key_name, "%03d_dz_cw_md", database_cw.dIndx);
                                         printf("--key_name=%s--\r\n",key_name);
 
                                         err = save_u8_value(key_name,database_gz[database_cw.dIndx].cunwu_mode_gz);
@@ -1390,7 +1390,7 @@ static void echo_task2()
 
 
                                         database_gz[database_cw.dIndx].dzx_mode_gz = database_cw.dzx_mode;
-                                        sprintf(key_name, "%d_dz_dzxmd", database_cw.dIndx);
+                                        sprintf(key_name, "%03d_dz_dzxmd", database_cw.dIndx);
                                         printf("--key_name=%s--\r\n",key_name);
 
                                         err = save_u8_value(key_name,database_gz[database_cw.dIndx].dzx_mode_gz);
@@ -1405,7 +1405,7 @@ static void echo_task2()
                                         database_cw.phone_number_nvs = atoi((const char*)phone_number);
 
                                         database_gz[database_cw.dIndx].phone_number_nvs_gz = database_cw.phone_number_nvs;
-                                        sprintf(key_name, "%d_dz_phone", database_cw.dIndx);
+                                        sprintf(key_name, "%03d_dz_phone", database_cw.dIndx);
                                         printf("--key_name=%s--\r\n",key_name);
 
                                         err = save_u64_value(key_name,database_gz[database_cw.dIndx].phone_number_nvs_gz);
@@ -1420,7 +1420,7 @@ static void echo_task2()
                                         database_cw.mima_number_nvs = atoi((const char*)mima_number);
                                         
                                         database_gz[database_cw.dIndx].mima_number_nvs_gz = database_cw.mima_number_nvs;
-                                        sprintf(key_name, "%d_dz_mima", database_cw.dIndx);
+                                        sprintf(key_name, "%03d_dz_mima", database_cw.dIndx);
                                         printf("--key_name=%s--\r\n",key_name);
 
                                         err = save_u32_value(key_name,database_gz[database_cw.dIndx].mima_number_nvs_gz);
@@ -1432,8 +1432,8 @@ static void echo_task2()
                                         
 
 
-
-                                        sprintf(key_name, "%d_dz_st", database_cw.dIndx);
+                                        database_gz[database_cw.dIndx].state_gz =database_cw.state;
+                                        sprintf(key_name, "%03d_dz_st", database_cw.dIndx);
                                         printf("--key_name=%s--\r\n",key_name);
 
                                         err = save_u8_value(key_name,database_gz[database_cw.dIndx].state_gz);
@@ -2178,9 +2178,10 @@ void read_nvs_guizi_all()
 
 
         //database_gz[i].cunwu_mode_gz = database_cw.cunwu_mode;
-        //sprintf(key_name, "%d_dz_cw_md", i);
-        itoa(i,key_num,10);
-        strcat(key_name,"_dz_cw_md");
+        sprintf(key_name, "%03d", i);
+        strcpy(key_name+3,"_dz_cw_md");
+        // itoa(i,key_num,10);
+        // strcat(key_name,"_dz_cw_md");
         printf("--key_name=%s--\r\n",key_name);
 
         // err = save_u8_value(key_name,database_gz[i].cunwu_mode_gz);
@@ -2192,9 +2193,10 @@ void read_nvs_guizi_all()
 
 
         //database_gz[i].dzx_mode_gz = database_cw.dzx_mode;
-        //sprintf(key_name, "%d_dz_dzxmd", i);
-        itoa(i,key_num,10);
-        strcat(key_name,"_dz_dzxmd");
+        sprintf(key_name, "%03d", i);
+        strcpy(key_name+3,"_dz_dzxmd");
+        // itoa(i,key_num,10);
+        // strcat(key_name,"_dz_dzxmd");
         printf("--key_name=%s--\r\n",key_name);
 
         // err = save_u8_value(key_name,database_gz[i].dzx_mode_gz);
@@ -2209,9 +2211,10 @@ void read_nvs_guizi_all()
         // database_cw.phone_number_nvs = atoi((const char*)phone_number);
 
         // database_gz[i].phone_number_nvs_gz = database_cw.phone_number_nvs;
-        //sprintf(key_name, "%d_dz_phone", i);
-        itoa(i,key_num,10);
-        strcat(key_name,"_dz_phone");
+        sprintf(key_name, "%03d", i);
+        strcpy(key_name+3,"_dz_phone");
+        // itoa(i,key_num,10);
+        // strcat(key_name,"_dz_phone");
         printf("--key_name=%s--\r\n",key_name);
 
         // err = save_u64_value(key_name,database_gz[i].phone_number_nvs_gz);
@@ -2226,9 +2229,10 @@ void read_nvs_guizi_all()
         //database_cw.mima_number_nvs = atoi((const char*)mima_number);
         
         //database_gz[i].mima_number_nvs_gz = database_cw.mima_number_nvs;
-        //sprintf(key_name, "%d_dz_mima", i);
-        itoa(i,key_num,10);
-        strcat(key_name,"_dz_mima");
+        sprintf(key_name, "%03d", i);
+        strcpy(key_name+3,"_dz_mima");
+        // itoa(i,key_num,10);
+        // strcat(key_name,"_dz_mima");
         printf("--key_name=%s--\r\n",key_name);
 
         // err = save_u32_value(key_name,database_gz[i].mima_number_nvs_gz);
@@ -2241,9 +2245,10 @@ void read_nvs_guizi_all()
 
 
 
-        //sprintf(key_name, "%d_dz_st", i);
-        itoa(i,key_num,10);
-        strcat(key_name,"_dz_st");
+        sprintf(key_name, "%03d", i);
+        strcpy(key_name+3,"_dz_st");
+        // itoa(i,key_num,10);
+        // strcat(key_name,"_dz_st");
         printf("--key_name=%s--\r\n",key_name);
 
         // err = save_u8_value(key_name,database_gz[i].state_gz);
@@ -2253,6 +2258,13 @@ void read_nvs_guizi_all()
         if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
     
         printf("\r\n");
+    }
+
+
+    for(uint16_t i=0;i<shengyu_all_max;i++)
+    {
+        printf("shengyu index=%03d, database_gz[i].dzx_mode_gz=%d, state =%d\r\n",
+                i, database_gz[i].dzx_mode_gz, database_gz[i].state_gz);
     }
 
 }
@@ -2379,39 +2391,26 @@ void app_main()
 
 
 
-    
-    for (uint16_t i = 0; i < SHENYU_GEZI_MAX; i++)
-    {
-        database_gz[i].dzx_mode_gz =3;
-    }
-
-    // database_gz[1].dzx_mode_gz =2;//z
-    // database_gz[2].dzx_mode_gz =2;
-    // database_gz[3].dzx_mode_gz =2;
-    // database_gz[4].dzx_mode_gz =2;
-    // database_gz[5].dzx_mode_gz =2;
-
-
-
-    // database_gz[11].dzx_mode_gz =1;//da
-    // database_gz[12].dzx_mode_gz =1;
-    // database_gz[13].dzx_mode_gz =1;
-    // database_gz[14].dzx_mode_gz =1;
-    // database_gz[15].dzx_mode_gz =1;
-    // database_gz[16].dzx_mode_gz =1;
-
-
-    for (uint16_t i = 11; i < 21; i++)
-    {
-        database_gz[i].dzx_mode_gz =1;
-    }
-    for (uint16_t i = 21; i < 31; i++)
-    {
-        database_gz[i].dzx_mode_gz =2;
-    }
 
 
     read_nvs_guizi_all();
+
+
+    for (uint16_t i = 0; i < SHENYU_GEZI_MAX; i++)
+    {
+        database_gz[i].dzx_mode_gz =1;
+    }
+
+    // for (uint16_t i = 11; i < 21; i++)
+    // {
+    //     database_gz[i].dzx_mode_gz =1;
+    // }
+    // for (uint16_t i = 21; i < 31; i++)
+    // {
+    //     database_gz[i].dzx_mode_gz =2;
+    // }
+
+
     //database_gz[0].state =1;
 
     // err = save_restart_counter();
