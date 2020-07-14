@@ -103,12 +103,15 @@ uint8_t flag_rx2;
 
 
 
-#define SHENYU_GEZI_MAX 40
+#define SHENYU_GEZI_MAX 40//shengyu kong
 //admin 
 //and cun de yong
+    uint16_t shengyu_all_max=40;//
+
     uint16_t shengyu_da_max=20;//
     uint16_t shengyu_zhong_max=10;
     uint16_t shengyu_xiao_max=10;
+
 
 int16_t guimen1_gk_max=16;
 int16_t guimen2_gk_max=16;
@@ -141,22 +144,26 @@ uint8_t shengyu_xiao=10;
 
 typedef struct
 {
-    uint8_t state; //zaiyong 是否
-    bool lock;
-    bool changqi;
-    uint8_t dzx_mode_gz;//default
-
-
 
     //zhiwen mima
     uint8_t cunwu_mode_gz;
+
+    //daxiao
+    uint8_t dzx_mode_gz;//default
+
     //yonghu xin xi
     uint64_t phone_number_nvs_gz;  //
     uint32_t mima_number_nvs_gz;  //
 
+    uint8_t state_gz; //zaiyong 是否
+
+
 
     // //格口编号
-	// uint16_t dIndx_gz;
+	// uint16_t dIndx_gz;//gaidao shuzuzhong
+    
+    bool lock;
+    bool changqi;
 }shujuku_struct_gz;
 //={0,0,0,3};//柜子
 
@@ -174,17 +181,10 @@ shujuku_struct_gz database_gz[SHENYU_GEZI_MAX];
 
 uint8_t phone_weishu_ok=00;
 
-
 //lock 格口编号
-
 //weiyi xuhao
 
-
-
-
 //donn't need save todo
-
-
 
 
 ///command struct
@@ -200,12 +200,16 @@ typedef struct
     uint64_t phone_number_nvs;  //
     uint32_t mima_number_nvs;  //
 
-    //格口编号
-	uint16_t dIndx;
 
     //状态 在用是否
-	bool sta_flag;
+	bool state;
 
+
+
+
+
+    //格口编号
+	uint16_t dIndx;//dangqian shuru
 
     //取物唯一编号 time
     uint16_t unique_number;
@@ -253,6 +257,80 @@ shujuku_struct_user database_cw;
 //     nvs_close(my_handle);
 //     return ESP_OK;
 // }
+
+
+
+
+
+
+
+
+
+
+
+//8
+esp_err_t save_u8_value(char* key, uint8_t out_value)
+{
+    nvs_handle_t my_handle;
+    esp_err_t err;
+
+    // Open
+    err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
+    if (err != ESP_OK) return err;
+
+    // Read
+    uint8_t out_value_t = 0; // value will default to 0, if not set yet in NVS
+    err = nvs_get_u8(my_handle, key, &out_value_t);
+    if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+
+    printf("w_r8-%s=%u\r\n",key,(uint8_t)(out_value_t));
+
+    // Write
+    err = nvs_set_u8(my_handle, key, out_value);
+    if (err != ESP_OK) return err;
+
+    // Commit written value.
+    // After setting any values, nvs_commit() must be called to ensure changes are written
+    // to flash storage. Implementations may write to storage at other times,
+    // but this is not guaranteed.
+    err = nvs_commit(my_handle);
+    if (err != ESP_OK) return err;
+
+    // Close
+    nvs_close(my_handle);
+    return ESP_OK;
+}
+
+esp_err_t read_u8_value(char* key, uint8_t* out_value)
+{
+    nvs_handle_t my_handle;
+    esp_err_t err;
+
+    // Open
+    err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
+    if (err != ESP_OK) return err;
+
+    // Read
+    //int32_t restart_counter = 0; // value will default to 0, if not set yet in NVS
+
+    err = nvs_get_u8(my_handle, key, out_value);
+    if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+
+
+    printf("rd8-%s=%u\r\n",key,(uint8_t)(*out_value));
+
+    // Close
+    nvs_close(my_handle);
+    return ESP_OK;
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -370,7 +448,7 @@ esp_err_t read_u32_value(char* key, uint32_t* out_value)
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
 
 
-    printf("r32-%s=%u\r\n",key,(*out_value));
+    printf("r32-%s=%u\r\n\r\n",key,(*out_value));
 
     // Close
     nvs_close(my_handle);
@@ -677,7 +755,36 @@ uint8_t ComputXor(uint8_t *InData, uint16_t Len)
 
 
 
+void kaiji_huamian(void)
+{
+    uint16_t crc16_temp=0;
+    uint8_t tx_Buffer[50]={0};  
 
+    //kaijie huamian
+    tx_Buffer[0] = 0x5A;
+    tx_Buffer[1] = 0xA5;
+    tx_Buffer[2] = 0x09;//len
+    tx_Buffer[3] = 0x82;
+    tx_Buffer[4] = 0x00;
+    tx_Buffer[5] = 0x84;
+    tx_Buffer[6] = 0x5A;
+    tx_Buffer[7] = 0x01;
+    tx_Buffer[8] = 0x00;
+    //todo
+    tx_Buffer[9] = 0x26;//kaiji
+    //crc
+    crc16_temp = CRC16(tx_Buffer+3, TX1_LEN-5);
+    printf("tx CRC16 result:0x%04X\r\n",crc16_temp);
+
+    tx_Buffer[10] = crc16_temp&0xff;
+    tx_Buffer[11] = (crc16_temp>>8)&0xff;
+    uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
+
+    ESP_LOGI(TAG,"切换到开机画面!!!\r\n");
+
+
+
+}
 
 
 
@@ -1116,26 +1223,28 @@ static void echo_task2()
                                     if(1 == database_cw.dzx_mode)
                                     {
                                         
-                                        for (uint16_t i = 0; i < SHENYU_GEZI_MAX; i++)
+                                        for (uint16_t i = 0; i < SHENYU_GEZI_MAX; i++)//todo changqi and suoding
                                         {
-                                            if((database_gz[i].state ==0) 
+                                            if((database_gz[i].state_gz ==0) 
                                                 &&(database_gz[i].dzx_mode_gz ==1))
                                             {
                                                 database_gz_temp[j++] =i;//no use
                                             }
-                                            else if((database_gz[i].state ==1) 
-                                                &&(database_gz[i].dzx_mode_gz ==1))//zhong xiao use, no use + da use
+                                            else if((database_gz[i].state_gz ==1) 
+                                                &&(database_gz[i].dzx_mode_gz ==1))// da use
                                             {
                                                 database_gz_temp_onuse[k++] =i;
                                             }
                                             printf("shengyu index=%d, database_gz[i].dzx_mode_gz=%d, state =%d\r\n",
-                                                    i, database_gz[i].dzx_mode_gz, database_gz[i].state);
+                                                    i, database_gz[i].dzx_mode_gz, database_gz[i].state_gz);
                                         }
                                         printf("shengyu j=%d, onuse k=%d\r\n",j,k);
                                         uart0_debug_data_dec(database_gz_temp,j);
                                         uart0_debug_data_dec(database_gz_temp_onuse,k);
                                         database_cw.dIndx = database_gz_temp[rand()%j];//随机获取哪个门没用
-                                        database_gz[database_cw.dIndx].state =1;
+
+                                        database_cw.state=1;
+                                        database_gz[database_cw.dIndx].state_gz =database_cw.state;
                                         printf("database_cw.dIndx=%u\r\n",database_cw.dIndx);
 
 
@@ -1204,7 +1313,7 @@ static void echo_task2()
                                         RS485_RX_EN();
                                             
                                         
-
+                                        
 
                                     }
                                     else if(2 == database_cw.dzx_mode)
@@ -1260,38 +1369,165 @@ static void echo_task2()
 
 
                                     ESP_LOGI(TAG, "----test--.\r\n");  
-                                    //database_cw.sta_flag=1;
+                                    
 
-                                    //if()
+                                    if(0 != database_cw.dzx_mode)
                                     {
-                                        esp_err_t err = save_u16_value("dw_dIndx",database_cw.dIndx);
+
+                                        char key_name[15];//15
+                                        esp_err_t err;
+
+                                        database_gz[database_cw.dIndx].cunwu_mode_gz = database_cw.cunwu_mode;
+                                        sprintf(key_name, "%d_dz_cw_md", database_cw.dIndx);
+                                        printf("--key_name=%s--\r\n",key_name);
+
+                                        err = save_u8_value(key_name,database_gz[database_cw.dIndx].cunwu_mode_gz);
                                         if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
 
-                                        err = read_u16_value("dw_dIndx", (uint16_t*)(&database_cw.dIndx));
+                                        err = read_u8_value(key_name, (uint8_t*)(&database_gz[database_cw.dIndx].cunwu_mode_gz));
                                         if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
 
-                                        // save_u16_value("1_2",database_cw.sta_flag);
-                                        // save_u16_value("1_3",database_cw.cunwu_mode);
-                                        // save_u16_value("1_4",database_cw.dzx_mode);
+
+                                        database_gz[database_cw.dIndx].dzx_mode_gz = database_cw.dzx_mode;
+                                        sprintf(key_name, "%d_dz_dzxmd", database_cw.dIndx);
+                                        printf("--key_name=%s--\r\n",key_name);
+
+                                        err = save_u8_value(key_name,database_gz[database_cw.dIndx].dzx_mode_gz);
+                                        if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        err = read_u8_value(key_name, (uint8_t*)(&database_gz[database_cw.dIndx].dzx_mode_gz));
+                                        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
 
 
                                         database_cw.phone_number_nvs = atoi((const char*)phone_number);
-                                        err = save_u64_value("dw_phone_number",database_cw.phone_number_nvs);
+
+                                        database_gz[database_cw.dIndx].phone_number_nvs_gz = database_cw.phone_number_nvs;
+                                        sprintf(key_name, "%d_dz_phone", database_cw.dIndx);
+                                        printf("--key_name=%s--\r\n",key_name);
+
+                                        err = save_u64_value(key_name,database_gz[database_cw.dIndx].phone_number_nvs_gz);
                                         if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
                                         
-                                        err = read_u64_value("dw_phone_number",&database_cw.phone_number_nvs);
+                                        err = read_u64_value(key_name,&database_gz[database_cw.dIndx].phone_number_nvs_gz);
                                         if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
 
 
 
                                         database_cw.mima_number_nvs = atoi((const char*)mima_number);
-                                        err = save_u32_value("dw_mima_number",database_cw.mima_number_nvs);
+                                        
+                                        database_gz[database_cw.dIndx].mima_number_nvs_gz = database_cw.mima_number_nvs;
+                                        sprintf(key_name, "%d_dz_mima", database_cw.dIndx);
+                                        printf("--key_name=%s--\r\n",key_name);
+
+                                        err = save_u32_value(key_name,database_gz[database_cw.dIndx].mima_number_nvs_gz);
                                         if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
 
-                                        err = read_u32_value("dw_mima_number",&database_cw.mima_number_nvs);
+                                        err = read_u32_value(key_name,&database_gz[database_cw.dIndx].mima_number_nvs_gz);
                                         if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+                                        
+
+
+
+                                        sprintf(key_name, "%d_dz_st", database_cw.dIndx);
+                                        printf("--key_name=%s--\r\n",key_name);
+
+                                        err = save_u8_value(key_name,database_gz[database_cw.dIndx].state_gz);
+                                        if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        err = read_u8_value(key_name, (uint8_t*)(&database_gz[database_cw.dIndx].state_gz));
+                                        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+
+
+
+
+
+
+                                        //custumer   mingming kongjian
+                                        // esp_err_t err = save_u16_value("dw_dIndx",database_cw.dIndx);
+                                        // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        // err = read_u16_value("dw_dIndx", (uint16_t*)(&database_cw.dIndx));
+                                        // if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+                                        //unique number
+
+
+                                        // database_gz[database_cw.dIndx].cunwu_mode_gz = database_cw.cunwu_mode;
+                                        // sprintf(key_name, "_%d_dgz_cunwu_mode", database_cw.dIndx);
+                                        // printf("--key_name=%s--\r\n",key_name);
+
+                                        // err = save_u8_value(key_name,database_cw.cunwu_mode);
+                                        // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        // err = read_u8_value(key_name, (uint8_t*)(&database_cw.cunwu_mode));
+                                        // if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+
+                                        // database_gz[database_cw.dIndx].dzx_mode_gz = database_cw.dzx_mode;
+                                        // sprintf(key_name, "_%d_dgz_dzx_mode", database_cw.dIndx);
+                                        // printf("--key_name=%s--\r\n",key_name);
+
+                                        // err = save_u8_value(key_name,database_cw.dzx_mode);
+                                        // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        // err = read_u8_value(key_name, (uint8_t*)(&database_cw.dzx_mode));
+                                        // if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+
+
+                                        // database_cw.phone_number_nvs = atoi((const char*)phone_number);
+
+                                        // database_gz[database_cw.dIndx].phone_number_nvs_gz = database_cw.phone_number_nvs;
+                                        // sprintf(key_name, "_%d_dgz_phone_number_nvs", database_cw.dIndx);
+                                        // printf("--key_name=%s--\r\n",key_name);
+
+                                        // err = save_u64_value(key_name,database_cw.phone_number_nvs);
+                                        // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+                                        
+                                        // err = read_u64_value(key_name,&database_cw.phone_number_nvs);
+                                        // if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+
+
+                                        // database_cw.mima_number_nvs = atoi((const char*)mima_number);
+                                        
+                                        // database_gz[database_cw.dIndx].mima_number_nvs_gz = database_cw.mima_number_nvs;
+                                        // sprintf(key_name, "_%d_dgz_mima_number_nvs", database_cw.dIndx);
+                                        // printf("--key_name=%s--\r\n",key_name);
+
+                                        // err = save_u32_value(key_name,database_cw.mima_number_nvs);
+                                        // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        // err = read_u32_value(key_name,&database_cw.mima_number_nvs);
+                                        // if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+                                        
+
+
+
+                                        // sprintf(key_name, "_%d_dgz_cunwu_state", database_cw.dIndx);
+                                        // printf("--key_name=%s--\r\n",key_name);
+
+                                        // err = save_u8_value(key_name,database_gz[database_cw.dIndx].state_gz);
+                                        // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        // err = read_u8_value(key_name, (uint8_t*)(&database_gz[database_cw.dIndx].state_gz));
+                                        // if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+
+
+
 
 
                                     }
@@ -1319,8 +1555,12 @@ static void echo_task2()
 
 
 
-                                phone_weishu_ok =0;
+                                
+                                database_cw.cunwu_mode =0;
                                 database_cw.dzx_mode = 0 ;
+                                database_cw.state=0;
+
+                                phone_weishu_ok =0;
                                 break;
 
 
@@ -1924,14 +2164,104 @@ void uart_init_all(void)
 }
 
 
+void read_nvs_guizi_all()
+{
+    char key_num[3];//65536
+    //todo
+    char key_name[15];
+    esp_err_t err;
 
+    shengyu_all_max = shengyu_da_max + shengyu_zhong_max + shengyu_xiao_max;
+    for(uint16_t i=0;i<shengyu_all_max;i++)
+    {
+
+
+
+        //database_gz[i].cunwu_mode_gz = database_cw.cunwu_mode;
+        //sprintf(key_name, "%d_dz_cw_md", i);
+        itoa(i,key_num,10);
+        strcat(key_name,"_dz_cw_md");
+        printf("--key_name=%s--\r\n",key_name);
+
+        // err = save_u8_value(key_name,database_gz[i].cunwu_mode_gz);
+        // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+        err = read_u8_value(key_name, (uint8_t*)(&database_gz[i].cunwu_mode_gz));
+        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+
+        //database_gz[i].dzx_mode_gz = database_cw.dzx_mode;
+        //sprintf(key_name, "%d_dz_dzxmd", i);
+        itoa(i,key_num,10);
+        strcat(key_name,"_dz_dzxmd");
+        printf("--key_name=%s--\r\n",key_name);
+
+        // err = save_u8_value(key_name,database_gz[i].dzx_mode_gz);
+        // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+        err = read_u8_value(key_name, (uint8_t*)(&database_gz[i].dzx_mode_gz));
+        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+
+
+        // database_cw.phone_number_nvs = atoi((const char*)phone_number);
+
+        // database_gz[i].phone_number_nvs_gz = database_cw.phone_number_nvs;
+        //sprintf(key_name, "%d_dz_phone", i);
+        itoa(i,key_num,10);
+        strcat(key_name,"_dz_phone");
+        printf("--key_name=%s--\r\n",key_name);
+
+        // err = save_u64_value(key_name,database_gz[i].phone_number_nvs_gz);
+        // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+        
+        err = read_u64_value(key_name,&database_gz[i].phone_number_nvs_gz);
+        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+
+
+        //database_cw.mima_number_nvs = atoi((const char*)mima_number);
+        
+        //database_gz[i].mima_number_nvs_gz = database_cw.mima_number_nvs;
+        //sprintf(key_name, "%d_dz_mima", i);
+        itoa(i,key_num,10);
+        strcat(key_name,"_dz_mima");
+        printf("--key_name=%s--\r\n",key_name);
+
+        // err = save_u32_value(key_name,database_gz[i].mima_number_nvs_gz);
+        // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+        err = read_u32_value(key_name,&database_gz[i].mima_number_nvs_gz);
+        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+        
+
+
+
+        //sprintf(key_name, "%d_dz_st", i);
+        itoa(i,key_num,10);
+        strcat(key_name,"_dz_st");
+        printf("--key_name=%s--\r\n",key_name);
+
+        // err = save_u8_value(key_name,database_gz[i].state_gz);
+        // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+        err = read_u8_value(key_name, (uint8_t*)(&database_gz[i].state_gz));
+        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+    
+        printf("\r\n");
+    }
+
+}
 
 
 void app_main()
 {
     u8 ensure;
-    uint16_t crc16_temp=0;
-    uint8_t tx_Buffer[50]={0};  
+
 
     gpio_pad_select_gpio(RE_485_GPIO);
     /* Set the GPIO as a push/pull output */
@@ -1997,29 +2327,7 @@ void app_main()
 
 
     
-
-    //kaijie huamian
-    tx_Buffer[0] = 0x5A;
-    tx_Buffer[1] = 0xA5;
-    tx_Buffer[2] = 0x09;//len
-    tx_Buffer[3] = 0x82;
-    tx_Buffer[4] = 0x00;
-    tx_Buffer[5] = 0x84;
-    tx_Buffer[6] = 0x5A;
-    tx_Buffer[7] = 0x01;
-    tx_Buffer[8] = 0x00;
-    //todo
-    tx_Buffer[9] = 0x26;//kaiji
-    //crc
-    crc16_temp = CRC16(tx_Buffer+3, TX1_LEN-5);
-    printf("tx CRC16 result:0x%04X\r\n",crc16_temp);
-
-    tx_Buffer[10] = crc16_temp&0xff;
-    tx_Buffer[11] = (crc16_temp>>8)&0xff;
-    uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
-
-    ESP_LOGI(TAG,"切换到开机画面!!!\r\n");
-
+    kaiji_huamian();
 
 
 
@@ -2051,30 +2359,27 @@ void app_main()
     ESP_ERROR_CHECK( err );
 
     // //err = print_what_saved();//dayin
-    err = read_u16_value("dw_dIndx", (uint16_t*)(&database_cw.dIndx));
-    if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+    // err = read_u16_value("dw_dIndx", (uint16_t*)(&database_cw.dIndx));
+    // if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
 
-    err = read_u64_value("dw_phone_number",&database_cw.phone_number_nvs);
-    if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+    // err = read_u64_value("dw_phone_number",&database_cw.phone_number_nvs);
+    // if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
 
-    err = read_u32_value("dw_mima_number",&database_cw.mima_number_nvs);
-    if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
-
-
-
+    // err = read_u32_value("dw_mima_number",&database_cw.mima_number_nvs);
+    // if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
 
 
 
 
+    
 
 
 
 
-
-
+    
     for (uint16_t i = 0; i < SHENYU_GEZI_MAX; i++)
     {
         database_gz[i].dzx_mode_gz =3;
@@ -2106,7 +2411,7 @@ void app_main()
     }
 
 
-
+    read_nvs_guizi_all();
     //database_gz[0].state =1;
 
     // err = save_restart_counter();
