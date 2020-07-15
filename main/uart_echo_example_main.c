@@ -1933,12 +1933,9 @@ done:
                                 database_cw.state=0;
 
                                 phone_weishu_ok =0;
+
+
                                 break;
-
-
-
-
-
 
 
 
@@ -1994,6 +1991,381 @@ done:
 //---------------------------------取物---------------------------------------------------
                             case 0x2030:
                                 ESP_LOGI(TAG, "-----qu-----.\r\n");
+                                if(02== data_rx_t[8])//12   mima
+                                {
+                                    database_cw.cunwu_mode = 2;//no use?
+                                    send_cmd_to_lcd_pic(0x000a);
+                                }
+                                if(01== data_rx_t[8])//12 zhiwen
+                                {
+                                    database_cw.cunwu_mode = 1;
+                                    send_cmd_to_lcd_pic(0x000c);     
+                                }
+                                break;
+
+                            case 0x1080:
+                                ESP_LOGI(TAG, "---q--phone-----.\r\n");
+                                //if(05== data_rx_t[6])//12
+                                if(01== data_rx_t[6])//12
+                                {
+                                    //zancun
+                                    phone_weishu_ok =1;
+                                    memcpy( phone_number,data_rx_t+7 ,10);
+                                    ESP_LOGI(TAG, "q---phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
+
+                                }
+                                else
+                                {
+                                    ESP_LOGI(TAG, "q-------1 - shoujihao weishu err--------.\r\n");
+                                }
+                                break;
+                            case 0x1090:
+                                ESP_LOGI(TAG, "---q--mima-----.\r\n");
+
+                                //ESP_LOGI(TAG, "---phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
+
+                                //存物的格口编号（123）、格口类型（1：小，2：中，3：大）
+                                //存物手机号（11位）密码（6位）            或者指纹(----)   
+
+
+                                //if((1 == phone_weishu_ok)&&(03== data_rx_t[6]))//6   ok todo shoujihao yiyou
+                                if((1 == phone_weishu_ok)&&(01== data_rx_t[6]))
+                                {
+                                    memcpy( mima_number,data_rx_t+7 ,6);
+
+                                    printf("phone_number=");
+                                    uart0_debug_str(phone_number,11);
+
+                                    printf("mima_number=");
+                                    uart0_debug_str(mima_number,6);
+
+                                    uint16_t j=0,k=0;
+                                    uint16_t database_gz_temp[SHENYU_GEZI_MAX]={0};
+                                    uint16_t database_gz_temp_onuse[SHENYU_GEZI_MAX]={0};
+
+            
+                                    uint64_t phone_number_nvs_i;  //
+                                    uint32_t mima_number_nvs_i;  //
+                                    //uint16_t duiying_index;  //
+
+                                    phone_number_nvs_i = atoi((const char*)phone_number);
+                                    mima_number_nvs_i = atoi((const char*)mima_number);
+                                    printf("phone?=%11llu,mima?=%6u,", phone_number_nvs_i, mima_number_nvs_i);
+                                    
+
+                                    database_cw.dIndx = 0;
+                                    for (uint16_t i = 1; i <= shengyu_all_max; i++)//todo changqi and suoding
+                                    {
+
+                                        if(database_gz[i].phone_number_nvs_gz == phone_number_nvs_i)
+                                        {
+                                            if(database_gz[i].mima_number_nvs_gz == mima_number_nvs_i) 
+                                            {
+
+                                                //chongfu_flag =1;
+                                                database_cw.dIndx = i;//ok
+                                                printf("---yes- phone_number and key_number has in database\r\n");
+                                            }
+                                            else
+                                            {
+                                                //goto done_qu;
+                                                printf("---only mima_number will xin, phone_number has in database\r\n");
+                                            }
+
+
+                                        }
+                                        else//
+                                        {
+                                            //printf("---phone_number and mima will xin\r\n");
+                                        }
+                                        
+                                    }
+                                    if(database_cw.dIndx == 0)
+                                    {
+                                        printf("---no find phone\r\n");
+                                        database_cw.dIndx = atoi((const char*)mima_number);//data_rx_t[7] - 0x30;
+                                        //goto done_qu;
+                                    }
+                                    printf("---phone_number and mima etc... will be deleted\r\n");
+
+
+
+                                    // database_gz[database_cw.dIndx].state_gz =database_cw.state;
+                                    printf("---add---database_cw.dIndx=%u\r\n",database_cw.dIndx);
+
+
+
+
+                                    j=0;k=0;
+                                    //j=5; k=0;
+
+                                    // suiji kaimen
+                                    // if(shengyu_da >0)
+                                    if(((int16_t)database_cw.dIndx-guimen1_gk_max)>0)
+                                    {
+                                        k++;//board
+                                    }
+                                    else
+                                    {
+                                        j=database_cw.dIndx;//lock
+                                    }
+
+                                    if(((int16_t)database_cw.dIndx-\
+                                        guimen2_gk_max-\
+                                        guimen1_gk_max)>0)
+                                    {
+                                        k++;
+                                    }
+                                    else
+                                    {
+                                        j=database_cw.dIndx;
+                                    }
+
+                                    if(((int16_t)database_cw.dIndx-\
+                                        guimen3_gk_max-\
+                                        guimen2_gk_max-\
+                                        guimen1_gk_max)>0)
+                                    {
+                                        k++;
+                                    }
+                                    else
+                                    {
+                                        j=database_cw.dIndx;
+                                    }
+                                    printf("--open- board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
+
+                    
+
+
+
+
+                                    switch (database_gz[database_cw.dIndx].dzx_mode_gz)
+                                    {
+                                    case 1:
+                                        //d
+                                        shengyu_da ++;
+                                        tongbu_gekou_shuliang_d(shengyu_da); 
+                                        break;
+                                    case 2:
+                                        //z
+                                        shengyu_zhong ++;
+                                        tongbu_gekou_shuliang_d(shengyu_zhong); 
+                                        break;
+                                    case 3:
+                                        //x
+                                        shengyu_xiao ++;
+                                        tongbu_gekou_shuliang_d(shengyu_xiao); 
+                                        break;
+
+                                    default:
+                                        break;
+                                    }
+
+            
+
+
+                                    ESP_LOGI(TAG, "-da-lock:%d ok--.\r\n",j);
+                                    memcpy(tx_Buffer2,"star",4);
+                                    tx_Buffer2[4]= 0x8A;//m_data.opcode;
+                                    tx_Buffer2[5]= (uint8_t)(k+1);//m_data.board_addr;
+                                    tx_Buffer2[6]= (uint8_t)j;//m_data.lock_addr;
+                                    tx_Buffer2[7]= 0x11;//guding
+                                    bcc_temp = ComputXor(tx_Buffer2+4,4);
+                                    tx_Buffer2[8]= bcc_temp;
+                                    memcpy(tx_Buffer2+9,"endo",4);
+                                    
+                                    tx_Buffer2[13]='\0';
+
+                                    RS485_TX_EN();
+
+                                    printf("tx_Buffer2=");
+                                    uart0_debug_data(tx_Buffer2, 13);
+                                    uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
+                                    RS485_RX_EN();
+            
+                                        
+
+                                    ESP_LOGI(TAG, "----test--.\r\n");  
+                                    
+
+                                    //if(0 != database_cw.dzx_mode)
+                                    {
+
+
+                                        shengyu_all ++ ;
+                                        tongbu_gekou_shuliang_all(shengyu_all);
+
+                                        send_cmd_to_lcd_bl(0x10a0,database_cw.dIndx);//lock n
+
+                                        char key_name[15];//15
+                                        esp_err_t err;
+
+                                        database_gz[database_cw.dIndx].cunwu_mode_gz = 0;
+                                        sprintf(key_name, "%03d_dz_cw_md", database_cw.dIndx);
+                                        printf("--key_name=%s--\r\n",key_name);
+
+                                        err = save_u8_value(STORAGE_NAMESPACE,key_name,database_gz[database_cw.dIndx].cunwu_mode_gz);
+                                        if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        err = read_u8_value(STORAGE_NAMESPACE,key_name, (uint8_t*)(&database_gz[database_cw.dIndx].cunwu_mode_gz));
+                                        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+
+                                        database_gz[database_cw.dIndx].dzx_mode_gz = 0;
+                                        sprintf(key_name, "%03d_dz_dzxmd", database_cw.dIndx);
+                                        printf("--key_name=%s--\r\n",key_name);
+
+                                        err = save_u8_value(STORAGE_NAMESPACE,key_name,database_gz[database_cw.dIndx].dzx_mode_gz);
+                                        if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        err = read_u8_value(STORAGE_NAMESPACE,key_name, (uint8_t*)(&database_gz[database_cw.dIndx].dzx_mode_gz));
+                                        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+
+
+                                        //database_cw.phone_number_nvs = atoi((const char*)phone_number);
+
+                                        database_gz[database_cw.dIndx].phone_number_nvs_gz = 0;
+                                        sprintf(key_name, "%03d_dz_phone", database_cw.dIndx);
+                                        printf("--key_name=%s--\r\n",key_name);
+
+                                        err = save_u64_value(STORAGE_NAMESPACE,key_name,database_gz[database_cw.dIndx].phone_number_nvs_gz);
+                                        if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+                                        
+                                        err = read_u64_value(STORAGE_NAMESPACE,key_name,&database_gz[database_cw.dIndx].phone_number_nvs_gz);
+                                        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+
+
+                                        //database_cw.mima_number_nvs = atoi((const char*)mima_number);
+                                        
+                                        database_gz[database_cw.dIndx].mima_number_nvs_gz = 0;
+                                        sprintf(key_name, "%03d_dz_mima", database_cw.dIndx);
+                                        printf("--key_name=%s--\r\n",key_name);
+
+                                        err = save_u32_value(STORAGE_NAMESPACE,key_name,database_gz[database_cw.dIndx].mima_number_nvs_gz);
+                                        if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        err = read_u32_value(STORAGE_NAMESPACE,key_name,&database_gz[database_cw.dIndx].mima_number_nvs_gz);
+                                        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+                                        
+
+
+                                        database_gz[database_cw.dIndx].state_gz =0;
+                                        sprintf(key_name, "%03d_dz_st", database_cw.dIndx);
+                                        printf("--key_name=%s--\r\n",key_name);
+
+                                        err = save_u8_value(STORAGE_NAMESPACE,key_name,database_gz[database_cw.dIndx].state_gz);
+                                        if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        err = read_u8_value(STORAGE_NAMESPACE,key_name, (uint8_t*)(&database_gz[database_cw.dIndx].state_gz));
+                                        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+
+
+                                        //admin
+                                        //d
+                                        //printf("--key_name=%s--\r\n",NAMESPACE_ADM_KEY_SHENGYU_D);
+
+                                        err = save_u16_value(STORAGE_NAMESPACE_ADM,ADM_KEY_SHENGYU_D,shengyu_da);
+                                        if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        err = read_u16_value(STORAGE_NAMESPACE_ADM,ADM_KEY_SHENGYU_D, (uint16_t*)(&shengyu_da));
+                                        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+                                        //z
+                                        //printf("--key_name=%s--\r\n",NAMESPACE_ADM_KEY_SHENGYU_D);
+
+                                        err = save_u16_value(STORAGE_NAMESPACE_ADM,ADM_KEY_SHENGYU_Z,shengyu_zhong);
+                                        if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        err = read_u16_value(STORAGE_NAMESPACE_ADM,ADM_KEY_SHENGYU_Z, (uint16_t*)(&shengyu_zhong));
+                                        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+
+                                        //x
+                                        //printf("--key_name=%s--\r\n",NAMESPACE_ADM_KEY_SHENGYU_D);
+
+                                        err = save_u16_value(STORAGE_NAMESPACE_ADM,ADM_KEY_SHENGYU_X,shengyu_xiao);
+                                        if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        err = read_u16_value(STORAGE_NAMESPACE_ADM,ADM_KEY_SHENGYU_X, (uint16_t*)(&shengyu_xiao));
+                                        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+
+
+
+
+
+                                        //custumer   mingming kongjian   todo
+                                        // esp_err_t err = save_u16_value(STORAGE_NAMESPACE,"dw_dIndx",database_cw.dIndx);
+                                        // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        // err = read_u16_value(STORAGE_NAMESPACE,"dw_dIndx", (uint16_t*)(&database_cw.dIndx));
+                                        // if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+                                        //unique number
+
+                                    }
+                                    //cun
+                                    // tx_Buffer[8] = 0x00;
+                                    // tx_Buffer[9] = 0x08;
+
+                                    send_cmd_to_lcd_pic(0x000e); 
+
+                                }
+                                else
+                                {
+                                    if(03!= data_rx_t[6])
+                                    {
+                                      ESP_LOGI(TAG, "----------------2 - mima weishu err---------------.\r\n");  
+                                    }
+//done_qu:
+                                    ESP_LOGI(TAG, "----test2-error--.\r\n");  
+                                    // tx_Buffer[8] = 0x00;
+                                    // tx_Buffer[9] = 0x07;
+
+                                    send_cmd_to_lcd_pic(0x000d); 
+
+                                }
+
+
+
+                                ESP_LOGI(TAG, "----test3-done--.\r\n");  
+                                //crc
+                                crc16_temp = CRC16(tx_Buffer+3, TX1_LEN-5);
+                                //printf("tx CRC16 result:0x%04X\r\n",crc16_temp);
+
+                                tx_Buffer[10] = crc16_temp&0xff;
+                                tx_Buffer[11] = (crc16_temp>>8)&0xff;
+                                uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
+
+
+
+                                
+                                database_cw.cunwu_mode =0;
+                                database_cw.dzx_mode = 0 ;
+                                database_cw.state=0;
+
+                                phone_weishu_ok =0;
+
+                                //send_cmd_to_lcd_pic(0x000a);
+                                break;
+
+
+
+
+//---------------------------------admin----------------------------------------------------
+                            case 0x10b0://mima
+                                ESP_LOGI(TAG, "----admin --mima-----.\r\n");
                                 send_cmd_to_lcd_pic(0x000a);
                                 break;
 
@@ -2644,6 +3016,9 @@ void read_nvs_guizi_all()
 
     shengyu_all = shengyu_da + shengyu_zhong + shengyu_xiao;
     
+    printf("---shengyu_da=%d----\n",shengyu_da);
+    printf("---shengyu_zhong=%d----\n",shengyu_zhong);
+    printf("---shengyu_xiao=%d----\n",shengyu_xiao);
     printf("---shengyu_all=%d----\n",shengyu_all);
 
 
