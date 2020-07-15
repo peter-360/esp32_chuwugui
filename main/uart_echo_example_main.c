@@ -840,8 +840,8 @@ void tongbu_gekou_shuliang_all(uint16_t temp)
     tx_Buffer[4] = 0x10;
     tx_Buffer[5] = 0x10;//dizhi
 
-    tx_Buffer[6] = temp/100;
-    tx_Buffer[7] = temp%100;//data shengyu dagezi
+    tx_Buffer[6] = temp/256;
+    tx_Buffer[7] = temp%256;//data shengyu dagezi
 
     printf("shengyu_da1:0x%04d\r\n",temp);
     //crc
@@ -867,8 +867,8 @@ void tongbu_gekou_shuliang_d(uint16_t temp)
     tx_Buffer[4] = 0x10;
     tx_Buffer[5] = 0x20;//dizhi
 
-    tx_Buffer[6] = temp/100;
-    tx_Buffer[7] = temp%100;//data shengyu dagezi
+    tx_Buffer[6] = temp/256;
+    tx_Buffer[7] = temp%256;//data shengyu dagezi
 
     printf("shengyu_da1:0x%04d\r\n",temp);
     //crc
@@ -894,8 +894,8 @@ void tongbu_gekou_shuliang_z(uint16_t temp )
     tx_Buffer[4] = 0x10;
     tx_Buffer[5] = 0x30;//dizhi
 
-    tx_Buffer[6] = temp/100;
-    tx_Buffer[7] = temp%100;
+    tx_Buffer[6] = temp/256;
+    tx_Buffer[7] = temp%256;
     printf("shengyu_zhong1:0x%04d\r\n",temp);
     //crc
     crc16_temp = CRC16(tx_Buffer+3, TX1_LEN_BL -5);
@@ -922,8 +922,8 @@ void tongbu_gekou_shuliang_x(uint16_t temp)
     tx_Buffer[4] = 0x10;
     tx_Buffer[5] = 0x40;//dizhi
 
-    tx_Buffer[6] = temp/100;
-    tx_Buffer[7] = temp%100;
+    tx_Buffer[6] = temp/256;
+    tx_Buffer[7] = temp%256;
     printf("shengyu_xiao1:0x%04d\r\n",temp);
     //crc
     crc16_temp = CRC16(tx_Buffer+3, TX1_LEN_BL -5);
@@ -936,10 +936,77 @@ void tongbu_gekou_shuliang_x(uint16_t temp)
 }
 
 
+
+
+void send_cmd_to_lcd_bl(uint16_t opCode, uint16_t temp)//变量
+{
+    uint8_t tx_Buffer[50]={0};  
+    uint16_t crc16_temp=0;
+    //xiao
+    tx_Buffer[0] = 0x5A;
+    tx_Buffer[1] = 0xA5;
+    tx_Buffer[2] = 0x07;//len
+    tx_Buffer[3] = 0x82;
+
+    tx_Buffer[4] = opCode/256;
+    tx_Buffer[5] = opCode%256;//dizhi
+
+    tx_Buffer[6] = temp/256;
+    tx_Buffer[7] = temp%256;
+    printf("temp-bl:0x%04d\r\n",temp);
+    //crc
+    crc16_temp = CRC16(tx_Buffer+3, TX1_LEN_BL -5);
+    printf("tx CRC16 result:0x%04X\r\n",crc16_temp);
+
+    tx_Buffer[8] = crc16_temp&0xff;
+    tx_Buffer[9] = (crc16_temp>>8)&0xff;
+    uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN_BL);
+}
+
+void send_cmd_to_lcd_pic(uint16_t temp)//图片
+{
+    uint8_t tx_Buffer[50]={0};  
+    uint16_t crc16_temp=0;
+
+    ESP_LOGI(TAG, "-----pic-----.\r\n");
+    tx_Buffer[0] = 0x5A;
+    tx_Buffer[1] = 0xA5;
+
+    tx_Buffer[2] = 0x09;//len
+    tx_Buffer[3] = 0x82;
+
+    tx_Buffer[4] = 0x00;
+    tx_Buffer[5] = 0x84;
+
+    tx_Buffer[6] = 0x5A;
+    tx_Buffer[7] = 0x01;
+
+        
+    tx_Buffer[8] = temp/256;
+    tx_Buffer[9] = temp%256;
+    printf("temp-pic:0x%04d\r\n",temp);
+
+    //crc
+    crc16_temp = CRC16(tx_Buffer+3, TX1_LEN - 5);
+    printf("tx CRC16 result:0x%04X\r\n",crc16_temp);
+
+    tx_Buffer[10] = crc16_temp&0xff;
+    tx_Buffer[11] = (crc16_temp>>8)&0xff;
+    
+    uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
+
+}
+
+// void lcd_send_cmd_response(uint8_t rsp)
+// {
+
+// }
+
+
 uint8_t phone_number[11]={0};  
 uint8_t mima_number[6]={0};  
 
-static void echo_task2()
+static void echo_task2()//lcd
 {
     uint16_t bl_addr=0;//bianliang lcd
     uint16_t crc16_temp=0;
@@ -1000,15 +1067,33 @@ static void echo_task2()
                     {
                     case 0x82:
                         //uart_write_bytes(UART_NUM_2, (const char *) (data_rx_t+4), len_rx_t-4);
-                        ESP_LOGI(TAG, "--0x82--.\r\n");
+                        
+                        bl_addr = (data_rx_t[4]<<8) + data_rx_t[5];
+                        ESP_LOGI(TAG, "--0x82--.bl_addr=%04x\r\n",bl_addr);
+
+                        uint8_t tx_Buffer[50]={0};  
+                        uint8_t bcc_temp=0;
+                        switch (bl_addr)
+                        {
+
+                        case 0x4F4B:
+                            ESP_LOGI(TAG, "-----ok-----.\r\n");
+                            //todo
+                            break;
+
+                        default:
+                            ESP_LOGI(TAG, "----------------83 default---------------.\r\n");
+                            break;
+                        }
+
                         break;
 
                     case 0x83:
                         if( data_rx_t[6] == (len_rx_t-7 -2)/2)
                         {
                             //uart_write_bytes(UART_NUM_2, (const char *) (data_rx_t+4), len_rx_t-4);
-                            ESP_LOGI(TAG, "--0x83--.\r\n");
                             bl_addr = (data_rx_t[4]<<8) + data_rx_t[5];
+                            ESP_LOGI(TAG, "--0x83--.bl_addr=%04x\r\n",bl_addr);
 
                             uint8_t tx_Buffer[50]={0};  
                             uint8_t tx_Buffer2[50]={0};  
@@ -1279,10 +1364,6 @@ static void echo_task2()
 
                                 if((1 == phone_weishu_ok)&&(03== data_rx_t[6]))//6   ok todo shoujihao yiyou
                                 {
-                                    //cun
-                                    tx_Buffer[8] = 0x00;
-                                    tx_Buffer[9] = 0x08;
-
                                     memcpy( mima_number,data_rx_t+7 ,6);
 
                                     printf("phone_number=");
@@ -1696,6 +1777,7 @@ static void echo_task2()
 
                                         shengyu_all -- ;
                                         tongbu_gekou_shuliang_all(shengyu_all);
+                                        send_cmd_to_lcd_bl(0x1070,database_cw.dIndx);
 
                                         char key_name[15];//15
                                         esp_err_t err;
@@ -1814,10 +1896,10 @@ static void echo_task2()
 
                                         //unique number
 
-
-
                                     }
-                                    
+                                    //cun
+                                    tx_Buffer[8] = 0x00;
+                                    tx_Buffer[9] = 0x08;
 
                                 }
                                 else
@@ -1892,7 +1974,7 @@ done:
 
 
 
-
+                            //zhiwen todo
                             case 0x2090:
                                 ESP_LOGI(TAG, "----------------zhiwen uart2test uart3 todo---------------.\r\n");
                                 
@@ -1904,7 +1986,19 @@ done:
                                 break;
 
 
+
+
+
+
+
+//---------------------------------取物---------------------------------------------------
+                            case 0x2030:
+                                ESP_LOGI(TAG, "-----qu-----.\r\n");
+                                send_cmd_to_lcd_pic(0x000a);
+                                break;
+
                             default:
+                                ESP_LOGI(TAG, "----------------83 default---------------.\r\n");
                                 break;
                             }
 
