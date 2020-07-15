@@ -827,7 +827,7 @@ void kaiji_huamian(void)
 
 
 
-void tongbu_gekou_shuliang_all(uint8_t temp)
+void tongbu_gekou_shuliang_all(uint16_t temp)
 {
     uint8_t tx_Buffer[50]={0};  
     uint16_t crc16_temp=0;
@@ -854,7 +854,7 @@ void tongbu_gekou_shuliang_all(uint8_t temp)
 
 }
 
-void tongbu_gekou_shuliang_d(uint8_t temp)
+void tongbu_gekou_shuliang_d(uint16_t temp)
 {
     uint8_t tx_Buffer[50]={0};  
     uint16_t crc16_temp=0;
@@ -881,7 +881,7 @@ void tongbu_gekou_shuliang_d(uint8_t temp)
 
 }
 
-void tongbu_gekou_shuliang_z(uint8_t temp )
+void tongbu_gekou_shuliang_z(uint16_t temp )
 {
     uint8_t tx_Buffer[50]={0};  
     uint16_t crc16_temp=0;
@@ -909,7 +909,7 @@ void tongbu_gekou_shuliang_z(uint8_t temp )
 
 }
 
-void tongbu_gekou_shuliang_x(uint8_t temp)
+void tongbu_gekou_shuliang_x(uint16_t temp)
 {
     uint8_t tx_Buffer[50]={0};  
     uint16_t crc16_temp=0;
@@ -1340,17 +1340,17 @@ static void echo_task2()
                                         
                                         for (uint16_t i = 1; i <= shengyu_all_max; i++)//todo changqi and suoding
                                         {
-                                            if((database_gz[i].state_gz ==0) 
+                                            if((database_gz[i].state_gz ==0) //no use
                                                 &&(database_gz[i].lock == 0)
                                                 &&(database_gz[i].changqi == 0)
-                                                &&(database_gz[i].dzx_mode_gz ==1))
+                                                &&(database_gz[i].dzx_mode_gz ==1))//d
                                             {
-                                                database_gz_temp[j++] =i;//da no use
+                                                database_gz_temp[j++] =i;
                                             }
-                                            else if((database_gz[i].state_gz ==1) 
+                                            else if((database_gz[i].state_gz ==1) //used
                                                 &&(database_gz[i].lock == 0)
                                                 &&(database_gz[i].changqi == 0)
-                                                &&(database_gz[i].dzx_mode_gz ==1))// da used
+                                                &&(database_gz[i].dzx_mode_gz ==1))//d
                                             {
                                                 database_gz_temp_onuse[k++] =i;
                                             }
@@ -1408,11 +1408,17 @@ static void echo_task2()
                                         printf("--open- board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
 
                         
-                                        shengyu_da = shengyu_da -1;
+
+
+
+
+
+                                        //old
+                                        shengyu_da --;
                                         tongbu_gekou_shuliang_d(shengyu_da);
 
 
-                                        ESP_LOGI(TAG, "--lock:%d ok--.\r\n",j);
+                                        ESP_LOGI(TAG, "-da-lock:%d ok--.\r\n",j);
                                         memcpy(tx_Buffer2,"star",4);
                                         tx_Buffer2[4]= 0x8A;//m_data.opcode;
                                         tx_Buffer2[5]= (uint8_t)(k+1);//m_data.board_addr;
@@ -1437,17 +1443,90 @@ static void echo_task2()
                                     }
                                     else if(2 == database_cw.dzx_mode)
                                     {
+                                        for (uint16_t i = 1; i <= shengyu_all_max; i++)//todo changqi and suoding
+                                        {
+                                            if((database_gz[i].state_gz ==0) //no use
+                                                &&(database_gz[i].lock == 0)
+                                                &&(database_gz[i].changqi == 0)
+                                                &&(database_gz[i].dzx_mode_gz ==2))//z
+                                            {
+                                                database_gz_temp[j++] =i;
+                                            }
+                                            else if((database_gz[i].state_gz ==1) //used
+                                                &&(database_gz[i].lock == 0)
+                                                &&(database_gz[i].changqi == 0)
+                                                &&(database_gz[i].dzx_mode_gz ==2))//z
+                                            {
+                                                database_gz_temp_onuse[k++] =i;
+                                            }
+                                            printf("shengyu index=%03d, database_gz[i].dzx_mode_gz=%d, state =%d\r\n",
+                                                    i, database_gz[i].dzx_mode_gz, database_gz[i].state_gz);
+                                        }
+                                        printf("shengyu j=%d, onuse k=%d\r\n",j,k);
+                                        uart0_debug_data_dec(database_gz_temp,j);
+                                        uart0_debug_data_dec(database_gz_temp_onuse,k);
+                                        database_cw.dIndx = database_gz_temp[rand()%j];//随机获取哪个门没用
+
+                                        database_cw.state=1;
+                                        // database_gz[database_cw.dIndx].state_gz =database_cw.state;
+                                        printf("---add---database_cw.dIndx=%u\r\n",database_cw.dIndx);
+
+
+
+
+                                        uint8_t j=0,k=0;
+                                        //j=5; k=0;
+
+                                        // suiji kaimen
+                                        // if(shengyu_da >0)
+                                        if(((int16_t)database_cw.dIndx-guimen1_gk_max)>0)
+                                        {
+                                            k++;//board
+                                        }
+                                        else
+                                        {
+                                            j=database_cw.dIndx;//lock
+                                        }
+
+                                        if(((int16_t)database_cw.dIndx-\
+                                            guimen2_gk_max-\
+                                            guimen1_gk_max)>0)
+                                        {
+                                            k++;
+                                        }
+                                        else
+                                        {
+                                            j=database_cw.dIndx;
+                                        }
+
+                                        if(((int16_t)database_cw.dIndx-\
+                                            guimen3_gk_max-\
+                                            guimen2_gk_max-\
+                                            guimen1_gk_max)>0)
+                                        {
+                                            k++;
+                                        }
+                                        else
+                                        {
+                                            j=database_cw.dIndx;
+                                        }
+                                        printf("--open- board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
+
+                        
+
+
                                         //if(shengyu_zhong >0)
                                         {
-                                            shengyu_zhong = shengyu_zhong -1;
+                                            shengyu_zhong --;
                                             tongbu_gekou_shuliang_z(shengyu_zhong);
 
-                                            ESP_LOGI(TAG, "--lock2 ok--.\r\n");
+                                            //ESP_LOGI(TAG, "--lock2 ok--.\r\n");
 
+                                            ESP_LOGI(TAG, "-zhong-lock:%d ok--.\r\n",j);
                                             memcpy(tx_Buffer2,"star",4);
                                             tx_Buffer2[4]= 0x8A;//m_data.opcode;
-                                            tx_Buffer2[5]= 0x01;//m_data.board_addr;
-                                            tx_Buffer2[6]= 0x01;//m_data.lock_addr;
+                                            tx_Buffer2[5]= (uint8_t)(k+1);//m_data.board_addr;
+                                            tx_Buffer2[6]= (uint8_t)j;//m_data.lock_addr;
                                             tx_Buffer2[7]= 0x11;//guding
                                             bcc_temp = ComputXor(tx_Buffer2+4,4);
                                             tx_Buffer2[8]= bcc_temp;
@@ -1461,6 +1540,7 @@ static void echo_task2()
                                             uart0_debug_data(tx_Buffer2, 13);
                                             uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
                                             RS485_RX_EN();
+                                            
                                         }
                                         // else
                                         // {
@@ -1470,13 +1550,109 @@ static void echo_task2()
                                     }
                                     else if(3 == database_cw.dzx_mode)
                                     {
-                                        tongbu_gekou_shuliang_x(shengyu_xiao);
+
+
+                                        for (uint16_t i = 1; i <= shengyu_all_max; i++)//todo changqi and suoding
+                                        {
+                                            if((database_gz[i].state_gz ==0) //no use
+                                                &&(database_gz[i].lock == 0)
+                                                &&(database_gz[i].changqi == 0)
+                                                &&(database_gz[i].dzx_mode_gz ==3))//x
+                                            {
+                                                database_gz_temp[j++] =i;
+                                            }
+                                            else if((database_gz[i].state_gz ==1) //used
+                                                &&(database_gz[i].lock == 0)
+                                                &&(database_gz[i].changqi == 0)
+                                                &&(database_gz[i].dzx_mode_gz ==3))//x
+                                            {
+                                                database_gz_temp_onuse[k++] =i;
+                                            }
+                                            printf("shengyu index=%03d, database_gz[i].dzx_mode_gz=%d, state =%d\r\n",
+                                                    i, database_gz[i].dzx_mode_gz, database_gz[i].state_gz);
+                                        }
+                                        printf("shengyu j=%d, onuse k=%d\r\n",j,k);
+                                        uart0_debug_data_dec(database_gz_temp,j);
+                                        uart0_debug_data_dec(database_gz_temp_onuse,k);
+                                        database_cw.dIndx = database_gz_temp[rand()%j];//随机获取哪个门没用
+
+                                        database_cw.state=1;
+                                        // database_gz[database_cw.dIndx].state_gz =database_cw.state;
+                                        printf("---add---database_cw.dIndx=%u\r\n",database_cw.dIndx);
+
+
+
+
+                                        uint8_t j=0,k=0;
+                                        //j=5; k=0;
+
+                                        // suiji kaimen
+                                        // if(shengyu_da >0)
+                                        if(((int16_t)database_cw.dIndx-guimen1_gk_max)>0)
+                                        {
+                                            k++;//board
+                                        }
+                                        else
+                                        {
+                                            j=database_cw.dIndx;//lock
+                                        }
+
+                                        if(((int16_t)database_cw.dIndx-\
+                                            guimen2_gk_max-\
+                                            guimen1_gk_max)>0)
+                                        {
+                                            k++;
+                                        }
+                                        else
+                                        {
+                                            j=database_cw.dIndx;
+                                        }
+
+                                        if(((int16_t)database_cw.dIndx-\
+                                            guimen3_gk_max-\
+                                            guimen2_gk_max-\
+                                            guimen1_gk_max)>0)
+                                        {
+                                            k++;
+                                        }
+                                        else
+                                        {
+                                            j=database_cw.dIndx;
+                                        }
+                                        printf("--open- board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
+
+                        
+
+
+
+
 
                                         //if(shengyu_xiao >0)
                                         {
-                                            shengyu_xiao = shengyu_xiao -1;
+                                            shengyu_xiao --;
                                             tongbu_gekou_shuliang_x(shengyu_xiao);
-                                            ESP_LOGI(TAG, "----------------lock3 ts---------------.\r\n");
+                                            //ESP_LOGI(TAG, "----------------lock3 ts---------------.\r\n");
+                                            
+                                            ESP_LOGI(TAG, "-xiao-lock:%d ok--.\r\n",j);
+                                            memcpy(tx_Buffer2,"star",4);
+                                            tx_Buffer2[4]= 0x8A;//m_data.opcode;
+                                            tx_Buffer2[5]= (uint8_t)(k+1);//m_data.board_addr;
+                                            tx_Buffer2[6]= (uint8_t)j;//m_data.lock_addr;
+                                            tx_Buffer2[7]= 0x11;//guding
+                                            bcc_temp = ComputXor(tx_Buffer2+4,4);
+                                            tx_Buffer2[8]= bcc_temp;
+                                            memcpy(tx_Buffer2+9,"endo",4);
+                                            
+                                            tx_Buffer2[13]='\0';
+
+                                            RS485_TX_EN();
+
+                                            printf("tx_Buffer2=");
+                                            uart0_debug_data(tx_Buffer2, 13);
+                                            uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
+                                            RS485_RX_EN();
+                                        
+                                        
                                         }
                                         // else
                                         // {
@@ -1486,6 +1662,7 @@ static void echo_task2()
                                     }
 
                                     shengyu_all -- ;
+                                    tongbu_gekou_shuliang_all(shengyu_all);
 
 
 
@@ -2348,7 +2525,7 @@ void read_nvs_guizi_all()
 
     shengyu_all = shengyu_da + shengyu_zhong + shengyu_xiao;
     
-
+    printf("---shengyu_all=%d----\n",shengyu_all);
 
 
 
