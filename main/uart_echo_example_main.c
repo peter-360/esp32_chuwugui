@@ -104,6 +104,15 @@ uint8_t flag_rx2;
 
 
 
+#define STORAGE_NAMESPACE "storage"//guizi
+#define STORAGE_NAMESPACE_ADM "storage_adm"//guizi admin
+#define STORAGE_NAMESPACE_USR "storage_usr"//yonghu
+
+#define ADM_KEY_SHENGYU_D "ad_shengyu_d"
+#define ADM_KEY_SHENGYU_Z "ad_shengyu_z"
+#define ADM_KEY_SHENGYU_X "ad_shengyu_x"
+
+
 
 
 
@@ -256,11 +265,6 @@ shujuku_struct_user database_cw=
 };
 
 
-#define STORAGE_NAMESPACE "storage"//guizi
-
-#define STORAGE_NAMESPACE_ADM "storage_adm"//guizi admin
-
-#define STORAGE_NAMESPACE_USR "storage_usr"//yonghu
 
 // esp_err_t save_i16_value(char* key, int16_t out_value)
 // {
@@ -1562,13 +1566,44 @@ static void echo_task2()
 
 
 
+                                        //admin
+                                        //d
+                                        //printf("--key_name=%s--\r\n",NAMESPACE_ADM_KEY_SHENGYU_D);
+
+                                        err = save_u16_value(STORAGE_NAMESPACE_ADM,ADM_KEY_SHENGYU_D,shengyu_da);
+                                        if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        err = read_u16_value(STORAGE_NAMESPACE_ADM,ADM_KEY_SHENGYU_D, (uint16_t*)(&shengyu_da));
+                                        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+                                        //z
+                                        //printf("--key_name=%s--\r\n",NAMESPACE_ADM_KEY_SHENGYU_D);
+
+                                        err = save_u16_value(STORAGE_NAMESPACE_ADM,ADM_KEY_SHENGYU_Z,shengyu_zhong);
+                                        if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        err = read_u16_value(STORAGE_NAMESPACE_ADM,ADM_KEY_SHENGYU_Z, (uint16_t*)(&shengyu_zhong));
+                                        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+
+                                        //x
+                                        //printf("--key_name=%s--\r\n",NAMESPACE_ADM_KEY_SHENGYU_D);
+
+                                        err = save_u16_value(STORAGE_NAMESPACE_ADM,ADM_KEY_SHENGYU_X,shengyu_xiao);
+                                        if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                                        err = read_u16_value(STORAGE_NAMESPACE_ADM,ADM_KEY_SHENGYU_X, (uint16_t*)(&shengyu_xiao));
+                                        if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
 
 
 
 
 
-                                        //custumer   mingming kongjian
+
+                                        //custumer   mingming kongjian   todo
                                         // esp_err_t err = save_u16_value(STORAGE_NAMESPACE,"dw_dIndx",database_cw.dIndx);
                                         // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
 
@@ -2224,11 +2259,8 @@ void read_nvs_guizi_all()
     char key_name[15];
     esp_err_t err;
 
-    shengyu_all = shengyu_da + shengyu_zhong + shengyu_xiao;
     for(uint16_t i=1;i<=shengyu_all_max;i++)
     {
-
-
 
         //database_gz[i].cunwu_mode_gz = database_cw.cunwu_mode;
         sprintf(key_name, "%03d", i);
@@ -2236,9 +2268,6 @@ void read_nvs_guizi_all()
         // itoa(i,key_num,10);
         // strcat(key_name,"_dz_cw_md");
         printf("--key_name=%s--\r\n",key_name);
-
-        // err = save_u8_value(STORAGE_NAMESPACE,key_name,database_gz[i].cunwu_mode_gz);
-        // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
 
         err = read_u8_value(STORAGE_NAMESPACE,key_name, (uint8_t*)(&database_gz[i].cunwu_mode_gz));
         if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
@@ -2251,9 +2280,6 @@ void read_nvs_guizi_all()
         // itoa(i,key_num,10);
         // strcat(key_name,"_dz_dzxmd");
         printf("--key_name=%s--\r\n",key_name);
-
-        // err = save_u8_value(STORAGE_NAMESPACE,key_name,database_gz[i].dzx_mode_gz);
-        // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
 
         err = read_u8_value(STORAGE_NAMESPACE,key_name, (uint8_t*)(&database_gz[i].dzx_mode_gz));
         if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
@@ -2270,9 +2296,6 @@ void read_nvs_guizi_all()
         // strcat(key_name,"_dz_phone");
         printf("--key_name=%s--\r\n",key_name);
 
-        // err = save_u64_value(STORAGE_NAMESPACE,key_name,database_gz[i].phone_number_nvs_gz);
-        // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
-        
         err = read_u64_value(STORAGE_NAMESPACE,key_name,&database_gz[i].phone_number_nvs_gz);
         if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
@@ -2288,9 +2311,6 @@ void read_nvs_guizi_all()
         // strcat(key_name,"_dz_mima");
         printf("--key_name=%s--\r\n",key_name);
 
-        // err = save_u32_value(STORAGE_NAMESPACE,key_name,database_gz[i].mima_number_nvs_gz);
-        // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
-
         err = read_u32_value(STORAGE_NAMESPACE,key_name,&database_gz[i].mima_number_nvs_gz);
         if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
@@ -2304,14 +2324,32 @@ void read_nvs_guizi_all()
         // strcat(key_name,"_dz_st");
         printf("--key_name=%s--\r\n",key_name);
 
-        // err = save_u8_value(STORAGE_NAMESPACE,key_name,database_gz[i].state_gz);
-        // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
-
         err = read_u8_value(STORAGE_NAMESPACE,key_name, (uint8_t*)(&database_gz[i].state_gz));
         if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
     
         printf("\r\n");
     }
+
+
+  //admin
+    //d
+    err = read_u16_value(STORAGE_NAMESPACE_ADM,ADM_KEY_SHENGYU_D, (uint16_t*)(&shengyu_da));
+    if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+    //z
+    err = read_u16_value(STORAGE_NAMESPACE_ADM,ADM_KEY_SHENGYU_Z, (uint16_t*)(&shengyu_zhong));
+    if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+    //x
+    err = read_u16_value(STORAGE_NAMESPACE_ADM,ADM_KEY_SHENGYU_X, (uint16_t*)(&shengyu_xiao));
+    if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+    shengyu_all = shengyu_da + shengyu_zhong + shengyu_xiao;
+    
+
+
 
 
     for(uint16_t i=1;i<=shengyu_all_max;i++)
