@@ -562,97 +562,6 @@ esp_err_t read_u64_value(const char* name,char* key, uint64_t* out_value)
 }
 
 
-// /* Save the number of module restarts in NVS
-//    by first reading and then incrementing
-//    the number that has been saved previously.
-//    Return an error if anything goes wrong
-//    during this process.
-//  */
-// esp_err_t save_restart_counter(void)
-// {
-//     nvs_handle_t my_handle;
-//     esp_err_t err;
-
-//     // Open
-//     err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
-//     if (err != ESP_OK) return err;
-
-//     // Read
-//     int32_t dIndx_t = 0; // value will default to 0, if not set yet in NVS
-//     err = nvs_get_u16(my_handle, "dw_dIndx", &dIndx_t);
-//     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
-
-//     // Write
-//     //restart_counter++;
-//     //database_cw.dIndx ++;
-//     err = nvs_set_u16(my_handle, "dw_dIndx", database_cw.dIndx);
-//     if (err != ESP_OK) return err;
-
-//     // Commit written value.
-//     // After setting any values, nvs_commit() must be called to ensure changes are written
-//     // to flash storage. Implementations may write to storage at other times,
-//     // but this is not guaranteed.
-//     err = nvs_commit(my_handle);
-//     if (err != ESP_OK) return err;
-
-//     // Close
-//     nvs_close(my_handle);
-//     return ESP_OK;
-// }
-
-
-
-// esp_err_t print_what_saved(void)
-// {
-//     nvs_handle_t my_handle;
-//     esp_err_t err;
-
-//     // Open
-//     err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
-//     if (err != ESP_OK) return err;
-
-
-
-//     // // Read restart counter
-//     // int32_t restart_counter = 0; // value will default to 0, if not set yet in NVS
-//     // err = nvs_get_i32(my_handle, "restart_conter", &restart_counter);
-//     // if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
-//     // printf("Restart counter = %d\n", restart_counter);
-
-
-
-//     err = nvs_get_u16(my_handle, "dw_dIndx", &database_cw.dIndx);
-//     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
-//     printf("dIndx = %d\n", database_cw.dIndx);
-
-
-
-//     // // Read run time blob
-//     // size_t required_size = 0;  // value will default to 0, if not set yet in NVS
-//     // // obtain required memory space to store blob being read from NVS
-//     // err = nvs_get_blob(my_handle, "run_time", NULL, &required_size);
-//     // if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
-//     // printf("Run time:\n");
-//     // if (required_size == 0) {
-//     //     printf("Nothing saved yet!\n");
-//     // } else {
-//     //     uint32_t* run_time = malloc(required_size);
-//     //     err = nvs_get_blob(my_handle, "run_time", run_time, &required_size);
-//     //     if (err != ESP_OK) {
-//     //         free(run_time);
-//     //         return err;
-//     //     }
-//     //     for (int i = 0; i < required_size / sizeof(uint32_t); i++) {
-//     //         printf("%d: %d\n", i + 1, run_time[i]);
-//     //     }
-//     //     free(run_time);
-//     // }
-
-//     // Close
-//     nvs_close(my_handle);
-//     return ESP_OK;
-// }
-
 
 #define usart2_baund  57600//串口2波特率，根据指纹模块波特率更改
 
@@ -1129,47 +1038,27 @@ static void echo_task2()//lcd
                             bl_addr = (data_rx_t[4]<<8) + data_rx_t[5];
                             ESP_LOGI(TAG, "--0x83--.bl_addr=%04x\r\n",bl_addr);
 
-                            uint8_t tx_Buffer[50]={0};  
+                            //uint8_t tx_Buffer[50]={0};  
                             uint8_t tx_Buffer2[50]={0};  
                             uint8_t bcc_temp=0;
                             switch (bl_addr)
                             {
                             case 0x2080://
                                 ESP_LOGI(TAG, "--cunwu--.\r\n");   
-                                tx_Buffer[0] = 0x5A;
-                                tx_Buffer[1] = 0xA5;
 
-                                tx_Buffer[2] = 0x09;//len
-                                tx_Buffer[3] = 0x82;
-
-                                tx_Buffer[4] = 0x00;
-                                tx_Buffer[5] = 0x84;
-
-                                tx_Buffer[6] = 0x5A;
-                                tx_Buffer[7] = 0x01;
                                 if((0== shengyu_da)
                                     &&(0== shengyu_zhong)
                                     &&(0== shengyu_xiao))
                                 {
                                     ESP_LOGI(TAG, "--zanwu kongxiang--.\r\n"); // houbian sheng  
-                                    tx_Buffer[8] = 0x00;
-                                    tx_Buffer[9] = 0x01;
+                                    send_cmd_to_lcd_pic(0x0001);
                                 }
                                 else//
                                 {
-                                    tx_Buffer[8] = 0x00;
-                                    tx_Buffer[9] = 0x02;//ji xu
+                                    send_cmd_to_lcd_pic(0x0002);
                                 }
 
-                                //crc
-                                crc16_temp = CRC16(tx_Buffer+3, TX1_LEN-5);
-                                //printf("tx CRC16 result:0x%04X\r\n",crc16_temp);
-
-                                tx_Buffer[10] = crc16_temp&0xff;
-                                tx_Buffer[11] = (crc16_temp>>8)&0xff;
-                                
-                                uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
-
+ 
 
                                 break;
 
@@ -1177,33 +1066,19 @@ static void echo_task2()//lcd
                                 ESP_LOGI(TAG, "---zhiwen or mima---.\r\n");   
                                 //if -> huise tupian?
 
-                                tx_Buffer[0] = 0x5A;
-                                tx_Buffer[1] = 0xA5;
-                                tx_Buffer[2] = 0x09;//len
-                                tx_Buffer[3] = 0x82;
-
-                                tx_Buffer[4] = 0x00;
-                                tx_Buffer[5] = 0x84;//dizhi
-
-                                tx_Buffer[6] = 0x5A;
-                                tx_Buffer[7] = 0x01;//data guding
-
-
                                 if((shengyu_xiao==0) && (shengyu_zhong==0))
                                 {
                                     if(01== data_rx_t[8])//zhiwen cun
                                     {
                                         ESP_LOGI(TAG, "--2 zhiwen--.\r\n");  
                                         //baocun 1
-                                        tx_Buffer[8] = 0x00;
-                                        tx_Buffer[9] = 0x04;//tiao 选择格子类型
+                                        send_cmd_to_lcd_pic(0x0004);
                                     }
                                     else if(02== data_rx_t[8])//mi ma
                                     {
                                         ESP_LOGI(TAG, "--2 mima--.\r\n");  
                                         //baocun 2
-                                        tx_Buffer[8] = 0x00;
-                                        tx_Buffer[9] = 0x06;//tiao 选择格子类型
+                                        send_cmd_to_lcd_pic(0x0006);
                                     }
                                     ESP_LOGI(TAG, "---2 da---.\r\n");  
                                     database_cw.dzx_mode = 1;
@@ -1214,15 +1089,13 @@ static void echo_task2()//lcd
                                     {
                                         ESP_LOGI(TAG, "--2 zhiwen--.\r\n");  
                                         //baocun 1
-                                        tx_Buffer[8] = 0x00;
-                                        tx_Buffer[9] = 0x04;//tiao 选择格子类型
+                                        send_cmd_to_lcd_pic(0x0004);
                                     }
                                     else if(02== data_rx_t[8])//mi ma
                                     {
                                         ESP_LOGI(TAG, "--2 mima--.\r\n");  
                                         //baocun 2
-                                        tx_Buffer[8] = 0x00;
-                                        tx_Buffer[9] = 0x06;//tiao 选择格子类型
+                                        send_cmd_to_lcd_pic(0x0006);
                                     }
                                     ESP_LOGI(TAG, "---2 zhong---.\r\n");  
                                     database_cw.dzx_mode = 2;
@@ -1233,23 +1106,19 @@ static void echo_task2()//lcd
                                     {
                                         ESP_LOGI(TAG, "--2zhiwen--.\r\n");  
                                         //baocun 1
-                                        tx_Buffer[8] = 0x00;
-                                        tx_Buffer[9] = 0x04;//tiao 选择格子类型
+                                        send_cmd_to_lcd_pic(0x0004);
                                     }
                                     else if(02== data_rx_t[8])//mi ma
                                     {
                                         ESP_LOGI(TAG, "--2 mima--.\r\n");  
-                                        //baocun 2
-                                        tx_Buffer[8] = 0x00;
-                                        tx_Buffer[9] = 0x06;//tiao 选择格子类型
+                                        send_cmd_to_lcd_pic(0x0006);
                                     }
                                     ESP_LOGI(TAG, "---2xiao---.\r\n");  
                                     database_cw.dzx_mode = 3;
                                 }
                                 else
                                 {
-                                    tx_Buffer[8] = 0x00;
-                                    tx_Buffer[9] = 0x03;//tiao 选择格子类型
+                                    send_cmd_to_lcd_pic(0x0003);
                                     if(01== data_rx_t[8])//zhiwen cun
                                     {
                                         ESP_LOGI(TAG, "--zhiwen--.\r\n");  
@@ -1265,16 +1134,6 @@ static void echo_task2()//lcd
                                     }
                                 }
 
-                                //crc
-                                crc16_temp = CRC16(tx_Buffer+3, TX1_LEN-5);
-                                printf("tx CRC16 result:0x%04X\r\n",crc16_temp);
-
-                                tx_Buffer[10] = crc16_temp&0xff;
-                                tx_Buffer[11] = (crc16_temp>>8)&0xff;
-
-                                uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
-
-
                                 //zhiwen_num_id =0;
                                 //zhiwen_num_id = data_rx_t[7];
                                 //Add_FR();		//录指纹	
@@ -1282,38 +1141,6 @@ static void echo_task2()//lcd
 
                             case 0x2020://da zhong xiao    ke sheng
                                 ESP_LOGI(TAG, "----------------daxiao---------------.\r\n");   
-                                tx_Buffer[0] = 0x5A;
-                                tx_Buffer[1] = 0xA5;
-
-                                tx_Buffer[2] = 0x09;//len
-                                tx_Buffer[3] = 0x82;
-
-                                tx_Buffer[4] = 0x00;
-                                tx_Buffer[5] = 0x84;
-
-                                tx_Buffer[6] = 0x5A;
-                                tx_Buffer[7] = 0x01;
-                                if(02 == database_cw.cunwu_mode)//2010 密码
-                                {
-                                    tx_Buffer[8] = 0x00;
-                                    tx_Buffer[9] = 0x06;
-                                }
-                                else if(01 == database_cw.cunwu_mode)//2010 指纹 ->指纹判断 0005 todo
-                                {
-                                    tx_Buffer[8] = 0x00;
-                                    tx_Buffer[9] = 0x04;
-                                }
-
-                                //crc
-                                crc16_temp = CRC16(tx_Buffer+3, TX1_LEN-5);
-                                printf("tx CRC16 result:0x%04X\r\n",crc16_temp);
-
-                                tx_Buffer[10] = crc16_temp&0xff;
-                                tx_Buffer[11] = (crc16_temp>>8)&0xff;
-                                
-
-
-
 
                                 //todo
                                 if((01== data_rx_t[8])&&(0!=shengyu_da))//da
@@ -1335,10 +1162,23 @@ static void echo_task2()//lcd
                                 else
                                 {
                                     ESP_LOGI(TAG, "---zanwu kongxiang---.\r\n");  
-                                    tx_Buffer[8] = 0x00;
-                                    tx_Buffer[9] = 0x01;
+                                    // tx_Buffer[8] = 0x00;
+                                    // tx_Buffer[9] = 0x01;
+                                    send_cmd_to_lcd_pic(0x0001);
                                 }
-                                uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
+
+
+   
+                                if(02 == database_cw.cunwu_mode)//2010 密码
+                                {
+                                    send_cmd_to_lcd_pic(0x0006);
+                                }
+                                else if(01 == database_cw.cunwu_mode)//2010 指纹 ->指纹判断 0005 todo
+                                {
+                                    send_cmd_to_lcd_pic(0x0004);
+                                }
+
+
                                 
 
                                 break;
@@ -1381,17 +1221,9 @@ static void echo_task2()//lcd
                                 //5A A5 0A 83   10 60   03   31 32 33 34 35 36 
                                 ESP_LOGI(TAG, "--password--.\r\n");
                                 //ESP_LOGI(TAG, "---phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
-                                tx_Buffer[0] = 0x5A;
-                                tx_Buffer[1] = 0xA5;
 
-                                tx_Buffer[2] = 0x09;//len
-                                tx_Buffer[3] = 0x82;
 
-                                tx_Buffer[4] = 0x00;
-                                tx_Buffer[5] = 0x84;
 
-                                tx_Buffer[6] = 0x5A;
-                                tx_Buffer[7] = 0x01;
                                 //存物的格口编号（123）、格口类型（1：小，2：中，3：大）
                                 //存物手机号（11位）密码（6位）            或者指纹(----)   
 
@@ -1536,23 +1368,7 @@ static void echo_task2()//lcd
                                             ESP_LOGI(TAG, "-da-lock:%d ok--.\r\n",j);
 
                                             send_cmd_to_lock(k+1,j);
-                                            // memcpy(tx_Buffer2,"star",4);
-                                            // tx_Buffer2[4]= 0x8A;//m_data.opcode;
-                                            // tx_Buffer2[5]= (uint8_t)(k+1);//m_data.board_addr;
-                                            // tx_Buffer2[6]= (uint8_t)j;//m_data.lock_addr;
-                                            // tx_Buffer2[7]= 0x11;//guding
-                                            // bcc_temp = ComputXor(tx_Buffer2+4,4);
-                                            // tx_Buffer2[8]= bcc_temp;
-                                            // memcpy(tx_Buffer2+9,"endo",4);
-                                            
-                                            // tx_Buffer2[13]='\0';
 
-                                            // RS485_TX_EN();
-
-                                            // printf("tx_Buffer2=");
-                                            // uart0_debug_data(tx_Buffer2, 13);
-                                            // uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
-                                            // RS485_RX_EN();
                                         }    
                                         else
                                         {
@@ -1593,8 +1409,6 @@ static void echo_task2()//lcd
                                             database_cw.state=1;
                                             // database_gz[database_cw.dIndx].state_gz =database_cw.state;
                                             printf("---add---database_cw.dIndx=%u\r\n",database_cw.dIndx);
-
-
 
 
                                             uint8_t j=0,k=0;
@@ -1647,23 +1461,6 @@ static void echo_task2()//lcd
 
                                                 ESP_LOGI(TAG, "-zhong-lock:%d ok--.\r\n",j);
                                                 send_cmd_to_lock(k+1,j);
-                                                // memcpy(tx_Buffer2,"star",4);
-                                                // tx_Buffer2[4]= 0x8A;//m_data.opcode;
-                                                // tx_Buffer2[5]= (uint8_t)(k+1);//m_data.board_addr;
-                                                // tx_Buffer2[6]= (uint8_t)j;//m_data.lock_addr;
-                                                // tx_Buffer2[7]= 0x11;//guding
-                                                // bcc_temp = ComputXor(tx_Buffer2+4,4);
-                                                // tx_Buffer2[8]= bcc_temp;
-                                                // memcpy(tx_Buffer2+9,"endo",4);
-                                                
-                                                // tx_Buffer2[13]='\0';
-
-                                                // RS485_TX_EN();
-
-                                                // printf("tx_Buffer2=");
-                                                // uart0_debug_data(tx_Buffer2, 13);
-                                                // uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
-                                                // RS485_RX_EN();
                                                 
                                             }
                                             // else
@@ -1771,25 +1568,6 @@ static void echo_task2()//lcd
 
                                                 send_cmd_to_lock(k+1,j);
 
-                                                // memcpy(tx_Buffer2,"star",4);
-                                                // tx_Buffer2[4]= 0x8A;//m_data.opcode;
-                                                // tx_Buffer2[5]= (uint8_t)(k+1);//m_data.board_addr;
-                                                // tx_Buffer2[6]= (uint8_t)j;//m_data.lock_addr;
-                                                // tx_Buffer2[7]= 0x11;//guding
-                                                // bcc_temp = ComputXor(tx_Buffer2+4,4);
-                                                // tx_Buffer2[8]= bcc_temp;
-                                                // memcpy(tx_Buffer2+9,"endo",4);
-                                                
-                                                // tx_Buffer2[13]='\0';
-
-                                                // RS485_TX_EN();
-
-                                                // printf("tx_Buffer2=");
-                                                // uart0_debug_data(tx_Buffer2, 13);
-                                                // uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
-                                                // RS485_RX_EN();
-                                            
-                                            
                                             }
                                             // else
                                             // {
@@ -1935,8 +1713,7 @@ static void echo_task2()//lcd
 
                                     }
                                     //cun
-                                    tx_Buffer[8] = 0x00;
-                                    tx_Buffer[9] = 0x08;
+                                    send_cmd_to_lcd_pic(0x0008);
 
                                 }
                                 else
@@ -1947,21 +1724,10 @@ static void echo_task2()//lcd
                                     }
 done:
                                     ESP_LOGI(TAG, "----test2-error--.\r\n");  
-                                    tx_Buffer[8] = 0x00;
-                                    tx_Buffer[9] = 0x07;
+                                    send_cmd_to_lcd_pic(0x0007);
                                 }
 
-
-
                                 ESP_LOGI(TAG, "----test3-done--.\r\n");  
-                                //crc
-                                crc16_temp = CRC16(tx_Buffer+3, TX1_LEN-5);
-                                //printf("tx CRC16 result:0x%04X\r\n",crc16_temp);
-
-                                tx_Buffer[10] = crc16_temp&0xff;
-                                tx_Buffer[11] = (crc16_temp>>8)&0xff;
-                                uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, TX1_LEN);
-
 
 
                                 
@@ -2202,23 +1968,7 @@ done:
 
 
                                     ESP_LOGI(TAG, "-da-lock:%d ok--.\r\n",j);
-                                    memcpy(tx_Buffer2,"star",4);
-                                    tx_Buffer2[4]= 0x8A;//m_data.opcode;
-                                    tx_Buffer2[5]= (uint8_t)(k+1);//m_data.board_addr;
-                                    tx_Buffer2[6]= (uint8_t)j;//m_data.lock_addr;
-                                    tx_Buffer2[7]= 0x11;//guding
-                                    bcc_temp = ComputXor(tx_Buffer2+4,4);
-                                    tx_Buffer2[8]= bcc_temp;
-                                    memcpy(tx_Buffer2+9,"endo",4);
-                                    
-                                    tx_Buffer2[13]='\0';
-
-                                    RS485_TX_EN();
-
-                                    printf("tx_Buffer2=");
-                                    uart0_debug_data(tx_Buffer2, 13);
-                                    uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
-                                    RS485_RX_EN();
+                                    send_cmd_to_lock(k+1,j);
             
                                         
 
