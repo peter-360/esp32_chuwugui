@@ -5467,6 +5467,16 @@
                                 "range": null,
                                 "title": "Minimum frequency that the RPL gets updated in storage",
                                 "type": "int"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "BLE_MESH_NODE && BLE_MESH && BLE_MESH_SETTINGS",
+                                "help": "This option is created to solve the issue of failure in recovering\nnode information after mesh stack updates. In the old version mesh\nstack, there is no key of \"mesh/role\" in nvs. In the new version\nmesh stack, key of \"mesh/role\" is added in nvs, recovering node\ninformation needs to check \"mesh/role\" key in nvs and implements\nselective recovery of mesh node information. Therefore, there may\nbe failure in recovering node information during node restarting\nafter OTA.\n\nThe new version mesh stack adds the option of \"mesh/role\" because\nwe have added the support of storing Provisioner information, while\nthe old version only supports storing node information.\n\nIf users are updating their nodes from old version to new version,\nwe recommend enabling this option, so that system could set the flag\nin advance before recovering node information and make sure the node\ninformation recovering could work as expected.\n",
+                                "id": "BLE_MESH_SETTINGS_BACKWARD_COMPATIBILITY",
+                                "name": "BLE_MESH_SETTINGS_BACKWARD_COMPATIBILITY",
+                                "range": null,
+                                "title": "A specific option for settings backward compatibility",
+                                "type": "bool"
                             }
                         ],
                         "depends_on": "BLE_MESH",
@@ -6104,11 +6114,11 @@
                             {
                                 "children": [],
                                 "depends_on": "BLE_MESH",
-                                "help": "Enable support for Generic Power Onoff client model.\n",
+                                "help": "Enable support for Generic Power OnOff client model.\n",
                                 "id": "BLE_MESH_GENERIC_POWER_ONOFF_CLI",
                                 "name": "BLE_MESH_GENERIC_POWER_ONOFF_CLI",
                                 "range": null,
-                                "title": "Generic Power Onoff Client Model",
+                                "title": "Generic Power OnOff Client Model",
                                 "type": "bool"
                             },
                             {
@@ -6274,7 +6284,7 @@
                                     {
                                         "children": [],
                                         "depends_on": "BLE_MESH && BLE_MESH_SELF_TEST",
-                                        "help": "With this option enabled, users can use whilte list to filter mesh\nadvertising packets while scanning.\n",
+                                        "help": "With this option enabled, users can use white list to filter mesh\nadvertising packets while scanning.\n",
                                         "id": "BLE_MESH_TEST_USE_WHITE_LIST",
                                         "name": "BLE_MESH_TEST_USE_WHITE_LIST",
                                         "range": null,
@@ -10370,6 +10380,16 @@
                         "type": "bool"
                     },
                     {
+                        "children": [],
+                        "depends_on": null,
+                        "help": "Enabling this option allows SO_LINGER processing.\nl_onoff = 1,l_linger can set the timeout.\n\nIf l_linger=0, When a connection is closed, TCP will terminate the connection.\nThis means that TCP will discard any data packets stored in the socket send buffer\nand send an RST to the peer.\n\nIf l_linger!=0,Then closesocket() calls to block the process until\nthe remaining data packets has been sent or timed out.\n",
+                        "id": "LWIP_SO_LINGER",
+                        "name": "LWIP_SO_LINGER",
+                        "range": null,
+                        "title": "Enable SO_LINGER processing",
+                        "type": "bool"
+                    },
+                    {
                         "children": [
                             {
                                 "children": [],
@@ -12098,6 +12118,16 @@
                                 "range": null,
                                 "title": "Disable API locks",
                                 "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "MQTT_USE_CUSTOM_CONFIG",
+                                "help": "MQTT task priority. Higher number denotes higher priority.\n",
+                                "id": "MQTT_TASK_PRIORITY",
+                                "name": "MQTT_TASK_PRIORITY",
+                                "range": null,
+                                "title": "MQTT task priority",
+                                "type": "int"
                             }
                         ],
                         "depends_on": null,
@@ -12582,6 +12612,47 @@
                         "name": "SPI_FLASH_USE_LEGACY_IMPL",
                         "range": null,
                         "title": "Use the legacy implementation before IDF v4.0",
+                        "type": "bool"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": null,
+                        "help": "Some flash chips can have very high \"max\" erase times, especially for block erase (32KB or 64KB).\nThis option allows to bypass \"block erase\" and always do sector erase commands.\nThis will be much slower overall in most cases, but improves latency for other code to run.\n",
+                        "id": "SPI_FLASH_BYPASS_BLOCK_ERASE",
+                        "name": "SPI_FLASH_BYPASS_BLOCK_ERASE",
+                        "range": null,
+                        "title": "Bypass a block erase and always do sector erase",
+                        "type": "bool"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "depends_on": "SPI_FLASH_YIELD_DURING_ERASE",
+                                "help": "If a duration of one erase command is large\nthen it will yield CPUs after finishing a current command.\n",
+                                "id": "SPI_FLASH_ERASE_YIELD_DURATION_MS",
+                                "name": "SPI_FLASH_ERASE_YIELD_DURATION_MS",
+                                "range": null,
+                                "title": "Duration of erasing to yield CPUs (ms)",
+                                "type": "int"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "SPI_FLASH_YIELD_DURING_ERASE",
+                                "help": "Defines how many ticks will be before returning to continue a erasing.\n",
+                                "id": "SPI_FLASH_ERASE_YIELD_TICKS",
+                                "name": "SPI_FLASH_ERASE_YIELD_TICKS",
+                                "range": null,
+                                "title": "CPU release time (tick)",
+                                "type": "int"
+                            }
+                        ],
+                        "depends_on": null,
+                        "help": "This allows to yield the CPUs between erase commands.\nPrevents starvation of other tasks.\n",
+                        "id": "SPI_FLASH_YIELD_DURING_ERASE",
+                        "name": "SPI_FLASH_YIELD_DURING_ERASE",
+                        "range": null,
+                        "title": "Enables yield operation during flash erase",
                         "type": "bool"
                     },
                     {
@@ -13153,6 +13224,16 @@
                         "name": "WPA_TLS_V12",
                         "range": null,
                         "title": "Enable TLS v1.2",
+                        "type": "bool"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": null,
+                        "help": "Select this option to enable WPS related IOT fixes with\ndifferent APs. This option fixes IOT related issues with\nAPs which do not follow some of the standards of WPS-2.0\nspecification. These do not include any of the security\nrelated bypassing, just simple configuration corrections.\n\nCurrent fixes under this flag.\n1. Allow NULL-padded WPS attributes: Some APs keep NULL-padding\nat the end of some variable length WPS Attributes.\nThis is not as par the WPS2.0 specs, but to avoid interop issues,\nignore the padding by reducing the attribute length by 1.\n2. Bypass WPS-Config method validation: Some APs set display/pbc\nbutton bit without setting virtual/physical display/button bit which\nwill cause M2 validation fail, bypassing WPS-Config method validation.\n",
+                        "id": "WPA_WPS_WARS",
+                        "name": "WPA_WPS_WARS",
+                        "range": null,
+                        "title": "Add WPS Inter operatability Fixes",
                         "type": "bool"
                     }
                 ],

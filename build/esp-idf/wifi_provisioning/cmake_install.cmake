@@ -1,4 +1,4 @@
-# Install script for directory: D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/wifi_provisioning
+# Install script for directory: D:/0_xitian/software/ESP32/0_code/esp-idf/components/wifi_provisioning
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

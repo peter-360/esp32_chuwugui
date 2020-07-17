@@ -3172,6 +3172,47 @@
                         "type": "bool"
                     },
                     {
+                        "children": [],
+                        "depends_on": null,
+                        "help": "Some flash chips can have very high \"max\" erase times, especially for block erase (32KB or 64KB).\nThis option allows to bypass \"block erase\" and always do sector erase commands.\nThis will be much slower overall in most cases, but improves latency for other code to run.\n",
+                        "id": "SPI_FLASH_BYPASS_BLOCK_ERASE",
+                        "name": "SPI_FLASH_BYPASS_BLOCK_ERASE",
+                        "range": null,
+                        "title": "Bypass a block erase and always do sector erase",
+                        "type": "bool"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "depends_on": "SPI_FLASH_YIELD_DURING_ERASE",
+                                "help": "If a duration of one erase command is large\nthen it will yield CPUs after finishing a current command.\n",
+                                "id": "SPI_FLASH_ERASE_YIELD_DURATION_MS",
+                                "name": "SPI_FLASH_ERASE_YIELD_DURATION_MS",
+                                "range": null,
+                                "title": "Duration of erasing to yield CPUs (ms)",
+                                "type": "int"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "SPI_FLASH_YIELD_DURING_ERASE",
+                                "help": "Defines how many ticks will be before returning to continue a erasing.\n",
+                                "id": "SPI_FLASH_ERASE_YIELD_TICKS",
+                                "name": "SPI_FLASH_ERASE_YIELD_TICKS",
+                                "range": null,
+                                "title": "CPU release time (tick)",
+                                "type": "int"
+                            }
+                        ],
+                        "depends_on": null,
+                        "help": "This allows to yield the CPUs between erase commands.\nPrevents starvation of other tasks.\n",
+                        "id": "SPI_FLASH_YIELD_DURING_ERASE",
+                        "name": "SPI_FLASH_YIELD_DURING_ERASE",
+                        "range": null,
+                        "title": "Enables yield operation during flash erase",
+                        "type": "bool"
+                    },
+                    {
                         "children": [
                             {
                                 "children": [],

@@ -1,4 +1,4 @@
-# Install script for directory: D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/esp_local_ctrl
+# Install script for directory: D:/0_xitian/software/ESP32/0_code/esp-idf/components/esp_local_ctrl
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

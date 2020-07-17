@@ -2366,7 +2366,8 @@ done:
 //---------------------------------admin----------------------------------------------------
                             case 0x10b0://mima
                                 ESP_LOGI(TAG, "----admin --mima-----.\r\n");
-                                send_cmd_to_lcd_pic(0x000a);
+                                send_cmd_to_lcd_pic(0x0011);
+                                //send_cmd_to_lcd_pic(0x0012);
                                 break;
 
                             default:

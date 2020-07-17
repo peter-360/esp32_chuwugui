@@ -1,18 +1,18 @@
 {
     "project_name":       "bootloader",
-    "project_path":       "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/bootloader/subproject",
+    "project_path":       "D:/0_xitian/software/ESP32/0_code/esp-idf/components/bootloader/subproject",
     "build_dir":          "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/build/bootloader",
     "config_file":        "D:/0_xitian/software/ESP32/0_code/esp32_chuwugui/sdkconfig",
     "config_defaults":    "",
     "app_elf":            "bootloader.elf",
     "app_bin":            "bootloader.bin",
-    "git_revision":       "v4.0.1-dirty",
+    "git_revision":       "v4.0.1-197-g94d97499a-dirty",
     "phy_data_partition": "",
     "monitor_baud" : "115200",
     "config_environment" : {
-        "COMPONENT_KCONFIGS" : "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/efuse/Kconfig;D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/esp32/Kconfig;D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/esp_common/Kconfig;D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/log/Kconfig;D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/spi_flash/Kconfig",
-        "COMPONENT_KCONFIGS_PROJBUILD" : "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/bootloader/Kconfig.projbuild;D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/esptool_py/Kconfig.projbuild;D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/partition_table/Kconfig.projbuild"
+        "COMPONENT_KCONFIGS" : "D:/0_xitian/software/ESP32/0_code/esp-idf/components/efuse/Kconfig;D:/0_xitian/software/ESP32/0_code/esp-idf/components/esp32/Kconfig;D:/0_xitian/software/ESP32/0_code/esp-idf/components/esp_common/Kconfig;D:/0_xitian/software/ESP32/0_code/esp-idf/components/log/Kconfig;D:/0_xitian/software/ESP32/0_code/esp-idf/components/spi_flash/Kconfig",
+        "COMPONENT_KCONFIGS_PROJBUILD" : "D:/0_xitian/software/ESP32/0_code/esp-idf/components/bootloader/Kconfig.projbuild;D:/0_xitian/software/ESP32/0_code/esp-idf/components/esptool_py/Kconfig.projbuild;D:/0_xitian/software/ESP32/0_code/esp-idf/components/partition_table/Kconfig.projbuild"
     },
     "build_components" : [ "bootloader", "bootloader_support", "efuse", "esp32", "esp_common", "esp_rom", "esptool_py", "log", "main", "micro-ecc", "partition_table", "soc", "spi_flash", "xtensa", "" ],
-    "build_component_paths" : [ "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/bootloader", "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/bootloader_support", "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/efuse", "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/esp32", "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/esp_common", "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/esp_rom", "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/esptool_py", "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/log", "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/bootloader/subproject/main", "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/bootloader/subproject/components/micro-ecc", "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/partition_table", "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/soc", "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/spi_flash", "D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/xtensa", "" ]
+    "build_component_paths" : [ "D:/0_xitian/software/ESP32/0_code/esp-idf/components/bootloader", "D:/0_xitian/software/ESP32/0_code/esp-idf/components/bootloader_support", "D:/0_xitian/software/ESP32/0_code/esp-idf/components/efuse", "D:/0_xitian/software/ESP32/0_code/esp-idf/components/esp32", "D:/0_xitian/software/ESP32/0_code/esp-idf/components/esp_common", "D:/0_xitian/software/ESP32/0_code/esp-idf/components/esp_rom", "D:/0_xitian/software/ESP32/0_code/esp-idf/components/esptool_py", "D:/0_xitian/software/ESP32/0_code/esp-idf/components/log", "D:/0_xitian/software/ESP32/0_code/esp-idf/components/bootloader/subproject/main", "D:/0_xitian/software/ESP32/0_code/esp-idf/components/bootloader/subproject/components/micro-ecc", "D:/0_xitian/software/ESP32/0_code/esp-idf/components/partition_table", "D:/0_xitian/software/ESP32/0_code/esp-idf/components/soc", "D:/0_xitian/software/ESP32/0_code/esp-idf/components/spi_flash", "D:/0_xitian/software/ESP32/0_code/esp-idf/components/xtensa", "" ]
 }

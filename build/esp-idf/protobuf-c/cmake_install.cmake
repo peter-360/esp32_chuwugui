@@ -1,4 +1,4 @@
-# Install script for directory: D:/0_xitian/software/ESP32/0_code/esp-idf-v4.0.1/components/protobuf-c
+# Install script for directory: D:/0_xitian/software/ESP32/0_code/esp-idf/components/protobuf-c
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
