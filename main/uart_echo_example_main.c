@@ -65,7 +65,7 @@ const char *TAG = "uart_events";
 #define ECHO_TEST_CTS  (UART_PIN_NO_CHANGE)
 
 
-#define ECHO_TEST2_TXD  (GPIO_NUM_2)//2-deng    23
+#define ECHO_TEST2_TXD  (GPIO_NUM_23)//2-deng    23
 #define ECHO_TEST2_RXD  (GPIO_NUM_34)//34        22
 #define ECHO_TEST2_RTS  (UART_PIN_NO_CHANGE)
 #define ECHO_TEST2_CTS  (UART_PIN_NO_CHANGE)
@@ -108,14 +108,20 @@ uint8_t flag_rx2;
 #define STORAGE_NAMESPACE_ADM "storage_adm"//guizi admin
 #define STORAGE_NAMESPACE_USR "storage_usr"//yonghu
 
+
+//1
 #define ADM_KEY_SHENGYU_D "ad_shengyu_d"
 #define ADM_KEY_SHENGYU_Z "ad_shengyu_z"
 #define ADM_KEY_SHENGYU_X "ad_shengyu_x"
 
 
 
-
-
+//3
+#define DZ_CW_MD "_dz_cw_md"//guizi    _dz_cw_md
+#define DZ_DZXMD "_dz_dzxmd"
+#define DZ_PHONE "_dz_phone"
+#define DZ_MIMA  "_dz_mima"
+#define DZ_ST    "_dz_st"
 
 
 #define SHENYU_GEZI_MAX 50//all kong
@@ -997,6 +1003,34 @@ void send_cmd_to_lcd_pic(uint16_t temp)//Õº∆¨
 
 }
 
+
+void send_cmd_to_lock(uint8_t board_addr, uint8_t lock_addr)//±‰¡ø
+{
+    uint8_t tx_Buffer2[50]={0};  
+    uint8_t bcc_temp=0;
+    memcpy(tx_Buffer2,"star",4);
+    tx_Buffer2[4]= 0x8A;//m_data.opcode;
+    tx_Buffer2[5]= (uint8_t)board_addr;//m_data.board_addr;
+    tx_Buffer2[6]= (uint8_t)lock_addr;//m_data.lock_addr;
+    tx_Buffer2[7]= 0x11;//guding
+    bcc_temp = ComputXor(tx_Buffer2+4,4);
+    tx_Buffer2[8]= bcc_temp;
+    memcpy(tx_Buffer2+9,"endo",4);
+
+    tx_Buffer2[13]='\0';
+
+    RS485_TX_EN();
+
+    printf("tx_Buffer2=");
+    uart0_debug_data(tx_Buffer2, 13);
+    uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
+    RS485_RX_EN();
+
+}
+
+
+
+
 // void lcd_send_cmd_response(uint8_t rsp)
 // {
 
@@ -1494,32 +1528,31 @@ static void echo_task2()//lcd
                             
 
 
-
-
-
                                             //old
                                             shengyu_da --;
                                             tongbu_gekou_shuliang_d(shengyu_da);
 
 
                                             ESP_LOGI(TAG, "-da-lock:%d ok--.\r\n",j);
-                                            memcpy(tx_Buffer2,"star",4);
-                                            tx_Buffer2[4]= 0x8A;//m_data.opcode;
-                                            tx_Buffer2[5]= (uint8_t)(k+1);//m_data.board_addr;
-                                            tx_Buffer2[6]= (uint8_t)j;//m_data.lock_addr;
-                                            tx_Buffer2[7]= 0x11;//guding
-                                            bcc_temp = ComputXor(tx_Buffer2+4,4);
-                                            tx_Buffer2[8]= bcc_temp;
-                                            memcpy(tx_Buffer2+9,"endo",4);
+
+                                            send_cmd_to_lock(k+1,j);
+                                            // memcpy(tx_Buffer2,"star",4);
+                                            // tx_Buffer2[4]= 0x8A;//m_data.opcode;
+                                            // tx_Buffer2[5]= (uint8_t)(k+1);//m_data.board_addr;
+                                            // tx_Buffer2[6]= (uint8_t)j;//m_data.lock_addr;
+                                            // tx_Buffer2[7]= 0x11;//guding
+                                            // bcc_temp = ComputXor(tx_Buffer2+4,4);
+                                            // tx_Buffer2[8]= bcc_temp;
+                                            // memcpy(tx_Buffer2+9,"endo",4);
                                             
-                                            tx_Buffer2[13]='\0';
+                                            // tx_Buffer2[13]='\0';
 
-                                            RS485_TX_EN();
+                                            // RS485_TX_EN();
 
-                                            printf("tx_Buffer2=");
-                                            uart0_debug_data(tx_Buffer2, 13);
-                                            uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
-                                            RS485_RX_EN();
+                                            // printf("tx_Buffer2=");
+                                            // uart0_debug_data(tx_Buffer2, 13);
+                                            // uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
+                                            // RS485_RX_EN();
                                         }    
                                         else
                                         {
@@ -1613,23 +1646,24 @@ static void echo_task2()//lcd
                                                 //ESP_LOGI(TAG, "--lock2 ok--.\r\n");
 
                                                 ESP_LOGI(TAG, "-zhong-lock:%d ok--.\r\n",j);
-                                                memcpy(tx_Buffer2,"star",4);
-                                                tx_Buffer2[4]= 0x8A;//m_data.opcode;
-                                                tx_Buffer2[5]= (uint8_t)(k+1);//m_data.board_addr;
-                                                tx_Buffer2[6]= (uint8_t)j;//m_data.lock_addr;
-                                                tx_Buffer2[7]= 0x11;//guding
-                                                bcc_temp = ComputXor(tx_Buffer2+4,4);
-                                                tx_Buffer2[8]= bcc_temp;
-                                                memcpy(tx_Buffer2+9,"endo",4);
+                                                send_cmd_to_lock(k+1,j);
+                                                // memcpy(tx_Buffer2,"star",4);
+                                                // tx_Buffer2[4]= 0x8A;//m_data.opcode;
+                                                // tx_Buffer2[5]= (uint8_t)(k+1);//m_data.board_addr;
+                                                // tx_Buffer2[6]= (uint8_t)j;//m_data.lock_addr;
+                                                // tx_Buffer2[7]= 0x11;//guding
+                                                // bcc_temp = ComputXor(tx_Buffer2+4,4);
+                                                // tx_Buffer2[8]= bcc_temp;
+                                                // memcpy(tx_Buffer2+9,"endo",4);
                                                 
-                                                tx_Buffer2[13]='\0';
+                                                // tx_Buffer2[13]='\0';
 
-                                                RS485_TX_EN();
+                                                // RS485_TX_EN();
 
-                                                printf("tx_Buffer2=");
-                                                uart0_debug_data(tx_Buffer2, 13);
-                                                uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
-                                                RS485_RX_EN();
+                                                // printf("tx_Buffer2=");
+                                                // uart0_debug_data(tx_Buffer2, 13);
+                                                // uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
+                                                // RS485_RX_EN();
                                                 
                                             }
                                             // else
@@ -1734,23 +1768,26 @@ static void echo_task2()//lcd
                                                 //ESP_LOGI(TAG, "----------------lock3 ts---------------.\r\n");
                                                 
                                                 ESP_LOGI(TAG, "-xiao-lock:%d ok--.\r\n",j);
-                                                memcpy(tx_Buffer2,"star",4);
-                                                tx_Buffer2[4]= 0x8A;//m_data.opcode;
-                                                tx_Buffer2[5]= (uint8_t)(k+1);//m_data.board_addr;
-                                                tx_Buffer2[6]= (uint8_t)j;//m_data.lock_addr;
-                                                tx_Buffer2[7]= 0x11;//guding
-                                                bcc_temp = ComputXor(tx_Buffer2+4,4);
-                                                tx_Buffer2[8]= bcc_temp;
-                                                memcpy(tx_Buffer2+9,"endo",4);
+
+                                                send_cmd_to_lock(k+1,j);
+
+                                                // memcpy(tx_Buffer2,"star",4);
+                                                // tx_Buffer2[4]= 0x8A;//m_data.opcode;
+                                                // tx_Buffer2[5]= (uint8_t)(k+1);//m_data.board_addr;
+                                                // tx_Buffer2[6]= (uint8_t)j;//m_data.lock_addr;
+                                                // tx_Buffer2[7]= 0x11;//guding
+                                                // bcc_temp = ComputXor(tx_Buffer2+4,4);
+                                                // tx_Buffer2[8]= bcc_temp;
+                                                // memcpy(tx_Buffer2+9,"endo",4);
                                                 
-                                                tx_Buffer2[13]='\0';
+                                                // tx_Buffer2[13]='\0';
 
-                                                RS485_TX_EN();
+                                                // RS485_TX_EN();
 
-                                                printf("tx_Buffer2=");
-                                                uart0_debug_data(tx_Buffer2, 13);
-                                                uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
-                                                RS485_RX_EN();
+                                                // printf("tx_Buffer2=");
+                                                // uart0_debug_data(tx_Buffer2, 13);
+                                                // uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
+                                                // RS485_RX_EN();
                                             
                                             
                                             }
@@ -1783,7 +1820,7 @@ static void echo_task2()//lcd
                                         esp_err_t err;
 
                                         database_gz[database_cw.dIndx].cunwu_mode_gz = database_cw.cunwu_mode;
-                                        sprintf(key_name, "%03d_dz_cw_md", database_cw.dIndx);
+                                        sprintf(key_name, "%03d%s", database_cw.dIndx,DZ_CW_MD);
                                         printf("--key_name=%s--\r\n",key_name);
 
                                         err = save_u8_value(STORAGE_NAMESPACE,key_name,database_gz[database_cw.dIndx].cunwu_mode_gz);
@@ -1795,7 +1832,7 @@ static void echo_task2()//lcd
 
 
                                         database_gz[database_cw.dIndx].dzx_mode_gz = database_cw.dzx_mode;
-                                        sprintf(key_name, "%03d_dz_dzxmd", database_cw.dIndx);
+                                        sprintf(key_name, "%03d%s", database_cw.dIndx,DZ_DZXMD);//dz_dzxmd
                                         printf("--key_name=%s--\r\n",key_name);
 
                                         err = save_u8_value(STORAGE_NAMESPACE,key_name,database_gz[database_cw.dIndx].dzx_mode_gz);
@@ -1810,7 +1847,7 @@ static void echo_task2()//lcd
                                         //database_cw.phone_number_nvs = atoi((const char*)phone_number);
 
                                         database_gz[database_cw.dIndx].phone_number_nvs_gz = database_cw.phone_number_nvs;
-                                        sprintf(key_name, "%03d_dz_phone", database_cw.dIndx);
+                                        sprintf(key_name, "%03d%s", database_cw.dIndx,DZ_PHONE);
                                         printf("--key_name=%s--\r\n",key_name);
 
                                         err = save_u64_value(STORAGE_NAMESPACE,key_name,database_gz[database_cw.dIndx].phone_number_nvs_gz);
@@ -1825,7 +1862,7 @@ static void echo_task2()//lcd
                                         //database_cw.mima_number_nvs = atoi((const char*)mima_number);
                                         
                                         database_gz[database_cw.dIndx].mima_number_nvs_gz = database_cw.mima_number_nvs;
-                                        sprintf(key_name, "%03d_dz_mima", database_cw.dIndx);
+                                        sprintf(key_name, "%03d%s", database_cw.dIndx,DZ_MIMA);
                                         printf("--key_name=%s--\r\n",key_name);
 
                                         err = save_u32_value(STORAGE_NAMESPACE,key_name,database_gz[database_cw.dIndx].mima_number_nvs_gz);
@@ -1838,7 +1875,7 @@ static void echo_task2()//lcd
 
 
                                         database_gz[database_cw.dIndx].state_gz =database_cw.state;
-                                        sprintf(key_name, "%03d_dz_st", database_cw.dIndx);
+                                        sprintf(key_name, "%03d%s", database_cw.dIndx,DZ_ST);
                                         printf("--key_name=%s--\r\n",key_name);
 
                                         err = save_u8_value(STORAGE_NAMESPACE,key_name,database_gz[database_cw.dIndx].state_gz);
@@ -2921,6 +2958,17 @@ void uart_init_all(void)
 }
 
 
+
+
+
+
+
+// #define DZ_CW_MD "_dz_cw_md"//guizi    _dz_cw_md
+// #define DZ_DZXMD "_dz_dzxmd"
+// #define DZ_PHONE "_dz_phone"
+// #define DZ_MIMA  "_dz_mima"
+// #define DZ_ST    "_dz_st"
+
 void read_nvs_guizi_all()
 {
     char key_num[3];//65536
@@ -2933,7 +2981,7 @@ void read_nvs_guizi_all()
 
         //database_gz[i].cunwu_mode_gz = database_cw.cunwu_mode;
         sprintf(key_name, "%03d", i);
-        strcpy(key_name+3,"_dz_cw_md");
+        strcpy(key_name+3,DZ_CW_MD);
         // itoa(i,key_num,10);
         // strcat(key_name,"_dz_cw_md");
         printf("--key_name=%s--\r\n",key_name);
@@ -2945,7 +2993,7 @@ void read_nvs_guizi_all()
 
         //database_gz[i].dzx_mode_gz = database_cw.dzx_mode;
         sprintf(key_name, "%03d", i);
-        strcpy(key_name+3,"_dz_dzxmd");
+        strcpy(key_name+3,DZ_DZXMD);
         // itoa(i,key_num,10);
         // strcat(key_name,"_dz_dzxmd");
         printf("--key_name=%s--\r\n",key_name);
@@ -2960,7 +3008,7 @@ void read_nvs_guizi_all()
 
         // database_gz[i].phone_number_nvs_gz = database_cw.phone_number_nvs;
         sprintf(key_name, "%03d", i);
-        strcpy(key_name+3,"_dz_phone");
+        strcpy(key_name+3,DZ_PHONE);
         // itoa(i,key_num,10);
         // strcat(key_name,"_dz_phone");
         printf("--key_name=%s--\r\n",key_name);
@@ -2975,7 +3023,7 @@ void read_nvs_guizi_all()
         
         //database_gz[i].mima_number_nvs_gz = database_cw.mima_number_nvs;
         sprintf(key_name, "%03d", i);
-        strcpy(key_name+3,"_dz_mima");
+        strcpy(key_name+3,DZ_MIMA);
         // itoa(i,key_num,10);
         // strcat(key_name,"_dz_mima");
         printf("--key_name=%s--\r\n",key_name);
@@ -2988,7 +3036,7 @@ void read_nvs_guizi_all()
 
 
         sprintf(key_name, "%03d", i);
-        strcpy(key_name+3,"_dz_st");
+        strcpy(key_name+3,DZ_ST);
         // itoa(i,key_num,10);
         // strcat(key_name,"_dz_st");
         printf("--key_name=%s--\r\n",key_name);
