@@ -1,63 +1,34 @@
-# UART Echo Example
+# Play mp3 file with playback control
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
+Functionality extension of [play_mp3](../play_mp3) example by adding possibility to start, stop, pause and resume playback, as well as adjust volume. 
 
-This example demonstrates how to utilize UART interfaces of ESP32 by echoing back to the sender any data received on
-UART1.
+The playback control is done using ESP32 touch pad functionality.
 
-## How to use example
+## Compatibility
 
-### Hardware Required
+This example is will run on boards marked with green checkbox. Please remember to select the board in menuconfig as discussed is section *Usage* below.
 
-The example can be run on any ESP32 development board connected to a PC with a single USB cable for flashing and
-monitoring. The external interface should have 3.3V outputs. You may use e.g. 3.3V compatible USB-to-Serial dongle.
+| Board Name | Getting Started | Chip | Compatible |
+|-------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------:|:-----------------------------------------------------------------:|
+| ESP32-LyraT | [![alt text](../../../docs/_static/esp32-lyrat-v4.3-side-small.jpg "ESP32-LyraT")](https://docs.espressif.com/projects/esp-adf/en/latest/get-started/get-started-esp32-lyrat.html) | <img src="../../../docs/_static/ESP32.svg" height="85" alt="ESP32"> | ![alt text](../../../docs/_static/yes-button.png "Compatible") |
+| ESP32-LyraTD-MSC | [![alt text](../../../docs/_static/esp32-lyratd-msc-v2.2-small.jpg "ESP32-LyraTD-MSC")](https://docs.espressif.com/projects/esp-adf/en/latest/get-started/get-started-esp32-lyratd-msc.html) | <img src="../../../docs/_static/ESP32.svg" height="85" alt="ESP32"> | ![alt text](../../../docs/_static/yes-button.png "Compatible") |
+| ESP32-LyraT-Mini | [![alt text](../../../docs/_static/esp32-lyrat-mini-v1.2-small.jpg "ESP32-LyraT-Mini")](https://docs.espressif.com/projects/esp-adf/en/latest/get-started/get-started-esp32-lyrat-mini.html) | <img src="../../../docs/_static/ESP32.svg" height="85" alt="ESP32"> | ![alt text](../../../docs/_static/yes-button.png "Compatible") |
+| ESP32-Korvo-DU1906 | [![alt text](../../../docs/_static/esp32-korvo-du1906-v1.1-small.jpg "ESP32-Korvo-DU1906")](https://docs.espressif.com/projects/esp-adf/en/latest/get-started/get-started-esp32-korvo-du1906.html) | <img src="../../../docs/_static/ESP32.svg" height="85" alt="ESP32"> | ![alt text](../../../docs/_static/yes-button.png "Compatible") |
+| ESP32-S2-Kaluga-1 Kit | [![alt text](../../../docs/_static/esp32-s2-kaluga-1-kit-small.png "ESP32-S2-Kaluga-1 Kit")](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/hw-reference/esp32s2/user-guide-esp32-s2-kaluga-1-kit.html) | <img src="../../../docs/_static/ESP32-S2.svg" height="100" alt="ESP32-S2"> | ![alt text](../../../docs/_static/yes-button.png "Compatible") |
 
-### Setup the Hardware
 
-Connect the external serial interface to the ESP32 board as follows.
+## Usage
 
-  | ESP32 Interface | #define | ESP32 Pin | External UART Pin |
-  | --- | --- | --- | --- |
-  | Transmit Data (TxD) | ECHO_TEST_TXD | GPIO4 | RxD |
-  | Receive Data (RxD) | ECHO_TEST_RXD | GPIO5 | TxD |
-  | Ground | n/a | GND | GND |
+Prepare the audio board:
 
-Optionally, you can set-up and use a serial interface that has RTS and CTS signals in order to verify that the
-hardware control flow works. Connect the extra signals according to the following table, configure both extra pins in
-the example code by replacing existing `UART_PIN_NO_CHANGE` macros with the appropriate pin numbers and configure
-UART1 driver to use the hardware flow control by setting `.flow_ctrl = UART_HW_FLOWCTRL_CTS_RTS` and adding
-`.rx_flow_ctrl_thresh = 122`.
+- Connect speakers or headphones to the board. 
 
-  | ESP32 Interface | #define | ESP32 Pin | External UART Pin |
-  | --- | --- | --- | --- |
-  | Request to Send (RTS) | ECHO_TEST_RTS | GPIO18 | CTS |
-  | Clear to Send (CTS) | ECHO_TEST_CTS | GPIO19 | RTS |
+Configure the example:
 
-### Configure the project
+- Select compatible audio board in `menuconfig` > `Audio HAL`.
 
-```
-idf.py menuconfig
-```
+Load and run the example. Use buttons to control how audio is played:
 
-### Build and Flash
-
-Build the project and flash it to the board, then run monitor tool to view serial output:
-
-```
-idf.py -p PORT flash monitor
-```
-
-(To exit the serial monitor, type ``Ctrl-]``.)
-
-See the Getting Started Guide for full steps to configure and use ESP-IDF to build projects.
-
-## Example Output
-
-Type some characters in the terminal connected to the external serial interface. As result you should see echo in the
-terminal which is used for flashing and monitoring. You can verify if the echo indeed comes from ESP32 by
-disconnecting either `TxD` or `RxD` pin: no characters will appear when typing.
-
-## Troubleshooting
-
-You are not supposed to see the echo in the terminal which is used for flashing and monitoring, but in the other one
-which is connected to UART1.
+- Use [Play] to start, pause and resume playback.
+- Adjust sound volume with [Vol-] or [Vol+].
+- To stop the pipeline press [Set].

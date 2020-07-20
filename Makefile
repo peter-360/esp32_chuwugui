@@ -1,9 +1,2 @@
-#
-# This is a project Makefile. It is assumed the directory this Makefile resides in is a
-# project subdirectory.
-#
-
-PROJECT_NAME := uart_echo
-
-include $(IDF_PATH)/make/project.mk
-
+PROJECT_NAME := play_mp3
+include $(ADF_PATH)/project.mk
