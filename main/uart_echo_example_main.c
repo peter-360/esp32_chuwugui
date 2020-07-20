@@ -1720,6 +1720,7 @@ static void echo_task2()//lcd
                                                 ESP_LOGI(TAG, "-xiao-lock:%d ok--.\r\n",j);
 
                                                 send_cmd_to_lock(k+1,j);
+                                                send_cmd_to_lcd_bl(0x1070,database_cw.dIndx);
 
                                             }
                                             // else
@@ -1745,7 +1746,7 @@ static void echo_task2()//lcd
 
                                         shengyu_all -- ;
                                         tongbu_gekou_shuliang_all(shengyu_all);
-                                        send_cmd_to_lcd_bl(0x1070,database_cw.dIndx);
+                                        
 
 
 
@@ -2046,12 +2047,12 @@ done:
                                     case 2:
                                         //z
                                         shengyu_zhong ++;
-                                        tongbu_gekou_shuliang_d(shengyu_zhong); 
+                                        tongbu_gekou_shuliang_z(shengyu_zhong); 
                                         break;
                                     case 3:
                                         //x
                                         shengyu_xiao ++;
-                                        tongbu_gekou_shuliang_d(shengyu_xiao); 
+                                        tongbu_gekou_shuliang_x(shengyu_xiao); 
                                         break;
 
                                     default:
@@ -2063,6 +2064,7 @@ done:
 
                                     ESP_LOGI(TAG, "-da-lock:%d ok--.\r\n",j);
                                     send_cmd_to_lock(k+1,j);
+                                    send_cmd_to_lcd_bl(0x10a0,database_cw.dIndx);
             
                                         
 
@@ -2075,8 +2077,6 @@ done:
 
                                         shengyu_all ++ ;
                                         tongbu_gekou_shuliang_all(shengyu_all);
-
-                                        send_cmd_to_lcd_bl(0x10a0,database_cw.dIndx);//lock n
 
                                         // char key_name[15];//15
                                         // esp_err_t err;
@@ -2148,9 +2148,95 @@ done:
 //---------------------------------admin----------------------------------------------------
                             case 0x10b0://mima
                                 ESP_LOGI(TAG, "----admin --mima-----.\r\n");
-                                send_cmd_to_lcd_pic(0x0011);
-                                //send_cmd_to_lcd_pic(0x0012);
+                                if(01== data_rx_t[6])
+                                {
+                                    send_cmd_to_lcd_pic(0x0011);
+                                }
+                                else
+                                {
+                                    send_cmd_to_lcd_pic(0x0010);
+                                    ESP_LOGI(TAG, "----admin --mima weisu err-----.\r\n");
+                                }
+  
                                 break;
+
+
+                            case 0x10c0://xiangmenhao
+                                ESP_LOGI(TAG, "----admin --mima-----.\r\n");
+                                uint8_t temp_xiangmen[4]={0}; 
+                                //uint8_t temp_xiangmen_uint=0; //16
+                                memcpy(temp_xiangmen,data_rx_t+7,2);//len todo 
+                                if(01== data_rx_t[6])
+                                {
+                                    database_cw.dIndx = atoi((const char*)temp_xiangmen);
+                                    ESP_LOGI(TAG, "--lock open--dIndx=%d--.\r\n",database_cw.dIndx);  
+
+                                    if(database_gz[database_cw.dIndx].dzx_mode_gz == 0)
+                                    {
+                                        goto wuci_xmh;
+                                    }
+
+                                    uint16_t j=0,k=0;
+                                    //j=0;k=0;
+
+                                    // suiji kaimen
+                                    // if(shengyu_da >0)
+                                    if(((int16_t)database_cw.dIndx-guimen1_gk_max)>0)
+                                    {
+                                        k++;//board
+                                    }
+                                    else
+                                    {
+                                        j=database_cw.dIndx;//lock
+                                    }
+
+                                    if(((int16_t)database_cw.dIndx-\
+                                        guimen2_gk_max-\
+                                        guimen1_gk_max)>0)
+                                    {
+                                        k++;
+                                    }
+                                    else
+                                    {
+                                        j=database_cw.dIndx;
+                                    }
+
+                                    if(((int16_t)database_cw.dIndx-\
+                                        guimen3_gk_max-\
+                                        guimen2_gk_max-\
+                                        guimen1_gk_max)>0)
+                                    {
+                                        k++;
+                                    }
+                                    else
+                                    {
+                                        j=database_cw.dIndx;
+                                    }
+                                    printf("--open- board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
+
+                    
+
+
+                                    ESP_LOGI(TAG, "-da-lock:%d ok--.\r\n",j);
+                                    send_cmd_to_lock(k+1,j);
+                                    send_cmd_to_lcd_bl(0x10c0,database_cw.dIndx);
+            
+
+
+                                    send_cmd_to_lcd_pic(0x0014);
+
+
+                                }
+                                else
+                                {
+wuci_xmh:
+                                    send_cmd_to_lcd_pic(0x0015);
+                                    ESP_LOGI(TAG, "----admin --wu ci xiangmenhao-----.\r\n");
+                                }
+                                
+
+                                break;
+
 
                             default:
                                 ESP_LOGI(TAG, "----------------83 default---------------.\r\n");
@@ -2741,6 +2827,9 @@ void read_nvs_guizi_all()
         nvs_wr_shengyu_da(0);
         nvs_wr_shengyu_zhong(0);
         nvs_wr_shengyu_xiao(0);
+
+
+
         // //database_gz[i].cunwu_mode_gz = database_cw.cunwu_mode;
         // sprintf(key_name, "%03d", i);
         // strcpy(key_name+3,DZ_CW_MD);
