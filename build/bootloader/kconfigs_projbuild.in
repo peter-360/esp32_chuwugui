@@ -1,0 +1,3 @@
+source "D:/0_xitian/software/ESP32/0_code/esp-idf/components/bootloader/Kconfig.projbuild"
+source "D:/0_xitian/software/ESP32/0_code/esp-idf/components/esptool_py/Kconfig.projbuild"
+source "D:/0_xitian/software/ESP32/0_code/esp-idf/components/partition_table/Kconfig.projbuild"

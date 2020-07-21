@@ -1,0 +1,5 @@
+source "D:/0_xitian/software/ESP32/0_code/esp-idf/components/efuse/Kconfig"
+source "D:/0_xitian/software/ESP32/0_code/esp-idf/components/esp32/Kconfig"
+source "D:/0_xitian/software/ESP32/0_code/esp-idf/components/esp_common/Kconfig"
+source "D:/0_xitian/software/ESP32/0_code/esp-idf/components/log/Kconfig"
+source "D:/0_xitian/software/ESP32/0_code/esp-idf/components/spi_flash/Kconfig"
