@@ -4467,6 +4467,26 @@
                             },
                             {
                                 "children": [],
+                                "depends_on": "BTDM_CTRL_MODE_BR_EDR_ONLY || BTDM_CTRL_MODE_BTDM",
+                                "help": "To protect from BIAS attack during Legacy authentication,\nLegacy authentication Vendor specific event should be enabled\n",
+                                "id": "BTDM_CTRL_LEGACY_AUTH_VENDOR_EVT",
+                                "name": "BTDM_CTRL_LEGACY_AUTH_VENDOR_EVT",
+                                "range": null,
+                                "title": "Legacy Authentication Vendor Specific Event Enable",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": null,
+                                "help": null,
+                                "id": "BTDM_CTRL_LEGACY_AUTH_VENDOR_EVT_EFF",
+                                "name": "BTDM_CTRL_LEGACY_AUTH_VENDOR_EVT_EFF",
+                                "range": null,
+                                "title": null,
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
                                 "depends_on": null,
                                 "help": null,
                                 "id": "BTDM_CTRL_BLE_MAX_CONN_EFF",
@@ -7716,13 +7736,74 @@
                         "type": "bool"
                     },
                     {
-                        "children": [],
+                        "children": [
+                            {
+                                "children": [],
+                                "depends_on": "<choice BLE_MESH_MEM_ALLOC_MODE>",
+                                "help": null,
+                                "id": "BLE_MESH_MEM_ALLOC_MODE_INTERNAL",
+                                "name": "BLE_MESH_MEM_ALLOC_MODE_INTERNAL",
+                                "range": null,
+                                "title": "Internal DRAM",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "ESP32_SPIRAM_SUPPORT && <choice BLE_MESH_MEM_ALLOC_MODE>",
+                                "help": null,
+                                "id": "BLE_MESH_MEM_ALLOC_MODE_EXTERNAL",
+                                "name": "BLE_MESH_MEM_ALLOC_MODE_EXTERNAL",
+                                "range": null,
+                                "title": "External SPIRAM",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "ESP32_SPIRAM_SUPPORT && <choice BLE_MESH_MEM_ALLOC_MODE>",
+                                "help": "Enable this option to use the default memory allocation strategy when\nexternal SPIRAM is enabled. See the SPIRAM options for more details.\n",
+                                "id": "BLE_MESH_MEM_ALLOC_MODE_DEFAULT",
+                                "name": "BLE_MESH_MEM_ALLOC_MODE_DEFAULT",
+                                "range": null,
+                                "title": "Default alloc mode",
+                                "type": "bool"
+                            }
+                        ],
                         "depends_on": "BLE_MESH",
-                        "help": "When this option is enabled, BLE Mesh stack will try to allocate memory\nfrom PSRAM firstly. This will save the internal RAM if PSRAM exists.\n",
-                        "id": "BLE_MESH_ALLOC_FROM_PSRAM_FIRST",
-                        "name": "BLE_MESH_ALLOC_FROM_PSRAM_FIRST",
+                        "help": "Allocation strategy for BLE Mesh stack, essentially provides ability to\nallocate all required dynamic allocations from,\n\n- Internal DRAM memory only\n- External SPIRAM memory only\n- Either internal or external memory based on default malloc()\n  behavior in ESP-IDF\n\nRecommended mode here is always internal, since that is most preferred\nfrom security perspective. But if application requirement does not allow\nsufficient free internal memory then alternate mode can be selected.\n",
+                        "id": "component-config-esp-ble-mesh-support-memory-allocation-strategy",
+                        "name": "BLE_MESH_MEM_ALLOC_MODE",
+                        "title": "Memory allocation strategy",
+                        "type": "choice"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [
+                                    {
+                                        "children": [],
+                                        "depends_on": "ESP32_SPIRAM_SUPPORT && <choice BLE_MESH_FREERTOS_STATIC_ALLOC_MODE>",
+                                        "help": "If enabled, BLE Mesh allocates dynamic memory from external SPIRAM for\nFreeRTOS objects, i.e. mutex, queue, and task stack. External SPIRAM\ncan only be used for task stack when SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY\nis enabled. See the SPIRAM options for more details.\n",
+                                        "id": "BLE_MESH_FREERTOS_STATIC_ALLOC_EXTERNAL",
+                                        "name": "BLE_MESH_FREERTOS_STATIC_ALLOC_EXTERNAL",
+                                        "range": null,
+                                        "title": "External SPIRAM",
+                                        "type": "bool"
+                                    }
+                                ],
+                                "depends_on": "BLE_MESH_FREERTOS_STATIC_ALLOC && BLE_MESH",
+                                "help": "Choose the memory to be used for FreeRTOS objects.\n",
+                                "id": "component-config-esp-ble-mesh-support-enable-freertos-static-allocation-memory-allocation-for-freertos-objects",
+                                "name": "BLE_MESH_FREERTOS_STATIC_ALLOC_MODE",
+                                "title": "Memory allocation for FreeRTOS objects",
+                                "type": "choice"
+                            }
+                        ],
+                        "depends_on": "FREERTOS_SUPPORT_STATIC_ALLOCATION && ESP32_SPIRAM_SUPPORT && BLE_MESH",
+                        "help": "Enable this option to use FreeRTOS static allocation APIs for BLE Mesh,\nwhich provides the ability to use different dynamic memory (i.e. SPIRAM)\nfor FreeRTOS objects.\nIf this option is disabled, the FreeRTOS static allocation APIs will not\nbe used, and internal DRAM will be allocated for FreeRTOS objects.\n",
+                        "id": "BLE_MESH_FREERTOS_STATIC_ALLOC",
+                        "name": "BLE_MESH_FREERTOS_STATIC_ALLOC",
                         "range": null,
-                        "title": "BLE Mesh will first allocate memory from PSRAM",
+                        "title": "Enable FreeRTOS static allocation",
                         "type": "bool"
                     },
                     {
@@ -9132,6 +9213,16 @@
             },
             {
                 "children": [
+                    {
+                        "children": [],
+                        "depends_on": "!FREERTOS_UNICORE && ESP32_SPIRAM_SUPPORT",
+                        "help": null,
+                        "id": "ESP32_ECO3_CACHE_LOCK_FIX",
+                        "name": "ESP32_ECO3_CACHE_LOCK_FIX",
+                        "range": null,
+                        "title": null,
+                        "type": "bool"
+                    },
                     {
                         "children": [
                             {
@@ -13313,6 +13404,16 @@
                                 "range": null,
                                 "title": "Support TCP window scale",
                                 "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": null,
+                                "help": "Set default TCP rto time for a reasonable initial rto.\nIn bad network environment, recommend set value of rto time to 1500.\n",
+                                "id": "LWIP_TCP_RTO_TIME",
+                                "name": "LWIP_TCP_RTO_TIME",
+                                "range": null,
+                                "title": "Default TCP rto time",
+                                "type": "int"
                             }
                         ],
                         "depends_on": null,

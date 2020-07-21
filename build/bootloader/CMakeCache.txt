@@ -90,8 +90,8 @@ CMAKE_C_FLAGS_RELEASE:STRING=-O3 -DNDEBUG
 //Flags used by the C compiler during RELWITHDEBINFO builds.
 CMAKE_C_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG
 
-//Linker Base Flags
-CMAKE_EXE_LINKER_FLAGS:STRING=-nostdlib
+//Flags used by the linker during all build types.
+CMAKE_EXE_LINKER_FLAGS:STRING=
 
 //Flags used by the linker during DEBUG builds.
 CMAKE_EXE_LINKER_FLAGS_DEBUG:STRING=

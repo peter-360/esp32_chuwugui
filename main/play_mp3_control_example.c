@@ -56,12 +56,83 @@
    To embed it in the app binary, the mp3 file is named
    in the component.mk COMPONENT_EMBED_TXTFILES variable.
 */
+// low rate mp3 audio
+
+audio_pipeline_handle_t pipeline;
+extern const uint8_t lr_mp3_start[] asm("_binary_16b_2c_8000hz_mp3_start");
+extern const uint8_t lr_mp3_end[]   asm("_binary_16b_2c_8000hz_mp3_end");
+
+// medium rate mp3 audio
+extern const uint8_t mr_mp3_start[] asm("_binary_16b_2c_22050hz_mp3_start");
+extern const uint8_t mr_mp3_end[]   asm("_binary_16b_2c_22050hz_mp3_end");
+
+// high rate mp3 audio
+extern const uint8_t hr_mp3_start[] asm("_binary_16b_2c_44100hz_mp3_start");
+extern const uint8_t hr_mp3_end[]   asm("_binary_16b_2c_44100hz_mp3_end");
+
+
+
 extern const uint8_t adf_music_mp3_start[] asm("_binary_adf_music_mp3_start");
 extern const uint8_t adf_music_mp3_end[]   asm("_binary_adf_music_mp3_end");
-static int adf_music_mp3_pos;
-audio_pipeline_handle_t pipeline;
+// static int adf_music_mp3_pos;
 
 
+const uint8_t * m_mp3_start ;
+const uint8_t * m_mp3_end;
+static int m_mp3_pos;
+
+
+
+
+// static void set_next_file_marker(int midx)
+static void set_next_file_marker(void)
+{
+    static int midx = 0;
+
+    switch (midx) {
+        case 0:
+            m_mp3_start = lr_mp3_start;
+            m_mp3_end   = lr_mp3_end;
+            break;
+        case 1:
+            m_mp3_start = mr_mp3_start;
+            m_mp3_end   = mr_mp3_end;
+            break;
+        case 2:
+            m_mp3_start = hr_mp3_start;
+            m_mp3_end   = hr_mp3_end;
+            break;
+        case 3:
+            m_mp3_start = adf_music_mp3_start;
+            m_mp3_end   = adf_music_mp3_end;
+            break;
+        default:
+            m_mp3_start = adf_music_mp3_start;
+            m_mp3_end   = adf_music_mp3_end;
+            ESP_LOGE(TAG, "[ * ] Not supported index = %d", midx);
+    }
+    // if (++idx > 2) {
+    //     idx = 0;
+    // }
+    m_mp3_pos = 0;
+
+    return;
+}
+
+
+
+int mp3_music_read_cb(audio_element_handle_t el, char *buf, int len, TickType_t wait_time, void *ctx)
+{
+    int read_size = m_mp3_end - m_mp3_start - m_mp3_pos;
+    if (read_size == 0) {
+        return AEL_IO_DONE;
+    } else if (len < read_size) {
+        read_size = len;
+    }
+    memcpy(buf, m_mp3_start + m_mp3_pos, read_size);
+    m_mp3_pos += read_size;
+    return read_size;
+}
 
 
 
@@ -102,8 +173,8 @@ const char *TAG = "uart_events";
     // #define ECHO_TEST3_CTS  (UART_PIN_NO_CHANGE)
 
 
-#define ECHO_TEST_TXD  GPIO_NUM_22//32(GPIO_NUM_33)//GPIO_NUM_4
-#define ECHO_TEST_RXD  GPIO_NUM_39//33(GPIO_NUM_32)//GPIO_NUM_5
+#define ECHO_TEST_TXD  GPIO_NUM_32//32(GPIO_NUM_33)//GPIO_NUM_4
+#define ECHO_TEST_RXD  GPIO_NUM_33//33(GPIO_NUM_32)//GPIO_NUM_5
 #define ECHO_TEST_RTS  (UART_PIN_NO_CHANGE)
 #define ECHO_TEST_CTS  (UART_PIN_NO_CHANGE)
 
@@ -2271,6 +2342,44 @@ done:
 
 
                                     ESP_LOGI(TAG, "-----2-----[ * ] Starting audio pipeline");
+                                    audio_pipeline_stop(pipeline);
+                                    audio_pipeline_wait_for_stop(pipeline);
+                                    audio_pipeline_terminate(pipeline);
+                                    audio_pipeline_reset_ringbuffer(pipeline);
+                                    audio_pipeline_reset_elements(pipeline);
+
+                                    // set_next_file_marker((int)(database_cw.dIndx));
+                                    //set_next_file_marker();
+                                    //static int idx = 0;
+
+                                    //static int midx = 0;
+                                    ESP_LOGE(TAG, "---- index = %d", database_cw.dIndx);
+                                    switch (1) {
+                                       case 0:
+                                            m_mp3_start = lr_mp3_start;
+                                            m_mp3_end   = lr_mp3_end;
+                                            break;
+
+                                        case 1:
+                                            m_mp3_start = adf_music_mp3_start;
+                                            m_mp3_end   = adf_music_mp3_end;
+                                            break;
+
+  
+                                        case 2:
+                                            m_mp3_start = mr_mp3_start;
+                                            m_mp3_end   = mr_mp3_end;
+                                            break;
+                                        case 3:
+                                            m_mp3_start = hr_mp3_start;
+                                            m_mp3_end   = hr_mp3_end;
+                                            break;
+  
+                                        default:
+                                            m_mp3_start = adf_music_mp3_start;
+                                            m_mp3_end   = adf_music_mp3_end;
+                                            ESP_LOGE(TAG, "[ * ] Not supported index = %d", database_cw.dIndx);
+                                    }
                                     audio_pipeline_run(pipeline);
                                 }
                                 else
@@ -2992,24 +3101,6 @@ void read_nvs_guizi_all()
 
 
 
-
-
-int mp3_music_read_cb(audio_element_handle_t el, char *buf, int len, TickType_t wait_time, void *ctx)
-{
-    int read_size = adf_music_mp3_end - adf_music_mp3_start - adf_music_mp3_pos;
-    if (read_size == 0) {
-        return AEL_IO_DONE;
-    } else if (len < read_size) {
-        read_size = len;
-    }
-    memcpy(buf, adf_music_mp3_start + adf_music_mp3_pos, read_size);
-    adf_music_mp3_pos += read_size;
-    return read_size;
-}
-
-
-
-
 void app_main(void)
 {
     u8 ensure;
@@ -3219,12 +3310,12 @@ void app_main(void)
         const char *link_tag[2] = {"mp3", "i2s"};
         audio_pipeline_link(pipeline, &link_tag[0], 2);
 
-        ESP_LOGI(TAG, "[ 3 ] Initialize peripherals");
-        esp_periph_config_t periph_cfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
-        esp_periph_set_handle_t set = esp_periph_set_init(&periph_cfg);
+        // ESP_LOGI(TAG, "[ 3 ] Initialize peripherals");
+        // esp_periph_config_t periph_cfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
+        // esp_periph_set_handle_t set = esp_periph_set_init(&periph_cfg);
 
-        ESP_LOGI(TAG, "[3.1] Initialize keys on board");
-        audio_board_key_init(set);
+        // ESP_LOGI(TAG, "[3.1] Initialize keys on board");
+        // audio_board_key_init(set);
 
         ESP_LOGI(TAG, "[ 4 ] Set up  event listener");
         audio_event_iface_cfg_t evt_cfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
@@ -3233,8 +3324,8 @@ void app_main(void)
         ESP_LOGI(TAG, "[4.1] Listening event from all elements of pipeline");
         audio_pipeline_set_listener(pipeline, evt);
 
-        ESP_LOGI(TAG, "[4.2] Listening event from peripherals");
-        audio_event_iface_set_listener(esp_periph_set_get_event_iface(set), evt);
+        // ESP_LOGI(TAG, "[4.2] Listening event from peripherals");
+        // audio_event_iface_set_listener(esp_periph_set_get_event_iface(set), evt);
 
         ESP_LOGW(TAG, "[ 5 ] Tap touch buttons to control music player:");
         ESP_LOGW(TAG, "      [Play] to start, pause and resume, [Set] to stop.");
@@ -3261,58 +3352,58 @@ void app_main(void)
                 continue;
             }
 
-            if ((msg.source_type == PERIPH_ID_TOUCH || msg.source_type == PERIPH_ID_BUTTON || msg.source_type == PERIPH_ID_ADC_BTN)
-                && (msg.cmd == PERIPH_TOUCH_TAP || msg.cmd == PERIPH_BUTTON_PRESSED || msg.cmd == PERIPH_ADC_BUTTON_PRESSED)) {
+            // if ((msg.source_type == PERIPH_ID_TOUCH || msg.source_type == PERIPH_ID_BUTTON || msg.source_type == PERIPH_ID_ADC_BTN)
+            //     && (msg.cmd == PERIPH_TOUCH_TAP || msg.cmd == PERIPH_BUTTON_PRESSED || msg.cmd == PERIPH_ADC_BUTTON_PRESSED)) {
 
-                if ((int) msg.data == get_input_play_id()) {
-                    ESP_LOGI(TAG, "[ * ] [Play] touch tap event");
-                    audio_element_state_t el_state = audio_element_get_state(i2s_stream_writer);
-                    switch (el_state) {
-                        case AEL_STATE_INIT :
-                            ESP_LOGI(TAG, "[ * ] Starting audio pipeline");
-                            audio_pipeline_run(pipeline);
-                            break;
-                        case AEL_STATE_RUNNING :
-                            ESP_LOGI(TAG, "[ * ] Pausing audio pipeline");
-                            audio_pipeline_pause(pipeline);
-                            break;
-                        case AEL_STATE_PAUSED :
-                            ESP_LOGI(TAG, "[ * ] Resuming audio pipeline");
-                            audio_pipeline_resume(pipeline);
-                            break;
-                        case AEL_STATE_FINISHED :
-                            ESP_LOGI(TAG, "[ * ] Rewinding audio pipeline");
-                            audio_pipeline_stop(pipeline);
-                            audio_pipeline_wait_for_stop(pipeline);
-                            adf_music_mp3_pos = 0;
-                            audio_pipeline_resume(pipeline);
-                            break;
-                        default :
-                            ESP_LOGI(TAG, "[ * ] Not supported state %d", el_state);
-                    }
-                } else if ((int) msg.data == get_input_set_id()) {
-                    ESP_LOGI(TAG, "[ * ] [Set] touch tap event");
-                    ESP_LOGI(TAG, "[ * ] Stopping audio pipeline");
-                    break;
-                } 
-                // else if ((int) msg.data == get_input_volup_id()) {
-                //     ESP_LOGI(TAG, "[ * ] [Vol+] touch tap event");
-                //     player_volume += 10;
-                //     if (player_volume > 100) {
-                //         player_volume = 100;
-                //     }
-                //     audio_hal_set_volume(board_handle->audio_hal, player_volume);
-                //     ESP_LOGI(TAG, "[ * ] Volume set to %d %%", player_volume);
-                // } else if ((int) msg.data == get_input_voldown_id()) {
-                //     ESP_LOGI(TAG, "[ * ] [Vol-] touch tap event");
-                //     player_volume -= 10;
-                //     if (player_volume < 0) {
-                //         player_volume = 0;
-                //     }
-                //     audio_hal_set_volume(board_handle->audio_hal, player_volume);
-                //     ESP_LOGI(TAG, "[ * ] Volume set to %d %%", player_volume);
-                // }
-            }
+            //     if ((int) msg.data == get_input_play_id()) {
+            //         ESP_LOGI(TAG, "[ * ] [Play] touch tap event");
+            //         audio_element_state_t el_state = audio_element_get_state(i2s_stream_writer);
+            //         switch (el_state) {
+            //             case AEL_STATE_INIT :
+            //                 ESP_LOGI(TAG, "[ * ] Starting audio pipeline");
+            //                 audio_pipeline_run(pipeline);
+            //                 break;
+            //             case AEL_STATE_RUNNING :
+            //                 ESP_LOGI(TAG, "[ * ] Pausing audio pipeline");
+            //                 audio_pipeline_pause(pipeline);
+            //                 break;
+            //             case AEL_STATE_PAUSED :
+            //                 ESP_LOGI(TAG, "[ * ] Resuming audio pipeline");
+            //                 audio_pipeline_resume(pipeline);
+            //                 break;
+            //             case AEL_STATE_FINISHED :
+            //                 ESP_LOGI(TAG, "[ * ] Rewinding audio pipeline");
+            //                 audio_pipeline_stop(pipeline);
+            //                 audio_pipeline_wait_for_stop(pipeline);
+            //                 m_mp3_pos = 0;
+            //                 audio_pipeline_resume(pipeline);
+            //                 break;
+            //             default :
+            //                 ESP_LOGI(TAG, "[ * ] Not supported state %d", el_state);
+            //         }
+            //     } else if ((int) msg.data == get_input_set_id()) {
+            //         ESP_LOGI(TAG, "[ * ] [Set] touch tap event");
+            //         ESP_LOGI(TAG, "[ * ] Stopping audio pipeline");
+            //         break;
+            //     } 
+            //     // else if ((int) msg.data == get_input_volup_id()) {
+            //     //     ESP_LOGI(TAG, "[ * ] [Vol+] touch tap event");
+            //     //     player_volume += 10;
+            //     //     if (player_volume > 100) {
+            //     //         player_volume = 100;
+            //     //     }
+            //     //     audio_hal_set_volume(board_handle->audio_hal, player_volume);
+            //     //     ESP_LOGI(TAG, "[ * ] Volume set to %d %%", player_volume);
+            //     // } else if ((int) msg.data == get_input_voldown_id()) {
+            //     //     ESP_LOGI(TAG, "[ * ] [Vol-] touch tap event");
+            //     //     player_volume -= 10;
+            //     //     if (player_volume < 0) {
+            //     //         player_volume = 0;
+            //     //     }
+            //     //     audio_hal_set_volume(board_handle->audio_hal, player_volume);
+            //     //     ESP_LOGI(TAG, "[ * ] Volume set to %d %%", player_volume);
+            //     // }
+            // }
         }
 
         ESP_LOGI(TAG, "[ 6 ] Stop audio_pipeline");

@@ -1533,6 +1533,16 @@
             {
                 "children": [
                     {
+                        "children": [],
+                        "depends_on": "!FREERTOS_UNICORE && ESP32_SPIRAM_SUPPORT",
+                        "help": null,
+                        "id": "ESP32_ECO3_CACHE_LOCK_FIX",
+                        "name": "ESP32_ECO3_CACHE_LOCK_FIX",
+                        "range": null,
+                        "title": null,
+                        "type": "bool"
+                    },
+                    {
                         "children": [
                             {
                                 "children": [],

@@ -6,7 +6,7 @@
     "config_defaults":    "",
     "app_elf":            "bootloader.elf",
     "app_bin":            "bootloader.bin",
-    "git_revision":       "v4.0.1-197-g94d97499a-dirty",
+    "git_revision":       "v4.0.1-316-g48ea44f3d-dirty",
     "phy_data_partition": "",
     "monitor_baud" : "115200",
     "config_environment" : {
