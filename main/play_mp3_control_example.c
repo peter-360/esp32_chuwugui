@@ -1082,7 +1082,7 @@ void nvs_wr_phone_number_nvs_gz(uint8_t mode)
     char key_name[15];//15
     esp_err_t err;
 
-    //database_cw.phone_number_nvs = atoi((const char*)phone_number);
+    //database_cw.phone_number_nvs = atoll((const char*)phone_number);
 
     //database_gz[database_cw.dIndx].phone_number_nvs_gz = database_cw.phone_number_nvs;
     sprintf(key_name, "%03d%s", database_cw.dIndx,DZ_PHONE);
@@ -1468,12 +1468,27 @@ static void echo_task2()//lcd
                                 // }
 
                                 //ESP_LOGI(TAG, "data_rx_t[6]=%d---.\r\n",data_rx_t[6]);
-                                if(05== data_rx_t[6])//12
+                                if((06== data_rx_t[6])
+                                    &&(0xFF== data_rx_t[len_rx_t -3]))//12
                                 {
                                     //zancun
                                     phone_weishu_ok =1;
-                                    memcpy( phone_number,data_rx_t+7 ,10);
-                                    ESP_LOGI(TAG, "---phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
+                                    memcpy( phone_number,data_rx_t+7 ,11);
+                                    //phone_number[11] = '\0';//no use
+                                    
+
+                                    for (int i = 7; i < 7+ data_rx_t[6] *2 -1; i++) {
+                                        printf("0x%.2X ", (uint8_t)data_rx_t[i]);
+                                        if(data_rx_t[i] == 0xFF)
+                                        {
+                                            phone_weishu_ok =0;
+                                            ESP_LOGI(TAG, "--no--phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
+                                        }
+                                    }
+                                    printf("\r\n");
+
+                                    if(phone_weishu_ok == 1)
+                                        ESP_LOGI(TAG, "-yes-phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
 
                                 }
                                 else
@@ -1505,6 +1520,20 @@ static void echo_task2()//lcd
                                     printf("mima_number=");
                                     uart0_debug_str(mima_number,6);
 
+
+                                    for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
+                                        printf("0x%.2X ", (uint8_t)data_rx_t[i]);
+                                        if(data_rx_t[i] == 0xFF)
+                                        {
+                                            ESP_LOGI(TAG, "--no--mima_weishu_ok=%d---.\r\n",phone_weishu_ok);
+                                            goto done;
+                                        }
+                                    }
+                                    printf("\r\n");
+
+
+
+
                                     uint16_t j=0,k=0;
                                     uint16_t database_gz_temp[SHENYU_GEZI_MAX]={0};
                                     uint16_t database_gz_temp_onuse[SHENYU_GEZI_MAX]={0};
@@ -1513,7 +1542,7 @@ static void echo_task2()//lcd
 
 
 
-                                    database_cw.phone_number_nvs = atoi((const char*)phone_number);
+                                    database_cw.phone_number_nvs = atoll((const char*)phone_number);
                                     database_cw.mima_number_nvs = atoi((const char*)mima_number);
                                     printf("phone?=%11llu,mima?=%6u,", database_cw.phone_number_nvs, database_cw.mima_number_nvs);
                                     
@@ -1635,7 +1664,7 @@ static void echo_task2()//lcd
                                             ESP_LOGI(TAG, "-da-lock:%d ok--.\r\n",j);
 
                                             send_cmd_to_lock(k+1,j);
-
+                                            send_cmd_to_lcd_bl(0x1070,database_cw.dIndx);
                                         }    
                                         else
                                         {
@@ -1728,6 +1757,7 @@ static void echo_task2()//lcd
 
                                                 ESP_LOGI(TAG, "-zhong-lock:%d ok--.\r\n",j);
                                                 send_cmd_to_lock(k+1,j);
+                                                send_cmd_to_lcd_bl(0x1070,database_cw.dIndx);
                                                 
                                             }
                                             // else
@@ -1885,7 +1915,7 @@ static void echo_task2()//lcd
                                         nvs_wr_dzx_mode_gz(1);
 
 
-                                        //database_cw.phone_number_nvs = atoi((const char*)phone_number);
+                                        //database_cw.phone_number_nvs = atoll((const char*)phone_number);
                                         database_gz[database_cw.dIndx].phone_number_nvs_gz = database_cw.phone_number_nvs;
                                         nvs_wr_phone_number_nvs_gz(1);
 
@@ -2060,7 +2090,7 @@ done:
                                     uint32_t mima_number_nvs_i;  //
                                     //uint16_t duiying_index;  //
 
-                                    phone_number_nvs_i = atoi((const char*)phone_number);
+                                    phone_number_nvs_i = atoll((const char*)phone_number);
                                     mima_number_nvs_i = atoi((const char*)mima_number);
                                     printf("phone?=%11llu,mima?=%6u,", phone_number_nvs_i, mima_number_nvs_i);
                                     
@@ -2353,7 +2383,7 @@ done:
                                     //static int idx = 0;
 
                                     //static int midx = 0;
-                                    ESP_LOGE(TAG, "---- index = %d", database_cw.dIndx);
+                                    ESP_LOGE(TAG, "--sound-- index = %d", database_cw.dIndx);
                                     switch (1) {
                                        case 0:
                                             m_mp3_start = lr_mp3_start;
@@ -3010,7 +3040,7 @@ void read_nvs_guizi_all()
 
 
 
-        // // database_cw.phone_number_nvs = atoi((const char*)phone_number);
+        // // database_cw.phone_number_nvs = atoll((const char*)phone_number);
 
         // // database_gz[i].phone_number_nvs_gz = database_cw.phone_number_nvs;
         // sprintf(key_name, "%03d", i);
