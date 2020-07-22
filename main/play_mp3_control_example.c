@@ -1443,7 +1443,7 @@ static void echo_task2()//lcd
                                     // tx_Buffer[9] = 0x01;
                                     send_cmd_to_lcd_pic(0x0001);
                                     flag_temp =0 ;
-                                    
+
                                 }
 
 
@@ -2088,6 +2088,7 @@ done:
                                 //if((1 == phone_weishu_ok)&&(03== data_rx_t[6]))//6   ok todo shoujihao yiyou
                                 if((1 == phone_weishu_ok)&&(03== data_rx_t[6]))//03
                                 {
+                                    phone_weishu_ok =0;
                                     memcpy( mima_number,data_rx_t+7 ,6);
 
                                     printf("phone_number=");
@@ -2099,7 +2100,7 @@ done:
                                         printf("0x%.2X ", (uint8_t)data_rx_t[i]);
                                         if(data_rx_t[i] == 0xFF)
                                         {
-                                            ESP_LOGI(TAG, "--no--mima_weishu_ok=%d---.\r\n",phone_weishu_ok);
+                                            ESP_LOGI(TAG, "--no--mima_weishu_ok---.\r\n");
                                             goto done_qu;
                                         }
                                     }
@@ -2133,12 +2134,6 @@ done:
                                                 database_cw.dIndx = i;//ok
                                                 printf("---yes- phone_number and key_number has in database\r\n");
                                             }
-                                            else
-                                            {
-                                                goto done_qu;
-                                                printf("---only mima_number will xin, phone_number has in database\r\n");
-                                            }
-
 
                                         }
                                         else//
@@ -2147,143 +2142,145 @@ done:
                                         }
                                         
                                     }
-                                    if(database_cw.dIndx == 0)
+                                    if(database_cw.dIndx == 0)//
                                     {
+                                        send_cmd_to_lcd_pic(0x000d); //
                                         printf("---no find phone\r\n");
-                                        database_cw.dIndx = atoi((const char*)mima_number);//data_rx_t[7] - 0x30;
-                                        goto done_qu;
-                                    }
-                                    printf("---phone_number and mima etc... will be deleted\r\n");
-
-
-
-                                    // database_gz[database_cw.dIndx].state_gz =database_cw.state;
-                                    printf("---add---database_cw.dIndx=%u\r\n",database_cw.dIndx);
-
-
-                                    j=0;k=0;
-                                    //j=5; k=0;
-
-                                    // suiji kaimen
-                                    // if(shengyu_da >0)
-                                    if(((int16_t)database_cw.dIndx-guimen1_gk_max)>0)
-                                    {
-                                        k++;//board
+                                        // database_cw.dIndx = atoi((const char*)mima_number);//data_rx_t[7] - 0x30;
+                                        //goto done_qu_zanwu;//todo
                                     }
                                     else
                                     {
-                                        j=database_cw.dIndx;//lock
-                                    }
 
-                                    if(((int16_t)database_cw.dIndx-\
-                                        guimen2_gk_max-\
-                                        guimen1_gk_max)>0)
-                                    {
-                                        k++;
-                                    }
-                                    else
-                                    {
-                                        j=database_cw.dIndx;
-                                    }
+                                        printf("---phone_number and mima etc... will be deleted\r\n");
 
-                                    if(((int16_t)database_cw.dIndx-\
-                                        guimen3_gk_max-\
-                                        guimen2_gk_max-\
-                                        guimen1_gk_max)>0)
-                                    {
-                                        k++;
-                                    }
-                                    else
-                                    {
-                                        j=database_cw.dIndx;
-                                    }
-                                    printf("--open- board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
-
-                    
+                                        // database_gz[database_cw.dIndx].state_gz =database_cw.state;
+                                        printf("---add---database_cw.dIndx=%u\r\n",database_cw.dIndx);
 
 
+                                        j=0;k=0;
+                                        //j=5; k=0;
+
+                                        // suiji kaimen
+                                        // if(shengyu_da >0)
+                                        if(((int16_t)database_cw.dIndx-guimen1_gk_max)>0)
+                                        {
+                                            k++;//board
+                                        }
+                                        else
+                                        {
+                                            j=database_cw.dIndx;//lock
+                                        }
+
+                                        if(((int16_t)database_cw.dIndx-\
+                                            guimen2_gk_max-\
+                                            guimen1_gk_max)>0)
+                                        {
+                                            k++;
+                                        }
+                                        else
+                                        {
+                                            j=database_cw.dIndx;
+                                        }
+
+                                        if(((int16_t)database_cw.dIndx-\
+                                            guimen3_gk_max-\
+                                            guimen2_gk_max-\
+                                            guimen1_gk_max)>0)
+                                        {
+                                            k++;
+                                        }
+                                        else
+                                        {
+                                            j=database_cw.dIndx;
+                                        }
+                                        printf("--open- board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
+
+                        
 
 
-                                    switch (database_gz[database_cw.dIndx].dzx_mode_gz)
-                                    {
-                                    case 1:
-                                        //d
-                                        shengyu_da ++;
-                                        tongbu_gekou_shuliang_d(shengyu_da); 
-                                        break;
-                                    case 2:
-                                        //z
-                                        shengyu_zhong ++;
-                                        tongbu_gekou_shuliang_z(shengyu_zhong); 
-                                        break;
-                                    case 3:
-                                        //x
-                                        shengyu_xiao ++;
-                                        tongbu_gekou_shuliang_x(shengyu_xiao); 
-                                        break;
-
-                                    default:
-                                        break;
-                                    }
-
-            
 
 
-                                    ESP_LOGI(TAG, "-da-lock:%d ok--.\r\n",j);
-                                    send_cmd_to_lock(k+1,j);
-                                    send_cmd_to_lcd_bl(0x10a0,database_cw.dIndx);
-            
+                                        switch (database_gz[database_cw.dIndx].dzx_mode_gz)
+                                        {
+                                        case 1:
+                                            //d
+                                            shengyu_da ++;
+                                            tongbu_gekou_shuliang_d(shengyu_da); 
+                                            break;
+                                        case 2:
+                                            //z
+                                            shengyu_zhong ++;
+                                            tongbu_gekou_shuliang_z(shengyu_zhong); 
+                                            break;
+                                        case 3:
+                                            //x
+                                            shengyu_xiao ++;
+                                            tongbu_gekou_shuliang_x(shengyu_xiao); 
+                                            break;
+
+                                        default:
+                                            break;
+                                        }
+
+                
+
+
+                                        ESP_LOGI(TAG, "-da-lock:%d ok--.\r\n",j);
+                                        send_cmd_to_lock(k+1,j);
+                                        send_cmd_to_lcd_bl(0x10a0,database_cw.dIndx);//weishu bugou
+                
+                                            
+
+                                        ESP_LOGI(TAG, "----test--.\r\n");  
                                         
 
-                                    ESP_LOGI(TAG, "----test--.\r\n");  
-                                    
-
-                                    //if(0 != database_cw.dzx_mode)
-                                    {
+                                        //if(0 != database_cw.dzx_mode)
+                                        {
 
 
-                                        shengyu_all ++ ;
-                                        tongbu_gekou_shuliang_all(shengyu_all);
+                                            shengyu_all ++ ;
+                                            tongbu_gekou_shuliang_all(shengyu_all);
 
-                                        // char key_name[15];//15
-                                        // esp_err_t err;
+                                            // char key_name[15];//15
+                                            // esp_err_t err;
 
-                                        database_gz[database_cw.dIndx].cunwu_mode_gz = 0;
-                                        database_gz[database_cw.dIndx].dzx_mode_gz = 0;
-                                        database_gz[database_cw.dIndx].phone_number_nvs_gz = 0;
-                                        database_gz[database_cw.dIndx].mima_number_nvs_gz = 0;
-                                        database_gz[database_cw.dIndx].state_gz =0;
-                                        nvs_wr_cunwu_mode_gz(1);
-                                        nvs_wr_dzx_mode_gz(1);
-                                        nvs_wr_phone_number_nvs_gz(1);
-                                        nvs_wr_mima_number_nvs_gz(1);
-                                        nvs_wr_state_gz(1);
+                                            database_gz[database_cw.dIndx].cunwu_mode_gz = 0;
+                                            database_gz[database_cw.dIndx].dzx_mode_gz = 0;
+                                            database_gz[database_cw.dIndx].phone_number_nvs_gz = 0;
+                                            database_gz[database_cw.dIndx].mima_number_nvs_gz = 0;
+                                            database_gz[database_cw.dIndx].state_gz =0;
+                                            nvs_wr_cunwu_mode_gz(1);
+                                            nvs_wr_dzx_mode_gz(1);
+                                            nvs_wr_phone_number_nvs_gz(1);
+                                            nvs_wr_mima_number_nvs_gz(1);
+                                            nvs_wr_state_gz(1);
 
 
-    
+        
 
-                                        nvs_wr_shengyu_da(1);
-                                        nvs_wr_shengyu_zhong(1);
-                                        nvs_wr_shengyu_xiao(1);
+                                            nvs_wr_shengyu_da(1);
+                                            nvs_wr_shengyu_zhong(1);
+                                            nvs_wr_shengyu_xiao(1);
 
 
 
 
 
 
-                                        //custumer   mingming kongjian   todo
-                                        // esp_err_t err = save_u16_value(STORAGE_NAMESPACE,"dw_dIndx",database_cw.dIndx);
-                                        // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+                                            //custumer   mingming kongjian   todo
+                                            // esp_err_t err = save_u16_value(STORAGE_NAMESPACE,"dw_dIndx",database_cw.dIndx);
+                                            // if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
 
-                                        // err = read_u16_value(STORAGE_NAMESPACE,"dw_dIndx", (uint16_t*)(&database_cw.dIndx));
-                                        // if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+                                            // err = read_u16_value(STORAGE_NAMESPACE,"dw_dIndx", (uint16_t*)(&database_cw.dIndx));
+                                            // if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
-                                        //unique number
+                                            //unique number
 
+                                        }
+
+                                        send_cmd_to_lcd_pic(0x000e); 
                                     }
-
-                                    send_cmd_to_lcd_pic(0x000e); 
-
                                 }
                                 else
                                 {
@@ -2294,19 +2291,19 @@ done:
 done_qu:
                                     ESP_LOGI(TAG, "----test2-error--.\r\n");  
 
-                                    send_cmd_to_lcd_pic(0x000d); 
+                                    send_cmd_to_lcd_pic(0x000b); //
 
                                 }
                                 ESP_LOGI(TAG, "----test3-done--.\r\n");  
 
                                 
-                                send_cmd_to_lcd_bl(0x1050,0);//phone
-                                send_cmd_to_lcd_bl(0x1060,0);//key
+                                send_cmd_to_lcd_bl(0x1080,0);//phone
+                                send_cmd_to_lcd_bl(0x1090,0);//key
                                 database_cw.cunwu_mode =0;
                                 database_cw.dzx_mode = 0 ;
                                 database_cw.state=0;
 
-                                phone_weishu_ok =0;
+                                
 
                                 //send_cmd_to_lcd_pic(0x000a);
                                 break;
@@ -3024,8 +3021,8 @@ void read_nvs_guizi_all()
 
 
 
- 
 
+    shengyu_all_max = shengyu_da_max+ shengyu_zhong_max + shengyu_xiao_max;
 
     for(uint16_t i=1;i<=shengyu_all_max;i++)
     {
@@ -3134,16 +3131,17 @@ void read_nvs_guizi_all()
 
 
 
-    shengyu_all_max = shengyu_da_max+ shengyu_zhong_max + shengyu_xiao_max;
+    
 
     shengyu_all = shengyu_da + shengyu_zhong + shengyu_xiao;
-    
+    printf("---shengyu_all_max=%d----\n",shengyu_all_max);
+    printf("---shengyu_all=%d----\n",shengyu_all);
+
     printf("---shengyu_da=%d----\n",shengyu_da);
     printf("---shengyu_zhong=%d----\n",shengyu_zhong);
     printf("---shengyu_xiao=%d----\n",shengyu_xiao);
 
-    printf("---shengyu_all=%d----\n",shengyu_all);
-    printf("---shengyu_all_max=%d----\n",shengyu_all_max);
+
 
 
 
@@ -3311,12 +3309,12 @@ void app_main(void)
         database_gz[i].dzx_mode_gz =1;
         //database_gz[i].state_gz =0;
     }
-    for (uint16_t i = 16; i <= shengyu_zhong_max+15; i++)//10
+    for (uint16_t i = shengyu_da_max+1; i <= shengyu_zhong_max+shengyu_da_max; i++)//10
     {
         database_gz[i].dzx_mode_gz =2;
         //database_gz[i].state_gz =0;
     }
-    for (uint16_t i = 26; i <= shengyu_xiao_max+25; i++)//5
+    for (uint16_t i = shengyu_zhong_max+shengyu_da_max+1; i <= shengyu_xiao_max+shengyu_zhong_max+shengyu_da_max; i++)//5
     {
         database_gz[i].dzx_mode_gz =3;
         //database_gz[i].state_gz =0;
