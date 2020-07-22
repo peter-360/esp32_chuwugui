@@ -50,6 +50,11 @@
 #include "periph_button.h"
 #include "board.h"
 
+
+
+#include "esp_timer.h"
+
+esp_timer_handle_t oneshot_timer;
 // static const char *TAG = "PLAY_MP3_FLASH";
 
 /*
@@ -245,20 +250,20 @@ uint8_t flag_rx2;
 
 //admin   need save   实时更新
 //shuliang
-uint16_t shengyu_all=30;//
-uint16_t shengyu_da=15;
-uint16_t shengyu_zhong=10;
-uint16_t shengyu_xiao=5;
+uint16_t shengyu_all=0;//
+uint16_t shengyu_da=1;
+uint16_t shengyu_zhong=20;
+uint16_t shengyu_xiao=2;
 
 
 
 //admin 
 //and cun de yong
-uint16_t shengyu_all_max=30;//shengyu max admin, guding
+uint16_t shengyu_all_max=0;//shengyu max admin, guding
 
-    uint16_t shengyu_da_max=15;//
-    uint16_t shengyu_zhong_max=10;
-    uint16_t shengyu_xiao_max=5;
+    uint16_t shengyu_da_max=1;//
+    uint16_t shengyu_zhong_max=20;
+    uint16_t shengyu_xiao_max=2;
 
 
 
@@ -1319,6 +1324,10 @@ static void echo_task2()//lcd
                                 {
                                     ESP_LOGI(TAG, "--zanwu kongxiang--.\r\n"); // houbian sheng  
                                     send_cmd_to_lcd_pic(0x0001);
+                                    //     /* Start the timers */
+                                    // ESP_ERROR_CHECK(esp_timer_start_once(oneshot_timer, 3000000));//3s
+                                    // ESP_LOGI(TAG, "Started timers, time since boot: %lld us", esp_timer_get_time());
+
                                 }
                                 else//
                                 {
@@ -1409,6 +1418,7 @@ static void echo_task2()//lcd
                             case 0x2020://da zhong xiao    ke sheng
                                 ESP_LOGI(TAG, "----------------daxiao---------------.\r\n");   
 
+                                bool flag_temp=1;
                                 //todo
                                 if((01== data_rx_t[8])&&(0!=shengyu_da))//da
                                 {
@@ -1432,18 +1442,23 @@ static void echo_task2()//lcd
                                     // tx_Buffer[8] = 0x00;
                                     // tx_Buffer[9] = 0x01;
                                     send_cmd_to_lcd_pic(0x0001);
+                                    flag_temp =0 ;
+                                    
                                 }
 
 
-   
-                                if(02 == database_cw.cunwu_mode)//2010 密码
+                                if(flag_temp == 1)
                                 {
-                                    send_cmd_to_lcd_pic(0x0006);
+                                    if(02 == database_cw.cunwu_mode)//2010 密码
+                                    {
+                                        send_cmd_to_lcd_pic(0x0006);
+                                    }
+                                    else if(01 == database_cw.cunwu_mode)//2010 指纹 ->指纹判断 0005 todo
+                                    {
+                                        send_cmd_to_lcd_pic(0x0004);
+                                    } 
                                 }
-                                else if(01 == database_cw.cunwu_mode)//2010 指纹 ->指纹判断 0005 todo
-                                {
-                                    send_cmd_to_lcd_pic(0x0004);
-                                }
+ 
 
 
                                 
@@ -1512,6 +1527,7 @@ static void echo_task2()//lcd
 
                                 if((1 == phone_weishu_ok)&&(03== data_rx_t[6]))//6   ok todo shoujihao yiyou
                                 {
+                                    phone_weishu_ok =0;
                                     memcpy( mima_number,data_rx_t+7 ,6);
 
                                     printf("phone_number=");
@@ -1525,7 +1541,7 @@ static void echo_task2()//lcd
                                         printf("0x%.2X ", (uint8_t)data_rx_t[i]);
                                         if(data_rx_t[i] == 0xFF)
                                         {
-                                            ESP_LOGI(TAG, "--no--mima_weishu_ok=%d---.\r\n",phone_weishu_ok);
+                                            ESP_LOGI(TAG, "--no--mima_weishu_ok---.\r\n");
                                             goto done;
                                         }
                                     }
@@ -1602,7 +1618,7 @@ static void echo_task2()//lcd
                                         }
                                         printf("shengyu j=%d, onuse k=%d\r\n",j,k);
                                         uart0_debug_data_dec(database_gz_temp,j);
-                                        uart0_debug_data_dec(database_gz_temp_onuse,k);
+                                        uart0_debug_data_dec(database_gz_temp_onuse,k);//no
 
                                         if(j>0)
                                         {
@@ -1611,9 +1627,6 @@ static void echo_task2()//lcd
                                             database_cw.state=1;
                                             // database_gz[database_cw.dIndx].state_gz =database_cw.state;
                                             printf("---add---database_cw.dIndx=%u\r\n",database_cw.dIndx);
-
-
-
 
                                             uint8_t j=0,k=0;
                                             //j=5; k=0;
@@ -1884,24 +1897,12 @@ static void echo_task2()//lcd
                                     ESP_LOGI(TAG, "----test--.\r\n");  
                                     
 
-                                    if(0 != database_cw.dzx_mode)
+                                    //if(0 != database_cw.dzx_mode)
                                     {
 
 
                                         shengyu_all -- ;
                                         tongbu_gekou_shuliang_all(shengyu_all);
-                                        
-
-
-
-
-
-
-
-
-
-
-
 
 
                                         // char key_name[15];//15
@@ -1951,6 +1952,8 @@ static void echo_task2()//lcd
                                         //unique number
 
                                     }
+                                    uart0_debug_data_dec(database_gz_temp,j);
+                                    uart0_debug_data_dec(database_gz_temp_onuse,k);
                                     //cun
                                     send_cmd_to_lcd_pic(0x0008);
 
@@ -1968,13 +1971,14 @@ done:
 
                                 ESP_LOGI(TAG, "----test3-done--.\r\n");  
 
-
+                                send_cmd_to_lcd_bl(0x1050,0);//phone
+                                send_cmd_to_lcd_bl(0x1060,0);//key
                                 
                                 database_cw.cunwu_mode =0;
                                 database_cw.dzx_mode = 0 ;
                                 database_cw.state=0;
 
-                                phone_weishu_ok =0;
+                                // phone_weishu_ok =0;
 
 
                                 break;
@@ -2048,13 +2052,24 @@ done:
                             case 0x1080:
                                 ESP_LOGI(TAG, "---q--phone-----.\r\n");
                                 //if(05== data_rx_t[6])//12
-                                if(06== data_rx_t[6])//12
+                                if((06== data_rx_t[6])
+                                    &&(0xFF== data_rx_t[len_rx_t -3]))//12
                                 {
                                     //zancun
                                     phone_weishu_ok =1;
-                                    memcpy( phone_number,data_rx_t+7 ,10);
-                                    ESP_LOGI(TAG, "q---phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
+                                    memcpy( phone_number,data_rx_t+7 ,11);
+                                    
 
+                                    for (int i = 7; i < 7+ data_rx_t[6] *2 -1; i++) {
+                                        printf("0x%.2X ", (uint8_t)data_rx_t[i]);
+                                        if(data_rx_t[i] == 0xFF)
+                                        {
+                                            phone_weishu_ok =0;
+                                            ESP_LOGI(TAG, "q--no--phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
+                                        }
+                                    }
+                                    if(phone_weishu_ok == 1)
+                                        ESP_LOGI(TAG, "q-yes-phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
                                 }
                                 else
                                 {
@@ -2080,6 +2095,16 @@ done:
 
                                     printf("mima_number=");
                                     uart0_debug_str(mima_number,6);
+                                    for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
+                                        printf("0x%.2X ", (uint8_t)data_rx_t[i]);
+                                        if(data_rx_t[i] == 0xFF)
+                                        {
+                                            ESP_LOGI(TAG, "--no--mima_weishu_ok=%d---.\r\n",phone_weishu_ok);
+                                            goto done_qu;
+                                        }
+                                    }
+                                    printf("\r\n");
+
 
                                     uint16_t j=0,k=0;
                                     uint16_t database_gz_temp[SHENYU_GEZI_MAX]={0};
@@ -2110,7 +2135,7 @@ done:
                                             }
                                             else
                                             {
-                                                //goto done_qu;
+                                                goto done_qu;
                                                 printf("---only mima_number will xin, phone_number has in database\r\n");
                                             }
 
@@ -2126,7 +2151,7 @@ done:
                                     {
                                         printf("---no find phone\r\n");
                                         database_cw.dIndx = atoi((const char*)mima_number);//data_rx_t[7] - 0x30;
-                                        //goto done_qu;
+                                        goto done_qu;
                                     }
                                     printf("---phone_number and mima etc... will be deleted\r\n");
 
@@ -2134,8 +2159,6 @@ done:
 
                                     // database_gz[database_cw.dIndx].state_gz =database_cw.state;
                                     printf("---add---database_cw.dIndx=%u\r\n",database_cw.dIndx);
-
-
 
 
                                     j=0;k=0;
@@ -2268,7 +2291,7 @@ done:
                                     {
                                       ESP_LOGI(TAG, "----------------2 - mima weishu err---------------.\r\n");  
                                     }
-//done_qu:
+done_qu:
                                     ESP_LOGI(TAG, "----test2-error--.\r\n");  
 
                                     send_cmd_to_lcd_pic(0x000d); 
@@ -2277,6 +2300,8 @@ done:
                                 ESP_LOGI(TAG, "----test3-done--.\r\n");  
 
                                 
+                                send_cmd_to_lcd_bl(0x1050,0);//phone
+                                send_cmd_to_lcd_bl(0x1060,0);//key
                                 database_cw.cunwu_mode =0;
                                 database_cw.dzx_mode = 0 ;
                                 database_cw.state=0;
@@ -2292,6 +2317,9 @@ done:
 //---------------------------------admin----------------------------------------------------
                             case 0x10b0://mima
                                 ESP_LOGI(TAG, "----admin --mima-----.\r\n");
+
+                                //mima 666888 todo
+
                                 if(03== data_rx_t[6])
                                 {
                                     send_cmd_to_lcd_pic(0x0011);
@@ -2301,6 +2329,8 @@ done:
                                     send_cmd_to_lcd_pic(0x0010);
                                     ESP_LOGI(TAG, "----admin --mima weisu err-----.\r\n");
                                 }
+
+                                send_cmd_to_lcd_bl(0x10B0,0);//key
   
                                 break;
 
@@ -2418,7 +2448,7 @@ wuci_xmh:
                                     send_cmd_to_lcd_pic(0x0015);
                                     ESP_LOGI(TAG, "----admin --wu ci xiangmenhao-----.\r\n");
                                 }
-                                
+                                send_cmd_to_lcd_bl(0x10C0,0);//xiangmen
 
                                 break;
 
@@ -3099,12 +3129,21 @@ void read_nvs_guizi_all()
     err = read_u16_value(STORAGE_NAMESPACE_ADM,ADM_KEY_SHENGYU_X, (uint16_t*)(&shengyu_xiao));
     if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
+
+
+
+
+
+    shengyu_all_max = shengyu_da_max+ shengyu_zhong_max + shengyu_xiao_max;
+
     shengyu_all = shengyu_da + shengyu_zhong + shengyu_xiao;
     
     printf("---shengyu_da=%d----\n",shengyu_da);
     printf("---shengyu_zhong=%d----\n",shengyu_zhong);
     printf("---shengyu_xiao=%d----\n",shengyu_xiao);
+
     printf("---shengyu_all=%d----\n",shengyu_all);
+    printf("---shengyu_all_max=%d----\n",shengyu_all_max);
 
 
 
@@ -3128,7 +3167,12 @@ void read_nvs_guizi_all()
 
 
 
-
+static void oneshot_timer_callback(void* arg)
+{
+    int64_t time_since_boot = esp_timer_get_time();
+    ESP_LOGI(TAG, "One-shot timer called, time since boot: %lld us", time_since_boot);
+    send_cmd_to_lcd_pic(KAIJI_PIC);
+}
 
 
 void app_main(void)
@@ -3298,6 +3342,25 @@ void app_main(void)
 
 
 
+
+    const esp_timer_create_args_t oneshot_timer_args = {
+            .callback = &oneshot_timer_callback,
+            /* argument specified here will be passed to timer callback function */
+            // .arg = (void*) periodic_timer,
+            .name = "one-shot"
+    };
+    
+    ESP_ERROR_CHECK(esp_timer_create(&oneshot_timer_args, &oneshot_timer));
+
+    // /* Start the timers */
+    // ESP_ERROR_CHECK(esp_timer_start_once(oneshot_timer, 3000000));//5s
+    // ESP_LOGI(TAG, "Started timers, time since boot: %lld us", esp_timer_get_time());
+
+
+
+
+
+
     //audio
     {
         // audio_pipeline_handle_t pipeline;
@@ -3455,5 +3518,7 @@ void app_main(void)
         audio_element_deinit(i2s_stream_writer);
         audio_element_deinit(mp3_decoder);
     }
+
+
 
 }
