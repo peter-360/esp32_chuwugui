@@ -318,7 +318,6 @@ shujuku_struct_admin database_ad=
 //3
 typedef struct
 {
-
     //zhiwen mima
     uint8_t cunwu_mode_gz;
 
@@ -330,23 +329,20 @@ typedef struct
     uint32_t mima_number_nvs_gz;  //
 
 
-    uint8_t state_fenpei_gz; //fenpei 是否
+        uint8_t state_fenpei_gz; //fenpei 是否
 
     uint8_t state_gz; //zaiyong 是否
 
-  
+      //格口编号 箱门-nolock
+    uint16_t dIndx_gz;//add
 
-
-
-    // //格口编号
-	// uint16_t dIndx_gz;//gaidao shuzuzhong
     
-    bool lock;
-    bool changqi;
+        bool lock;
+        bool changqi;
 }shujuku_struct_gz;
 //={0,0,0,3};//柜子
 
-shujuku_struct_gz database_gz[SHENYU_GEZI_MAX];//i
+shujuku_struct_gz database_gz[SHENYU_GEZI_MAX];//i/lock  idx
 // shujuku_struct_gz database_gz=
 // {
 //     .state = 0 ,
@@ -366,7 +362,7 @@ uint8_t phone_weishu_ok=00;
 //donn't need save todo
 
 
-//2
+//2 temp
 ///command struct
 typedef struct
 {
@@ -387,8 +383,8 @@ typedef struct
 
 
 
-    //格口编号
-	uint16_t dIndx;//dangqian shuru
+    //格口编号 箱门-nolock
+	uint16_t dIndx;//dangqian rcv
 
     //取物唯一编号 time
     uint16_t unique_number;
@@ -798,6 +794,8 @@ void uart0_debug_data(uint8_t* data,uint8_t len)
         printf("%02x ",data[i]);
     printf("\r\n");
 }
+
+//2字节
 void uart0_debug_data_dec(uint16_t* data,uint16_t len)
 {
     printf("--------debug_data:");
@@ -949,8 +947,44 @@ void tongbu_gekou_shuliang_x(uint16_t temp)
 }
 
 
+#define  BL_XM_SZ 0x11A0
 
 
+
+//数组
+void send_cmd_to_lcd_bl_len(uint16_t opCode, uint8_t* buff_temp,uint8_t data_len)//变量
+{
+    uint8_t tx_Buffer[200]={0};  
+    uint16_t crc16_temp=0;
+    //xiao
+    tx_Buffer[0] = 0x5A;
+    tx_Buffer[1] = 0xA5;
+    tx_Buffer[2] = data_len;//len  
+    tx_Buffer[3] = 0x82;
+
+    tx_Buffer[4] = opCode/256;
+    tx_Buffer[5] = opCode%256;//dizhi
+
+
+    for (int i = 0; i < data_len-2 ; i++) {
+        tx_Buffer[6+i] = buff_temp[i];
+        //printf("0x%.2X ", (uint8_t)buff_temp[i]);
+    }
+    printf("\r\n");
+
+
+    //crc
+    crc16_temp = CRC16(tx_Buffer+3, data_len-2);
+    printf("tx CRC16 result:0x%04X\r\n",crc16_temp);
+
+    tx_Buffer[3+ data_len-2 ] = crc16_temp&0xff;
+    tx_Buffer[3+ data_len-2 +1] = (crc16_temp>>8)&0xff;
+    uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, 3+ data_len);
+
+    uart0_debug_data( (const char *) tx_Buffer, 3+ data_len);
+}
+
+//2个字节
 void send_cmd_to_lcd_bl(uint16_t opCode, uint16_t temp)//变量
 {
     uint8_t tx_Buffer[50]={0};  
@@ -977,7 +1011,7 @@ void send_cmd_to_lcd_bl(uint16_t opCode, uint16_t temp)//变量
 }
 
 
-
+#define  BOOT_PIC 0x0041
 #define  KAIJI_PIC 0x0026
 
 
@@ -1342,10 +1376,40 @@ static void echo_task2()//lcd
                             ESP_LOGI(TAG, "--0x83--.bl_addr=%04x\r\n",bl_addr);
 
                             //uint8_t tx_Buffer[50]={0};  
-                            uint8_t tx_Buffer2[50]={0};  
+                            uint8_t tx_Buffer2[200]={0};  
                             uint8_t bcc_temp=0;
                             switch (bl_addr)
                             {
+//-----------------------------------------guimenshezhi-----------------------------------------------------
+                            case 0x11A0://
+                                ESP_LOGI(TAG, "--kajishezhi--.\r\n");   
+                                for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
+                                    printf("0x%.2X ", (uint8_t)data_rx_t[i]);
+                                    // if(data_rx_t[i] == 0xFF)
+                                    // {
+                                    //     ESP_LOGI(TAG, "--no--mima_weishu_ok---.\r\n");
+                                    //     goto done;
+                                    // }
+                                }
+                                printf("\r\n");
+
+
+                                if(data_rx_t[2] == 0x9c)
+                                {
+                                    //save
+
+
+                                    send_cmd_to_lcd_bl_len(BL_XM_SZ,tx_Buffer2,data_rx_t[2]-1);//clear
+                                    send_cmd_to_lcd_pic(KAIJI_PIC);
+                                }
+                                    
+
+                                
+
+                                break;
+
+
+//-----------------------------------------cun-----------------------------------------------------
                             case 0x2080://
                                 ESP_LOGI(TAG, "--cunwu--.\r\n");   
 
@@ -2702,7 +2766,7 @@ static void echo_task()
             printf("] \n");
 
             //vTaskDelay(2 / portTICK_PERIOD_MS);
-            xTaskCreate(echo_task2, "uart_echo_task2",4* 1024, NULL, 2, NULL);
+            xTaskCreate(echo_task2, "uart_echo_task2",8* 1024, NULL, 2, NULL);
 
             //echo_task2();
 
@@ -3266,7 +3330,7 @@ void app_main(void)
     read_nvs_guizi_all();
 
 
-    send_cmd_to_lcd_pic(KAIJI_PIC);
+    send_cmd_to_lcd_pic(BOOT_PIC);
     ESP_LOGI(TAG,"切换到开机画面!!!\r\n");
     //kaiji_huamian();
 
