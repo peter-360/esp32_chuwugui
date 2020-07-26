@@ -233,6 +233,7 @@ uint8_t flag_rx2;
 #define ADM_KEY_SHENGYU_Z "ad_shengyu_z"
 #define ADM_KEY_SHENGYU_X "ad_shengyu_x"
 #define ADM_KEY_MIMA      "ad_mima"
+#define ADM_KEY_SHENGYU_ALL_MAX "ad_sy_all_m"
 
 
 
@@ -242,9 +243,10 @@ uint8_t flag_rx2;
 #define DZ_PHONE "_dz_phone"
 #define DZ_MIMA  "_dz_mima"
 #define DZ_ST    "_dz_st"
+#define DZ_INDEX "_dz_idx"
 
 
-#define SHENYU_GEZI_MAX 300//all kong
+#define SHENYU_GEZI_MAX 600//all kong
 
 
 //admin   need save   实时更新
@@ -265,34 +267,38 @@ uint16_t shengyu_all_max=0;//shengyu max admin, guding
     uint16_t shengyu_xiao_max=100;
 
 
-#define BOARD_GK_MAX 19//all kong
-#define GUIMENX_GK_MAX 16//all kong
+#define BOARD_GK_MAX 25//all kong
+int16_t board_gk_max;
 
-int16_t guimen1_gk_max=12;
-int16_t guimen2_gk_max=10;
-int16_t guimen3_gk_max=10;//8  guding
+#define GUIMENX_GK_MAX 24//all kong
 
-int16_t guimen4_gk_max=16;
-int16_t guimen5_gk_max=16;
-int16_t guimen6_gk_max=16;
-int16_t guimen7_gk_max=16;
+    int16_t guimen1_gk_max=12;
+    int16_t guimen2_gk_max=10;
+    int16_t guimen3_gk_max=10;//8  guding
 
-int16_t guimen8_gk_max=16;
-int16_t guimen9_gk_max=16;
-int16_t guimen10_gk_max=16;
-int16_t guimen11_gk_max=16;
-int16_t guimen12_gk_max=16;
-int16_t guimen13_gk_max=16;
-int16_t guimen14_gk_max=16;
-int16_t guimen15_gk_max=16;
-int16_t guimen16_gk_max=16;
-int16_t guimen17_gk_max=16;
-int16_t guimen18_gk_max=16;
-int16_t guimen19_gk_max=16;
+    int16_t guimen4_gk_max=16;
+    int16_t guimen5_gk_max=16;
+    int16_t guimen6_gk_max=16;
+    int16_t guimen7_gk_max=16;
+
+    int16_t guimen8_gk_max=16;
+    int16_t guimen9_gk_max=16;
+    int16_t guimen10_gk_max=16;
+    int16_t guimen11_gk_max=16;
+    int16_t guimen12_gk_max=16;
+    int16_t guimen13_gk_max=16;
+    int16_t guimen14_gk_max=16;
+    int16_t guimen15_gk_max=16;
+    int16_t guimen16_gk_max=16;
+    int16_t guimen17_gk_max=16;
+    int16_t guimen18_gk_max=16;
+    int16_t guimen19_gk_max=16;
 
 
-int16_t guimen_x_gk_max[19]={12,10,10,16,16,16,16,16,16,16,
-                           16,16,16,16,16,16,16,16,16};
+// int16_t guimen_x_gk_max[25]={12,10,10,16,16,16,16,16,16,16,
+//                            16,16,16,16,16,16,16,16,16};//600
+
+int16_t guimen_x_gk_max[25];//600=24*25
 
 
 
@@ -1011,7 +1017,9 @@ void send_cmd_to_lcd_bl(uint16_t opCode, uint16_t temp)//变量
 }
 
 
-#define  BOOT_PIC 0x0041
+#define  BOOT_PIC 0x0041//qushezhi->guimen
+#define  GEKOU_PIC 0x0032//
+
 #define  KAIJI_PIC 0x0026
 
 
@@ -1189,7 +1197,25 @@ void nvs_wr_state_gz(uint8_t mode)
 
 }
 
+///////////////////////
+void nvs_wr_index_gz(uint8_t mode)//1 write; 0 read
+{
+    char key_name[15];//15
+    esp_err_t err;
 
+    sprintf(key_name, "%03d%s", database_cw.dIndx,DZ_INDEX);
+    printf("--key_name=%s--\r\n",key_name);
+
+    if(mode == 1)
+    {
+        printf("--write--\r\n");
+        err = save_u8_value(STORAGE_NAMESPACE,key_name,database_gz[database_cw.dIndx].dIndx_gz);
+        if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+    }
+    err = read_u8_value(STORAGE_NAMESPACE,key_name, (uint8_t*)(&database_gz[database_cw.dIndx].dIndx_gz));
+    if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+}
 
 
 
@@ -1232,7 +1258,9 @@ void nvs_wr_shengyu_zhong(uint8_t mode)
     if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
 }
-void nvs_wr_shengyu_xiao(uint8_t mode)
+
+
+void nvs_wr_shengyu_xiao(uint8_t mode)//->all
 {
     char key_name[15];//15
     esp_err_t err;
@@ -1269,6 +1297,21 @@ void nvs_wr_mima_number_adm(uint8_t mode)
 
 
 
+void nvs_wr_shengyu_all_max(uint8_t mode)//->all
+{
+    char key_name[15];//15
+    esp_err_t err;
+    if(mode == 1)
+    {
+        //x
+        //printf("--key_name=%s--\r\n",NAMESPACE_ADM_KEY_SHENGYU_D);
+        printf("--write--\r\n");
+        err = save_u16_value(STORAGE_NAMESPACE_ADM,ADM_KEY_SHENGYU_ALL_MAX,shengyu_all_max);
+        if (err != ESP_OK) printf("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+    }
+    err = read_u16_value(STORAGE_NAMESPACE_ADM,ADM_KEY_SHENGYU_ALL_MAX, (uint16_t*)(&shengyu_all_max));
+    if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+}
 
 
 
@@ -1377,36 +1420,161 @@ static void echo_task2()//lcd
 
                             //uint8_t tx_Buffer[50]={0};  
                             uint8_t tx_Buffer2[200]={0};  
+                            uint8_t Buffer2_ok[200]={0};  
                             uint8_t bcc_temp=0;
                             switch (bl_addr)
                             {
-//-----------------------------------------guimenshezhi-----------------------------------------------------
+//-----------------------------------------guimenshezhi-----------2次------------------------------------------
                             case 0x11A0://
                                 ESP_LOGI(TAG, "--kajishezhi--.\r\n");   
+                                int j=0;
                                 for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
                                     printf("0x%.2X ", (uint8_t)data_rx_t[i]);
-                                    // if(data_rx_t[i] == 0xFF)
-                                    // {
-                                    //     ESP_LOGI(TAG, "--no--mima_weishu_ok---.\r\n");
-                                    //     goto done;
-                                    // }
+                                    tx_Buffer2[j]=data_rx_t[i];
+                                    // uart0_debug_data( (const char *) tx_Buffer, 3+ data_len);
+                                    // if(tx_Buffer2[j] != 0x2D)
+                                    j++;
                                 }
                                 printf("\r\n");
 
 
-                                if(data_rx_t[2] == 0x9c)
+                                char show[156][10];
+                                char *p = NULL;
+                                char *q = NULL;
+                                int i = 0;
+                                // int j;
+                                // printf("请输入字符串shou:");
+                                // gets(shou);
+                                p = q = (char*)tx_Buffer2;
+                                while( NULL != (p = strchr(p,'-')))    
                                 {
-                                    //save
+                                    strncpy(show[i],q,p-q);
+                                    show[i][p-q] = '\0';
 
-
-                                    send_cmd_to_lcd_bl_len(BL_XM_SZ,tx_Buffer2,data_rx_t[2]-1);//clear
-                                    send_cmd_to_lcd_pic(KAIJI_PIC);
+                                    //printf("%02x\r\n",*p);//0x2d
+                                    p = p+1;
+                                    q = p;
+                                    i ++;
                                 }
-                                    
 
-                                
+                                if (p == NULL)
+                                {
+                                    strncpy(show[i],q,strlen(q));
+                                    show[i][strlen(q)] = '\0';
+                                }
+
+                                board_gk_max =i;
+                                printf("show1=");
+                                for(j = 0; j <= board_gk_max; j++)
+                                {
+                                    printf("%s\r\n",show[j]);
+                                }
+
+                                for(j = 0; j <= strlen(show[board_gk_max]); j++)//最后一行
+                                {
+                                    if(0xff == show[board_gk_max][j])
+                                        show[board_gk_max][j] = '\0';
+                                    printf("%02x-",show[board_gk_max][j]);
+                                }
+                                printf("\r\n");
+
+
+
+
+                                printf("show2=");
+                                shengyu_all_max =0 ;
+                                for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
+                                {
+                                    database_gz[i].state_fenpei_gz =0;
+                                }
+                                if(board_gk_max<=BOARD_GK_MAX)
+                                {
+                                    for(j = 0; j <= board_gk_max; j++)//i 个柜子
+                                    {
+
+                                        guimen_x_gk_max[j] = (int16_t)atoi((const char*)show[j]);
+                                        if(guimen_x_gk_max[j] >=24)
+                                            guimen_x_gk_max[j] =24;
+                                        printf("guimen_x_gk_max[j] = %03d\r\n\r\n",guimen_x_gk_max[j]);
+
+                                        for(int k=1; k<= guimen_x_gk_max[j]; k++)//列
+                                        {
+                                            database_gz[j*24 + k].state_fenpei_gz = 1;
+                                            printf("--lock index=%03d\r\n",j*24 + k);
+                                        }
+                                        
+                                        shengyu_all_max = shengyu_all_max +guimen_x_gk_max[j];
+                                    }
+                                    printf("\r\n");
+                                    printf("shengyu_all_max=%03d\r\n",shengyu_all_max);
+                                    shengyu_all = shengyu_all_max;
+                                    tongbu_gekou_shuliang_all(shengyu_all);
+                                    nvs_wr_shengyu_all_max(1);
+
+                                    j=0;
+                                    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
+                                    {
+                                        
+                                        // printf("fenpei?=%d, ", database_gz[i].state_fenpei_gz);
+                                        if(database_gz[i].state_fenpei_gz == 1)
+                                        {
+                                            j++;
+                                            database_gz[i].dIndx_gz = j;
+                                            database_cw.dIndx = i;
+                                            printf("lock index =%03d, ",i);
+                                            printf("xmh index j= %03d",j);
+                                            printf("\r\n");
+                                            
+                                            nvs_wr_index_gz(1);
+
+                                        }
+                                        else
+                                        {
+                                            database_gz[i].dIndx_gz = 0;
+                                        }
+                                        
+                                    }
+
+
+
+
+
+                                    if(data_rx_t[2] == 0x9c)
+                                    {
+                                        //save
+                                        
+                                        memset(tx_Buffer2,0,200);
+                                        send_cmd_to_lcd_bl_len(BL_XM_SZ,tx_Buffer2,data_rx_t[2]-1);//clear
+                                        //send_cmd_to_lcd_pic(KAIJI_PIC);
+                                        send_cmd_to_lcd_pic(GEKOU_PIC);
+                                    }
+                                        
+
+
+
+                                }
 
                                 break;
+
+                            //格口设置
+                            case 0x11B0://
+                                ESP_LOGI(TAG, "--gekou--.\r\n");   
+                                j=0;
+                                for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
+                                    printf("0x%.2X ", (uint8_t)data_rx_t[i]);
+                                    tx_Buffer2[j]=data_rx_t[i];
+                                    // uart0_debug_data( (const char *) tx_Buffer, 3+ data_len);
+                                    // if(tx_Buffer2[j] != 0x2D)
+                                    j++;
+                                }
+                                printf("\r\n");
+
+
+
+                                send_cmd_to_lcd_pic(KAIJI_PIC);
+                                break;
+
+
 
 
 //-----------------------------------------cun-----------------------------------------------------
@@ -2412,7 +2580,8 @@ done_kai_admin:
                             case 0x10c0://xiangmenhao
                                 ESP_LOGI(TAG, "----admin --mima-----.\r\n");
                                 uint8_t temp_xiangmen[4]={0}; 
-                                uint16_t j=0,k=0;//k:board  j:lock
+                                j=0;
+                                uint16_t k=0;//k:board  j:lock
                                 //uint8_t temp_xiangmen_uint=0; //16
                                 memcpy(temp_xiangmen,data_rx_t+7,3);//len todo 
                                 if(02== data_rx_t[6])//-------------------------
@@ -3079,9 +3248,11 @@ void read_nvs_guizi_all()
     esp_err_t err;
 
 
+    nvs_wr_shengyu_all_max(0);
 
+    //shengyu_all_max = shengyu_da_max+ shengyu_zhong_max + shengyu_xiao_max;
 
-    shengyu_all_max = shengyu_da_max+ shengyu_zhong_max + shengyu_xiao_max;
+    //shengyu_xiao_max = shengyu_all_max - (shengyu_da_max+ shengyu_zhong_max);
 
     for(uint16_t i=1;i<=shengyu_all_max;i++)
     {
@@ -3092,7 +3263,7 @@ void read_nvs_guizi_all()
         nvs_wr_phone_number_nvs_gz(0);
         nvs_wr_mima_number_nvs_gz(0);
         nvs_wr_state_gz(0);
-
+        nvs_wr_index_gz(0);
 
         //admin
         nvs_wr_shengyu_da(0);
@@ -3359,12 +3530,12 @@ void app_main(void)
         database_gz[i].dzx_mode_gz =1;
         //database_gz[i].state_gz =0;
     }
-    for (uint16_t i = shengyu_da_max+1; i <= shengyu_zhong_max+shengyu_da_max; i++)//10
-    {
-        database_gz[i].dzx_mode_gz =2;
-        //database_gz[i].state_gz =0;
-    }
-    for (uint16_t i = shengyu_zhong_max+shengyu_da_max+1; i <= shengyu_xiao_max+shengyu_zhong_max+shengyu_da_max; i++)//5
+    // for (uint16_t i = shengyu_da_max+1; i <= shengyu_zhong_max+shengyu_da_max; i++)//10
+    // {
+    //     database_gz[i].dzx_mode_gz =2;
+    //     //database_gz[i].state_gz =0;
+    // }
+    for (uint16_t i = 2; i <= SHENYU_GEZI_MAX; i++)//5
     {
         database_gz[i].dzx_mode_gz =3;
         //database_gz[i].state_gz =0;
@@ -3373,24 +3544,6 @@ void app_main(void)
 
 
 
-    uint16_t temp_sum=0;
-    temp_sum = 0+ guimen_x_gk_max[0];
-    for (uint16_t i = 1; i <= temp_sum; i++)//15
-    {
-        database_gz[i].state_fenpei_gz =1;
-    }
-
-    temp_sum = 16+1+ guimen_x_gk_max[1];
-    for (uint16_t i = 17; i <= temp_sum; i++)//15
-    {
-        database_gz[i].state_fenpei_gz =1;
-    }
-
-    temp_sum = 16*2+1 + guimen_x_gk_max[2];
-    for (uint16_t i = 33; i <= temp_sum; i++)//15
-    {
-        database_gz[i].state_fenpei_gz =1;
-    }
 
 
     uint16_t j=0;
