@@ -247,7 +247,7 @@ uint8_t flag_rx2;
 #define DZ_FENPEI "_dz_fp"//<=12
 
 
-#define SHENYU_GEZI_MAX 50//all kong
+#define SHENYU_GEZI_MAX 150//all kong
 
 
 //admin   need save   实时更新
@@ -315,7 +315,7 @@ typedef struct
 
 shujuku_struct_admin database_ad=
 {
-    
+    .mima_number_adm = 666888,
     .shengyu1 = 0,
 };
 
@@ -1510,13 +1510,27 @@ static void echo_task2()//lcd
 
                                     printf("show2=");
                                     shengyu_all_max =0 ;
+                                    nvs_wr_mima_number_adm(1);
                                     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
                                     {
+                                        database_cw.dIndx = i;
+
+                                        database_gz[i].dIndx_gz =0;
                                         database_gz[i].state_fenpei_gz =0;
+                                        database_gz[i].dzx_mode_gz =3;
+                                        database_gz[i].state_gz =0;
+                                        
+                                        nvs_wr_index_gz(1);
+                                        nvs_wr_fenpei_gz(1);
+                                        nvs_wr_dzx_mode_gz(1);
+                                        nvs_wr_state_gz(1);
+
+                                        //lock----------------todo---------------------
+                                        //changqi
                                     }
 
 
-
+                                    printf("board_gk_max=%03d\r\n",board_gk_max);
                                     if(board_gk_max<=BOARD_GK_MAX)
                                     {
                                         for(j = 0; j <= board_gk_max; j++)//i 个柜子
@@ -1567,14 +1581,18 @@ static void echo_task2()//lcd
                                                 j++;
                                                 database_gz[i].dIndx_gz = j;
                                                 database_cw.dIndx = i;
-                                                database_gz[i].dzx_mode_gz =3;
+         
+
                                                 printf("-2-lock index =%03d, ",i);
                                                 printf("-2-xmh index j= %03d",j);
                                                 printf("\r\n");
-                                                
+   
                                                 nvs_wr_index_gz(1);
                                                 nvs_wr_fenpei_gz(1);
-                                                nvs_wr_dzx_mode_gz(1);
+              
+
+                                                //lock
+                                                //changqi
                                                 
                                             }
                                             else
@@ -1603,7 +1621,7 @@ static void echo_task2()//lcd
 
 
 
-                            //格口设置 dazhongxiao
+                            //-------------格口设置 dazhongxiao
                             case 0x11B0://
                                 ESP_LOGI(TAG, "--da gekou--.\r\n");   
                                 j=0;
@@ -1665,6 +1683,21 @@ static void echo_task2()//lcd
                             case 0x2010://zhiwen  or   mima
                                 ESP_LOGI(TAG, "---zhiwen or mima---.\r\n");   
                                 //if -> huise tupian?
+                                if(01== data_rx_t[8])//zhiwen cun
+                                {
+                                    ESP_LOGI(TAG, "--zhiwen--.\r\n");  
+                                    //baocun 1
+                                    database_cw.cunwu_mode = 1;
+                                }
+                                else if(02== data_rx_t[8])//mi ma
+                                {
+                                    ESP_LOGI(TAG, "--mima--.\r\n");  
+                                    //baocun 2
+                                    database_cw.cunwu_mode = 2;
+                                }
+
+
+
 
                                 if((shengyu_xiao==0) && (shengyu_zhong==0))
                                 {
@@ -1719,19 +1752,7 @@ static void echo_task2()//lcd
                                 else
                                 {
                                     send_cmd_to_lcd_pic(0x0003);
-                                    if(01== data_rx_t[8])//zhiwen cun
-                                    {
-                                        ESP_LOGI(TAG, "--zhiwen--.\r\n");  
-                                        //baocun 1
-                                        database_cw.cunwu_mode = 1;
-                                    }
-                                    else if(02== data_rx_t[8])//mi ma
-                                    {
-                                        ESP_LOGI(TAG, "--mima--.\r\n");  
-                                        //baocun 2
-                                        database_cw.cunwu_mode = 2;
 
-                                    }
                                 }
 
                                 //zhiwen_num_id =0;
@@ -1796,15 +1817,6 @@ static void echo_task2()//lcd
                                 ESP_LOGI(TAG, "--phone number--.\r\n");
                                 //panduan   -  zan cun quanju
                                 //if has, todo  -----------------------------------
-
-                                // //if weishu    -------------------------------------
-                                // if(06== data_rx_t[6])//12
-                                // {
-                                //     //zancun
-                                //     phone_weishu_ok =1;
-                                //     memcpy( phone_number,data_rx_t+7 ,11);
-
-                                // }
 
                                 //ESP_LOGI(TAG, "data_rx_t[6]=%d---.\r\n",data_rx_t[6]);
                                 if((06== data_rx_t[6])
@@ -1889,7 +1901,7 @@ static void echo_task2()//lcd
                                     
 
                                     
-                                    for (uint16_t i = 1; i <= shengyu_all_max; i++)//todo changqi and suoding
+                                    for (uint16_t i = 1; i <= SHENYU_GEZI_MAX; i++)//todo changqi and suoding
                                     {
 
                                         if(database_gz[i].phone_number_nvs_gz == database_cw.phone_number_nvs)
@@ -1922,7 +1934,7 @@ static void echo_task2()//lcd
                                     if(1 == database_cw.dzx_mode)
                                     {
                                         
-                                        for (uint16_t i = 1; i <= shengyu_all_max; i++)//todo changqi and suoding
+                                        for (uint16_t i = 1; i <= SHENYU_GEZI_MAX; i++)//todo changqi and suoding
                                         {
                                             if((database_gz[i].state_gz ==0) //no use
                                                 &&(database_gz[i].state_fenpei_gz == 1)
@@ -1955,25 +1967,41 @@ static void echo_task2()//lcd
                                             // database_gz[database_cw.dIndx].state_gz =database_cw.state;
                                             printf("---add---database_cw.dIndx=%u\r\n",database_cw.dIndx);
 
-                                            uint16_t j=0,k=0;
-                                        
-                                            guimen_gk_temp = GUIMENX_GK_MAX;
-                                            while( (int16_t)database_cw.dIndx-guimen_gk_temp>0)
-                                            {
-                                                k++;//board
-                                                guimen_gk_temp = guimen_gk_temp+ GUIMENX_GK_MAX;
-                                            }
-                                            j=(uint8_t)((int16_t)database_cw.dIndx-guimen_gk_temp +GUIMENX_GK_MAX);//lock
+                                            printf("-------------add--xmh=%u\r\n",database_gz[database_cw.dIndx].dIndx_gz);
 
+
+
+                                            guimen_gk_temp = database_cw.dIndx ;
+                                            uint16_t j=0,k=0;
+                                            while(guimen_gk_temp/24 >0)
+                                            {
+                                                k++;
+                                                guimen_gk_temp=guimen_gk_temp-24;
+                                            }
+                                            j = guimen_gk_temp;
                                             printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
 
 
-                                            guimen_gk_temp =j;
-                                            for (uint16_t i = 0; i < k; i++)
-                                            {
-                                                guimen_gk_temp = guimen_x_gk_max[i] + guimen_gk_temp;
-                                            }
-                                            printf("---add---guimen_gk_temp=%u\r\n",guimen_gk_temp);
+
+                                            //uint16_t j=0,k=0;
+            
+                                            // guimen_gk_temp = GUIMENX_GK_MAX;
+                                            // while( (int16_t)database_cw.dIndx-guimen_gk_temp>0)
+                                            // {
+                                            //     k++;//board
+                                            //     guimen_gk_temp = guimen_gk_temp+ GUIMENX_GK_MAX;
+                                            // }
+                                            // j=(uint8_t)((int16_t)database_cw.dIndx-guimen_gk_temp +GUIMENX_GK_MAX);//lock
+
+                                            // printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
+
+
+                                            // guimen_gk_temp =j;
+                                            // for (uint16_t i = 0; i < k; i++)
+                                            // {
+                                            //     guimen_gk_temp = guimen_x_gk_max[i] + guimen_gk_temp;
+                                            // }
+                                            // printf("---add---guimen_gk_temp=%u\r\n",guimen_gk_temp);
                                             
 
                                             // if(shengyu_da>0)
@@ -1986,20 +2014,22 @@ static void echo_task2()//lcd
                                                 ESP_LOGI(TAG, "-da-lock:%d ok--.\r\n",j);
 
                                                 send_cmd_to_lock(k+1,j);
-                                                send_cmd_to_lcd_bl(0x1070,guimen_gk_temp);//-----------
+                                                send_cmd_to_lcd_bl(0x1070,database_gz[database_cw.dIndx].dIndx_gz);//-----------
                                             }
                                         
                                         }    
                                         else
                                         {
-                                            ESP_LOGI(TAG, "-------state d have no-----.\r\n");
+                                            ESP_LOGI(TAG, "---1----state d have no-----.\r\n");
+                                            goto done;
                                         }
                                         
 
                                     }
                                     else if(2 == database_cw.dzx_mode)
                                     {
-                                        for (uint16_t i = 1; i <= shengyu_all_max; i++)//todo changqi and suoding
+                                        j=0;
+                                        for (uint16_t i = 1; i <= SHENYU_GEZI_MAX; i++)//todo changqi and suoding
                                         {
                                             if((database_gz[i].state_gz ==0) //no use
                                                 &&(database_gz[i].state_fenpei_gz == 1)
@@ -2031,27 +2061,40 @@ static void echo_task2()//lcd
                                             database_cw.state=1;
                                             // database_gz[database_cw.dIndx].state_gz =database_cw.state;
                                             printf("---add---database_cw.dIndx=%u\r\n",database_cw.dIndx);
+                                            printf("-------------add--xmh=%u\r\n",database_gz[database_cw.dIndx].dIndx_gz);
 
 
+
+                                            guimen_gk_temp = database_cw.dIndx ;
                                             uint16_t j=0,k=0;
-                                            
-                                            guimen_gk_temp = GUIMENX_GK_MAX;
-                                            while( (int16_t)database_cw.dIndx-guimen_gk_temp>0)
+                                            while(guimen_gk_temp/24 >0)
                                             {
-                                                k++;//board
-                                                guimen_gk_temp = guimen_gk_temp+ GUIMENX_GK_MAX;
+                                                k++;
+                                                guimen_gk_temp=guimen_gk_temp-24;
                                             }
-                                            j=(uint8_t)((int16_t)database_cw.dIndx-guimen_gk_temp +GUIMENX_GK_MAX);//lock
-
+                                            j = guimen_gk_temp;
                                             printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
 
+
+                                            //uint16_t j=0,k=0;
+                                            
+                                            // guimen_gk_temp = GUIMENX_GK_MAX;
+                                            // while( (int16_t)database_cw.dIndx-guimen_gk_temp>0)
+                                            // {
+                                            //     k++;//board
+                                            //     guimen_gk_temp = guimen_gk_temp+ GUIMENX_GK_MAX;
+                                            // }
+                                            // j=(uint8_t)((int16_t)database_cw.dIndx-guimen_gk_temp +GUIMENX_GK_MAX);//lock
+
+                                            // printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
+
                             
-                                            guimen_gk_temp =j;
-                                            for (uint16_t i = 0; i < k; i++)
-                                            {
-                                                guimen_gk_temp = guimen_x_gk_max[i] + guimen_gk_temp;
-                                            }
-                                            printf("---add---guimen_gk_temp=%u\r\n",guimen_gk_temp);
+                                            // guimen_gk_temp =j;
+                                            // for (uint16_t i = 0; i < k; i++)
+                                            // {
+                                            //     guimen_gk_temp = guimen_x_gk_max[i] + guimen_gk_temp;
+                                            // }
+                                            // printf("---add---guimen_gk_temp=%u\r\n",guimen_gk_temp);
                                             
 
                                             //if(shengyu_zhong >0)
@@ -2063,14 +2106,15 @@ static void echo_task2()//lcd
 
                                                 ESP_LOGI(TAG, "-zhong-lock:%d ok--.\r\n",j);
                                                 send_cmd_to_lock(k+1,j);
-                                                send_cmd_to_lcd_bl(0x1070,guimen_gk_temp);
+                                                send_cmd_to_lcd_bl(0x1070,database_gz[database_cw.dIndx].dIndx_gz);
                                                 
                                             }
 
                                         }
                                         else
                                         {
-                                            ESP_LOGI(TAG, "-------state z have no-----.\r\n");
+                                            ESP_LOGI(TAG, "---2----state z have no-----.\r\n");
+                                            goto done;
                                         }
                                         
 
@@ -2079,7 +2123,7 @@ static void echo_task2()//lcd
                                     {
 
 
-                                        for (uint16_t i = 1; i <= shengyu_all_max; i++)//todo changqi and suoding
+                                        for (uint16_t i = 1; i <= SHENYU_GEZI_MAX; i++)//todo changqi and suoding
                                         {
                                             if((database_gz[i].state_gz ==0) //no use
                                                 &&(database_gz[i].state_fenpei_gz == 1)
@@ -2111,29 +2155,42 @@ static void echo_task2()//lcd
                                             database_cw.state=1;
                                             // database_gz[database_cw.dIndx].state_gz =database_cw.state;
                                             printf("---add---database_cw.dIndx=%u\r\n",database_cw.dIndx);
+                                            printf("-------------add--xmh=%u\r\n",database_gz[database_cw.dIndx].dIndx_gz);
+
+                                            //database_cw.dIndx = 43;//-------14--------
 
 
-                                            database_cw.dIndx = 43;//-------14--------
+                                            guimen_gk_temp = database_cw.dIndx ;
                                             uint16_t j=0,k=0;
-                                            
-                                            guimen_gk_temp = GUIMENX_GK_MAX;
-                                            while( (int16_t)database_cw.dIndx-guimen_gk_temp>0)
+                                            while(guimen_gk_temp/24 >0)
                                             {
-                                                k++;//board
-                                                guimen_gk_temp = guimen_gk_temp+ GUIMENX_GK_MAX;
+                                                k++;
+                                                guimen_gk_temp=guimen_gk_temp-24;
                                             }
-                                            j=(uint8_t)((int16_t)database_cw.dIndx-guimen_gk_temp +GUIMENX_GK_MAX);//lock
-
+                                            j = guimen_gk_temp;
                                             printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
+
+
+                                            
+                                            
+                                            // guimen_gk_temp = GUIMENX_GK_MAX;
+                                            // while( (int16_t)database_cw.dIndx-guimen_gk_temp>0)
+                                            // {
+                                            //     k++;//board
+                                            //     guimen_gk_temp = guimen_gk_temp+ GUIMENX_GK_MAX;
+                                            // }
+                                            // j=(uint8_t)((int16_t)database_cw.dIndx-guimen_gk_temp +GUIMENX_GK_MAX);//lock
+
+                                            // printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
 
                             
 
-                                            guimen_gk_temp =j;
-                                            for (uint16_t i = 0; i < k; i++)
-                                            {
-                                                guimen_gk_temp = guimen_x_gk_max[i] + guimen_gk_temp;
-                                            }
-                                            printf("---add---guimen_gk_temp=%u\r\n",guimen_gk_temp);
+                                            // guimen_gk_temp =j;
+                                            // for (uint16_t i = 0; i < k; i++)
+                                            // {
+                                            //     guimen_gk_temp = guimen_x_gk_max[i] + guimen_gk_temp;
+                                            // }
+                                            // printf("---add---guimen_gk_temp=%u\r\n",guimen_gk_temp);
                                             
                                             //if(shengyu_xiao >0)
                                             {
@@ -2144,7 +2201,7 @@ static void echo_task2()//lcd
                                                 ESP_LOGI(TAG, "-xiao-lock:%d ok--.\r\n",j);
 
                                                 send_cmd_to_lock(k+1,j);
-                                                send_cmd_to_lcd_bl(0x1070,guimen_gk_temp);
+                                                send_cmd_to_lcd_bl(0x1070,database_gz[database_cw.dIndx].dIndx_gz);
 
                                             }
     
@@ -2153,7 +2210,8 @@ static void echo_task2()//lcd
                                         }
                                         else
                                         {
-                                            ESP_LOGI(TAG, "-------state x have no-----.\r\n");
+                                            ESP_LOGI(TAG, "----3---state x have no-----.\r\n");
+                                            goto done;
                                         }
                                             
                                     }
@@ -2171,6 +2229,9 @@ static void echo_task2()//lcd
                                         tongbu_gekou_shuliang_all(shengyu_all);
 
 
+
+
+                                        //------------save-------------------
                                         // char key_name[15];//15
                                         // esp_err_t err;
 
@@ -2227,7 +2288,7 @@ static void echo_task2()//lcd
 
 
                                     j=0;k=0;
-                                    for (uint16_t i = 1; i <= shengyu_all_max; i++)//todo changqi and suoding
+                                    for (uint16_t i = 1; i <= SHENYU_GEZI_MAX; i++)//todo changqi and suoding
                                     {
                                         if((database_gz[i].state_gz ==0) //no use
                                             &&(database_gz[i].state_fenpei_gz == 1)
@@ -2419,7 +2480,7 @@ done:
                                     
         
                                     database_cw.dIndx = 0;
-                                    for (uint16_t i = 1; i <= shengyu_all_max; i++)//todo changqi and suoding
+                                    for (uint16_t i = 1; i <= SHENYU_GEZI_MAX; i++)//todo changqi and suoding
                                     {
 
                                         if(database_gz[i].phone_number_nvs_gz == phone_number_nvs_i)
@@ -2455,33 +2516,45 @@ done:
                                         printf("---add---database_cw.dIndx=%u\r\n",database_cw.dIndx);
 
 
-                                        j=0;k=0;
+
+                                        guimen_gk_temp = database_cw.dIndx ;
+                                        uint16_t j=0,k=0;
+                                        while(guimen_gk_temp/24 >0)
+                                        {
+                                            k++;
+                                            guimen_gk_temp=guimen_gk_temp-24;
+                                        }
+                                        j = guimen_gk_temp;
+                                        printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
+
+
+                                        // j=0;k=0;
             
 
-                                        guimen_gk_temp = GUIMENX_GK_MAX;
-                                        while( (int16_t)database_cw.dIndx-guimen_gk_temp>0)
-                                        {
-                                            k++;//board
-                                            guimen_gk_temp = guimen_gk_temp+ GUIMENX_GK_MAX;
-                                        }
-                                        j=(uint8_t)((int16_t)database_cw.dIndx-guimen_gk_temp +GUIMENX_GK_MAX);//lock
+                                        // guimen_gk_temp = GUIMENX_GK_MAX;
+                                        // while( (int16_t)database_cw.dIndx-guimen_gk_temp>0)
+                                        // {
+                                        //     k++;//board
+                                        //     guimen_gk_temp = guimen_gk_temp+ GUIMENX_GK_MAX;
+                                        // }
+                                        // j=(uint8_t)((int16_t)database_cw.dIndx-guimen_gk_temp +GUIMENX_GK_MAX);//lock
 
-                                        printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
+                                        // printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
 
                         
 
-                                        guimen_gk_temp =j;
-                                        for (uint16_t i = 0; i < k; i++)
-                                        {
-                                            guimen_gk_temp = guimen_x_gk_max[i] + guimen_gk_temp;
-                                        }
-                                        printf("---add---guimen_gk_temp=%u\r\n",guimen_gk_temp);
+                                        // guimen_gk_temp =j;
+                                        // for (uint16_t i = 0; i < k; i++)
+                                        // {
+                                        //     guimen_gk_temp = guimen_x_gk_max[i] + guimen_gk_temp;
+                                        // }
+                                        // printf("---add---guimen_gk_temp=%u\r\n",guimen_gk_temp);
 
                 
 
                                         ESP_LOGI(TAG, "-da-lock:%d ok--.\r\n",j);
                                         send_cmd_to_lock(k+1,j);
-                                        send_cmd_to_lcd_bl(0x10a0,guimen_gk_temp);//weishu bugou
+                                        send_cmd_to_lcd_bl(0x10a0,database_gz[database_cw.dIndx].dIndx_gz);//weishu bugou
                 
                                             
 
@@ -2530,6 +2603,7 @@ done:
                                             nvs_wr_phone_number_nvs_gz(1);
                                             nvs_wr_mima_number_nvs_gz(1);
                                             nvs_wr_state_gz(1);
+
 
 
         
@@ -2650,35 +2724,52 @@ done_kai_admin:
                                     guimen_gk_temp = atoi((const char*)temp_xiangmen);
                                     ESP_LOGI(TAG, "-------guimen_gk_temp--dIndx=%d--.\r\n",guimen_gk_temp); 
 
-
-
-                                    if( ((int16_t)guimen_gk_temp - guimen_x_gk_max[k]) <=0)
+                                    database_cw.dIndx =0;
+                                    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
                                     {
-                                        j = guimen_gk_temp;
-                                    }
-                                    else
-                                    {
-                                        // uint16_t i=0;
-                                        while( ((int16_t)guimen_gk_temp - guimen_x_gk_max[k]) >0)
+                                        if(database_gz[i].dIndx_gz == guimen_gk_temp)
                                         {
-                                            k++;//board
-                                            guimen_gk_temp = guimen_gk_temp- (uint16_t)(guimen_x_gk_max[k]);
+                                            database_cw.dIndx = i;
+                                            ESP_LOGI(TAG, "-------lock--dIndx=%d--.\r\n",database_cw.dIndx); 
                                         }
-                                        j= (int16_t)guimen_gk_temp + guimen_x_gk_max[k];//lock
-
+                                       
                                     }
-                                    
 
-                                    
-                                    
-                                    printf("------open- board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
 
-                                    database_cw.dIndx = (k+1)*16 +j;
-                                    ESP_LOGI(TAG, "------lock open--dIndx=%d--.\r\n",database_cw.dIndx);  
+
+                                    // if( ((int16_t)guimen_gk_temp - guimen_x_gk_max[k]) <=0)
+                                    // {
+                                    //     j = guimen_gk_temp;
+                                    // }
+                                    // else
+                                    // {
+                                    //     // uint16_t i=0;
+                                    //     while( ((int16_t)guimen_gk_temp - guimen_x_gk_max[k]) >0)
+                                    //     {
+                                    //         k++;//board
+                                    //         guimen_gk_temp = guimen_gk_temp- (uint16_t)(guimen_x_gk_max[k]);
+                                    //     }
+                                    //     j= (int16_t)guimen_gk_temp + guimen_x_gk_max[k];//lock
+
+                                    // }
+                                    
+ 
                                     if(database_gz[database_cw.dIndx].state_fenpei_gz == 0)
                                     {
                                         goto wuci_xmh;
                                     }
+
+                                    ESP_LOGI(TAG, "------lock open--dIndx=%d--.\r\n",database_cw.dIndx); 
+                                    guimen_gk_temp = database_cw.dIndx ;
+                                    uint16_t j=0,k=0;
+                                    while(guimen_gk_temp/24 >0)
+                                    {
+                                        k++;
+                                        guimen_gk_temp=guimen_gk_temp-24;
+                                    }
+                                    j = guimen_gk_temp;
+                                    printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
+
 
 
                                     ESP_LOGI(TAG, "-da-lock:%d ok--.\r\n",j);
@@ -2686,6 +2777,9 @@ done_kai_admin:
                                     send_cmd_to_lcd_bl(0x10c0,database_cw.dIndx);
             
                                     send_cmd_to_lcd_pic(0x0014);
+
+
+
 
                                     ESP_LOGI(TAG, "-----2-----[ * ] Starting audio pipeline");
                                     audio_pipeline_stop(pipeline);
@@ -2727,6 +2821,9 @@ done_kai_admin:
                                             ESP_LOGE(TAG, "[ * ] Not supported index = %d", database_cw.dIndx);
                                     }
                                     audio_pipeline_run(pipeline);
+
+
+
                                 }
                                 else
                                 {
@@ -2734,7 +2831,7 @@ wuci_xmh:
                                     send_cmd_to_lcd_pic(0x0015);
                                     ESP_LOGI(TAG, "----admin --wu ci xiangmenhao-----.\r\n");
                                 }
-                                send_cmd_to_lcd_bl(0x10C0,database_cw.dIndx);//xiangmen------------
+                                send_cmd_to_lcd_bl(0x10C0,database_gz[database_cw.dIndx].dIndx_gz);//xiangmen------------
 
                                 break;
 
@@ -3292,314 +3389,8 @@ void uart_init_all(void)
 
 
 
-
-
-
-// #define DZ_CW_MD "_dz_cw_md"//guizi    _dz_cw_md
-// #define DZ_DZXMD "_dz_dzxmd"
-// #define DZ_PHONE "_dz_phone"
-// #define DZ_MIMA  "_dz_mima"
-// #define DZ_ST    "_dz_st"
-
-void read_nvs_guizi_all()
+void audio_init(void)
 {
-    char key_num[3];//65536
-    //todo
-    char key_name[15];
-    esp_err_t err;
-
-
-    
-
-    //shengyu_all_max = shengyu_da_max+ shengyu_zhong_max + shengyu_xiao_max;
-
-    //shengyu_xiao_max = shengyu_all_max - (shengyu_da_max+ shengyu_zhong_max);
-
-
-
-    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
-    {
-        database_cw.dIndx =i;
-        nvs_wr_fenpei_gz(0);//2
-        if(1== database_gz[database_cw.dIndx].state_fenpei_gz)
-        {
-            //guizi
-            nvs_wr_cunwu_mode_gz(0);
-            nvs_wr_dzx_mode_gz(0);
-            nvs_wr_phone_number_nvs_gz(0);
-            nvs_wr_mima_number_nvs_gz(0);
-            
-            nvs_wr_index_gz(0);//3
-
-            // nvs_wr_fenpei_gz(0);
-            // //admin
-            // nvs_wr_shengyu_da(0);
-            // nvs_wr_shengyu_zhong(0);
-            // nvs_wr_shengyu_xiao(0);
-        }
-        
-        printf("\r\n");
-    }
-
-
-  //admin
-    nvs_wr_shengyu_da(0);
-    nvs_wr_shengyu_zhong(0);
-    nvs_wr_shengyu_xiao(0);
-
-    nvs_wr_mima_number_adm(0);
-
-
-    
-
-    shengyu_all = shengyu_da + shengyu_zhong + shengyu_xiao;
-    printf("-2-shengyu_all_max=%d----\n",shengyu_all_max);
-    printf("---shengyu_all=%d----\n",shengyu_all);
-
-    printf("---shengyu_da=%d----\n",shengyu_da);
-    printf("---shengyu_zhong=%d----\n",shengyu_zhong);
-    printf("---shengyu_xiao=%d----\n",shengyu_xiao);
-
-
-
-
-/*
-    for(uint16_t i=1;i<=shengyu_all_max;i++)
-    {
-        printf("shengyu index =%03d,cunwu_mode_gz =%d,dzx_mode_gz =%d,",\
-                i, database_gz[i].cunwu_mode_gz,database_gz[i].dzx_mode_gz);
-
-
-        printf("phone?=%11llu,mima?=%6u,", database_gz[i].phone_number_nvs_gz, database_gz[i].mima_number_nvs_gz);
-
-        printf("state_fenpei_gz?=%d, state?=%d,lock?=%d,changqi?=%d\r\n",\
-            database_gz[i].state_fenpei_gz,\
-            database_gz[i].state_gz,\
-            database_gz[i].lock,\
-            database_gz[i].changqi);
-
-    }
-*/
-
-
-}
-
-
-
-
-static void oneshot_timer_callback(void* arg)
-{
-    int64_t time_since_boot = esp_timer_get_time();
-    ESP_LOGI(TAG, "One-shot timer called, time since boot: %lld us", time_since_boot);
-    send_cmd_to_lcd_pic(KAIJI_PIC);
-}
-
-
-void app_main(void)
-{
-    u8 ensure;
-
-
-    gpio_pad_select_gpio(RE_485_GPIO);
-    /* Set the GPIO as a push/pull output */
-    gpio_set_direction(RE_485_GPIO, GPIO_MODE_OUTPUT);
-    
-    RS485_RX_EN();
-
-
-
-    uart_init_all();
-    //vTaskDelay(500 / portTICK_PERIOD_MS);
-
-    //xTaskCreate(echo_task, "uart_echo_task", 1024, NULL, 10, NULL);
-    xTaskCreate(echo_task, "uart_echo_task", 2* 1024, NULL, 1, NULL);//1024 10
-
-	
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-
-
-
-
-
-    // ESP_LOGI(TAG, "与AS608模块握手....\r\n");
-	// while(PS_HandShake(&AS608Addr))//与AS608模块握手
-	// {
-	// 	delay_ms(400);
-    //     ESP_LOGI(TAG, "未检测到模块!!!\r\n");
-    //     delay_ms(800);
-    //     ESP_LOGI(TAG, "尝试连接模块...\r\n");	
-
-    //     // u8 data = 0x35;
-    //     // uart_write_bytes(UART_NUM_0, (const char *) &data, 1);//------UART_NUM_2------	  
-    //     // uart_write_bytes(UART_NUM_1, (const char *) &data, 1);//------UART_NUM_2------	  
-	// }
-
-    // ESP_LOGI(TAG,"通讯成功!!!\r\n");
-    // ESP_LOGI(TAG,"波特率:%d   地址:%x\r\n",usart2_baund,AS608Addr);
-
-
-	// ensure=PS_ValidTempleteNum(&ValidN);//读库指纹个数
-	// if(ensure!=0x00)
-    // {
-    //     ESP_LOGI(TAG,"1-ensure = %d\r\n",ensure);
-    //     ShowErrMessage(ensure);//显示确认码错误信息	
-    // }
-		
-    // delay_ms(100);
-
-	// ensure=PS_ReadSysPara(&AS608Para);  //读参数 
-	// if(ensure==0x00)
-	// {
-	// 		// mymemset(str,0,50);
-	// 		// sprintf(str,"库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
-	// 		// Show_Str(0,80,240,16,(u8*)str,16,0);
-    //     ESP_LOGI(TAG,"库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
-	// }
-	// else
-    // {
-    //     ESP_LOGI(TAG,"2-ensure = %d\r\n",ensure);
-    //     ShowErrMessage(ensure);	
-    // }
-
-
-
-
-
-
-
-    esp_err_t err = nvs_flash_init();
-    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        // NVS partition was truncated and needs to be erased
-        // Retry nvs_flash_init
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        err = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK( err );
-
-    // //err = print_what_saved();//dayin
-    // err = read_u16_value(STORAGE_NAMESPACE,"dw_dIndx", (uint16_t*)(&database_cw.dIndx));
-    // if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
-
-
-    // err = read_u64_value(STORAGE_NAMESPACE,"dw_phone_number",&database_cw.phone_number_nvs);
-    // if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
-
-
-    // err = read_u32_value(STORAGE_NAMESPACE,"dw_mima_number",&database_cw.mima_number_nvs);
-    // if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
-
-
-
-
-
-    
-
-
-
-  //debug
-    for (uint16_t i = 1; i <= SHENYU_GEZI_MAX; i++)//15
-    {
-        database_gz[i].dzx_mode_gz =3;
-    }
-
-    nvs_wr_shengyu_all_max(0);//1
-    printf("-1-shengyu_all_max=%d----\n",shengyu_all_max);
-    if(shengyu_all_max == 0)
-    {
-        send_cmd_to_lcd_pic(BOOT_PIC);
-    }
-    else
-    {
-        read_nvs_guizi_all();
-        send_cmd_to_lcd_pic(KAIJI_PIC);
-    }
-    
-    ESP_LOGI(TAG,"切换到开机画面!!!\r\n");
-    //kaiji_huamian();
-
-
-
-
-    // shengyu_da=shengyu_da_max;//read
-    // shengyu_zhong=shengyu_zhong_max;
-    // shengyu_xiao=shengyu_xiao_max;
-
-
-    tongbu_gekou_shuliang_d(shengyu_da);
-    vTaskDelay(10 / portTICK_PERIOD_MS);
-    tongbu_gekou_shuliang_z(shengyu_zhong);
-    vTaskDelay(10 / portTICK_PERIOD_MS);
-    tongbu_gekou_shuliang_x(shengyu_xiao);
-    vTaskDelay(10 / portTICK_PERIOD_MS);
-
-    tongbu_gekou_shuliang_all(shengyu_all);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
-
-
-  
-
-
-
-    uint16_t j=0;
-    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
-    {
-        if(1== database_gz[i].state_fenpei_gz)
-        {
-            printf("index =%03d,cunwu_mode =%d,dzx_mode =%d,",\
-                    i, database_gz[i].cunwu_mode_gz,database_gz[i].dzx_mode_gz);
-
-
-            printf("phone?=%11llu,mima?=%6u,", database_gz[i].phone_number_nvs_gz, database_gz[i].mima_number_nvs_gz);
-
-            printf("fenpei?=%d, state?=%d,lock?=%d,changqi?=%d, ",\
-                    database_gz[i].state_fenpei_gz,\
-                    database_gz[i].state_gz,\
-                    database_gz[i].lock,\
-                    database_gz[i].changqi);
-            
-            // if(database_gz[i].state_fenpei_gz == 1)
-            // {
-                j++;
-                printf("xmh dIndx= %03d, ",database_gz[i].dIndx_gz);
-                printf("xm j= %03d",j);//xiangmenhao
-            // }
-            printf("\r\n");
-        }
-        printf("---i=%d\r\n",i);
-
-    }
-
-
-    // err = save_restart_counter();
-    //  if (err != ESP_OK) printf("Error (%s) saving restart counter to NVS!\n", esp_err_to_name(err));
-
-
-
-
-
-
-
-
-
-    //---------------timer-----------------------
-    const esp_timer_create_args_t oneshot_timer_args = {
-            .callback = &oneshot_timer_callback,
-            /* argument specified here will be passed to timer callback function */
-            // .arg = (void*) periodic_timer,
-            .name = "one-shot"
-    };
-    
-    ESP_ERROR_CHECK(esp_timer_create(&oneshot_timer_args, &oneshot_timer));
-
-    // /* Start the timers */
-    // ESP_ERROR_CHECK(esp_timer_start_once(oneshot_timer, 3000000));//5s
-    // ESP_LOGI(TAG, "Started timers, time since boot: %lld us", esp_timer_get_time());
-
-
-
-
-
-
     //---------------audio------------------------
     {
         // audio_pipeline_handle_t pipeline;
@@ -3757,6 +3548,317 @@ void app_main(void)
         audio_element_deinit(i2s_stream_writer);
         audio_element_deinit(mp3_decoder);
     }
+
+
+
+
+
+}
+
+
+
+
+
+
+
+// #define DZ_CW_MD "_dz_cw_md"//guizi    _dz_cw_md
+// #define DZ_DZXMD "_dz_dzxmd"
+// #define DZ_PHONE "_dz_phone"
+// #define DZ_MIMA  "_dz_mima"
+// #define DZ_ST    "_dz_st"
+
+void read_nvs_guizi_all()
+{
+    char key_num[3];//65536
+    //todo
+    char key_name[15];
+    esp_err_t err;
+
+
+    
+
+    //shengyu_all_max = shengyu_da_max+ shengyu_zhong_max + shengyu_xiao_max;
+
+    //shengyu_xiao_max = shengyu_all_max - (shengyu_da_max+ shengyu_zhong_max);
+
+
+
+    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
+    {
+        database_cw.dIndx =i;
+        nvs_wr_fenpei_gz(0);//2
+        if(1== database_gz[database_cw.dIndx].state_fenpei_gz)
+        {
+            //guizi
+            nvs_wr_cunwu_mode_gz(0);
+            nvs_wr_dzx_mode_gz(0);
+            nvs_wr_phone_number_nvs_gz(0);
+            nvs_wr_mima_number_nvs_gz(0);
+            nvs_wr_state_gz(0);
+            
+            nvs_wr_index_gz(0);//3
+
+            // nvs_wr_fenpei_gz(0);
+            // //admin
+            // nvs_wr_shengyu_da(0);
+            // nvs_wr_shengyu_zhong(0);
+            // nvs_wr_shengyu_xiao(0);
+        }
+        
+        printf("\r\n");
+    }
+
+
+  //admin
+    nvs_wr_shengyu_da(0);
+    nvs_wr_shengyu_zhong(0);
+    nvs_wr_shengyu_xiao(0);
+
+    nvs_wr_mima_number_adm(0);
+
+
+    
+
+    shengyu_all = shengyu_da + shengyu_zhong + shengyu_xiao;
+    printf("-2-shengyu_all_max=%d----\n",shengyu_all_max);
+    printf("---shengyu_all=%d----\n",shengyu_all);
+
+    printf("---shengyu_da=%d----\n",shengyu_da);
+    printf("---shengyu_zhong=%d----\n",shengyu_zhong);
+    printf("---shengyu_xiao=%d----\n",shengyu_xiao);
+
+
+
+
+/*
+    for(uint16_t i=1;i<=shengyu_all_max;i++)
+    {
+        printf("shengyu index =%03d,cunwu_mode_gz =%d,dzx_mode_gz =%d,",\
+                i, database_gz[i].cunwu_mode_gz,database_gz[i].dzx_mode_gz);
+
+
+        printf("phone?=%11llu,mima?=%6u,", database_gz[i].phone_number_nvs_gz, database_gz[i].mima_number_nvs_gz);
+
+        printf("state_fenpei_gz?=%d, state?=%d,lock?=%d,changqi?=%d\r\n",\
+            database_gz[i].state_fenpei_gz,\
+            database_gz[i].state_gz,\
+            database_gz[i].lock,\
+            database_gz[i].changqi);
+
+    }
+*/
+
+
+}
+
+
+
+
+static void oneshot_timer_callback(void* arg)
+{
+    int64_t time_since_boot = esp_timer_get_time();
+    ESP_LOGI(TAG, "One-shot timer called, time since boot: %lld us", time_since_boot);
+    send_cmd_to_lcd_pic(KAIJI_PIC);
+}
+
+
+void app_main(void)
+{
+    u8 ensure;
+
+
+    gpio_pad_select_gpio(RE_485_GPIO);
+    /* Set the GPIO as a push/pull output */
+    gpio_set_direction(RE_485_GPIO, GPIO_MODE_OUTPUT);
+    
+    RS485_RX_EN();
+
+
+
+    uart_init_all();
+    //vTaskDelay(500 / portTICK_PERIOD_MS);
+
+    //xTaskCreate(echo_task, "uart_echo_task", 1024, NULL, 10, NULL);
+    xTaskCreate(echo_task, "uart_echo_task", 2* 1024, NULL, 1, NULL);//1024 10
+
+	
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+
+
+
+
+
+    // ESP_LOGI(TAG, "与AS608模块握手....\r\n");
+	// while(PS_HandShake(&AS608Addr))//与AS608模块握手
+	// {
+	// 	delay_ms(400);
+    //     ESP_LOGI(TAG, "未检测到模块!!!\r\n");
+    //     delay_ms(800);
+    //     ESP_LOGI(TAG, "尝试连接模块...\r\n");	
+
+    //     // u8 data = 0x35;
+    //     // uart_write_bytes(UART_NUM_0, (const char *) &data, 1);//------UART_NUM_2------	  
+    //     // uart_write_bytes(UART_NUM_1, (const char *) &data, 1);//------UART_NUM_2------	  
+	// }
+
+    // ESP_LOGI(TAG,"通讯成功!!!\r\n");
+    // ESP_LOGI(TAG,"波特率:%d   地址:%x\r\n",usart2_baund,AS608Addr);
+
+
+	// ensure=PS_ValidTempleteNum(&ValidN);//读库指纹个数
+	// if(ensure!=0x00)
+    // {
+    //     ESP_LOGI(TAG,"1-ensure = %d\r\n",ensure);
+    //     ShowErrMessage(ensure);//显示确认码错误信息	
+    // }
+		
+    // delay_ms(100);
+
+	// ensure=PS_ReadSysPara(&AS608Para);  //读参数 
+	// if(ensure==0x00)
+	// {
+	// 		// mymemset(str,0,50);
+	// 		// sprintf(str,"库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
+	// 		// Show_Str(0,80,240,16,(u8*)str,16,0);
+    //     ESP_LOGI(TAG,"库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
+	// }
+	// else
+    // {
+    //     ESP_LOGI(TAG,"2-ensure = %d\r\n",ensure);
+    //     ShowErrMessage(ensure);	
+    // }
+
+
+
+
+
+
+
+    esp_err_t err = nvs_flash_init();
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        // NVS partition was truncated and needs to be erased
+        // Retry nvs_flash_init
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        err = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK( err );
+
+
+
+
+
+
+
+  //debug
+    for (uint16_t i = 1; i <= SHENYU_GEZI_MAX; i++)//15
+    {
+        database_gz[i].dzx_mode_gz =3;
+    }
+
+    nvs_wr_shengyu_all_max(0);//1
+    printf("-1-shengyu_all_max=%d----\n",shengyu_all_max);
+    if(shengyu_all_max == 0)
+    {
+        send_cmd_to_lcd_pic(BOOT_PIC);
+
+        // nvs_wr_mima_number_adm(1);
+        // for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
+        // {
+        //     database_cw.dIndx = i;
+
+        //     database_gz[i].dIndx_gz =0;
+        //     database_gz[i].state_fenpei_gz =0;
+        //     database_gz[i].dzx_mode_gz =3;
+        //     database_gz[i].state_gz =0;
+            
+        //     nvs_wr_index_gz(1);
+        //     nvs_wr_fenpei_gz(1);
+        //     nvs_wr_dzx_mode_gz(1);
+        //     nvs_wr_state_gz(1);
+
+        //     //lock----------------todo---------------------
+        //     //changqi
+        // }
+    }
+    else
+    {
+        read_nvs_guizi_all();
+        send_cmd_to_lcd_pic(KAIJI_PIC);
+    }
+    
+    ESP_LOGI(TAG,"切换到开机画面!!!\r\n");
+
+
+
+    uint16_t j=0;
+    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
+    {
+        if(1== database_gz[i].state_fenpei_gz)
+        {
+            printf("index =%03d,cunwu_mode =%d,dzx_mode =%d,",\
+                    i, database_gz[i].cunwu_mode_gz,database_gz[i].dzx_mode_gz);
+
+
+            printf("phone?=%11llu,mima?=%6u,", database_gz[i].phone_number_nvs_gz, database_gz[i].mima_number_nvs_gz);
+
+            printf("fenpei?=%d, state?=%d,lock?=%d,changqi?=%d, ",\
+                    database_gz[i].state_fenpei_gz,\
+                    database_gz[i].state_gz,\
+                    database_gz[i].lock,\
+                    database_gz[i].changqi);
+            
+            // if(database_gz[i].state_fenpei_gz == 1)
+            // {
+                j++;
+                printf("xmh dIndx= %03d, ",database_gz[i].dIndx_gz);
+                printf("xm j= %03d",j);//xiangmenhao
+            // }
+            printf("\r\n");
+        }
+        //printf("---i=%d\r\n",i);
+
+    }
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+
+
+    // err = save_restart_counter();
+    //  if (err != ESP_OK) printf("Error (%s) saving restart counter to NVS!\n", esp_err_to_name(err));
+
+    // shengyu_da=shengyu_da_max;//read
+    // shengyu_zhong=shengyu_zhong_max;
+    // shengyu_xiao=shengyu_xiao_max;
+
+
+    tongbu_gekou_shuliang_d(shengyu_da);
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+    tongbu_gekou_shuliang_z(shengyu_zhong);
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+    tongbu_gekou_shuliang_x(shengyu_xiao);
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+
+    tongbu_gekou_shuliang_all(shengyu_all);
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+
+
+  
+
+
+    //---------------timer-----------------------
+    const esp_timer_create_args_t oneshot_timer_args = {
+            .callback = &oneshot_timer_callback,
+            /* argument specified here will be passed to timer callback function */
+            // .arg = (void*) periodic_timer,
+            .name = "one-shot"
+    };
+    
+    ESP_ERROR_CHECK(esp_timer_create(&oneshot_timer_args, &oneshot_timer));
+
+    // /* Start the timers */
+    // ESP_ERROR_CHECK(esp_timer_start_once(oneshot_timer, 3000000));//5s
+    // ESP_LOGI(TAG, "Started timers, time since boot: %lld us", esp_timer_get_time());
+
+
+    audio_init();
 
 
 
