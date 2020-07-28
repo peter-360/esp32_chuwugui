@@ -730,9 +730,9 @@ static void RS485_delay(u32 nCount)
 
 /*??????·?????*/
 //????????????,±??????????±????485???í?ê????
-#define RS485_RX_EN()			RS485_delay(1000); gpio_set_level(RE_485_GPIO, 0);//rx;  RS485_delay(1000);
+#define RS485_RX_EN()			delay_ms(10); gpio_set_level(RE_485_GPIO, 0);delay_ms(10);//rx;  RS485_delay(1000);
 //????·???????,±??????????±????485???í?ê????
-#define RS485_TX_EN()			RS485_delay(1000); gpio_set_level(RE_485_GPIO, 1);//rx;  RS485_delay(1000);
+#define RS485_TX_EN()			delay_ms(10); gpio_set_level(RE_485_GPIO, 1);delay_ms(10);//rx;  RS485_delay(1000);
 
 
 
@@ -965,6 +965,9 @@ void tongbu_gekou_shuliang_x(uint16_t temp)
 #define  BL_GK_SZ_D 0x11B0
 #define  BL_GK_SZ_Z 0x11C0
 
+
+#define  BL_GK_BH_D 0x1240
+#define  BL_GK_BH_Z 0x1230
 
 
 //数组
@@ -1749,7 +1752,7 @@ static void echo_task2()//lcd
 
 
                                     printf("hang_shu_max=%03d\r\n",hang_shu_max);
-                                    if((hang_shu_max<= 0x96)&&(shengyu_xiao_max>0))
+                                    if((hang_shu_max<= 0x96)||(shengyu_xiao_max>0))
                                     {
                                         printf("show2=");
                                         for(j = 0; j <= hang_shu_max; j++)//i 个柜子
@@ -1759,7 +1762,7 @@ static void echo_task2()//lcd
                                             ESP_LOGI(TAG, "-------guimen_gk_temp--dIndx=%d--.\r\n",guimen_gk_temp); 
 
 
-                                            if(guimen_gk_temp >=SHENYU_GEZI_MAX)
+                                            if((guimen_gk_temp >=SHENYU_GEZI_MAX)&&(0==guimen_gk_temp))
                                             {
                                                 ESP_LOGI(TAG, "--gekou set fail--.\r\n");   
                                                 goto gekou_fail;
@@ -1841,7 +1844,7 @@ gekou_fail:
                                 break;
 
 
-//da
+                            //zhong
                             case 0x11C0://
                                 ESP_LOGI(TAG, "--zhong gekou--.\r\n");   
                                 j=0;
@@ -1910,7 +1913,7 @@ gekou_fail:
                                             guimen_gk_temp = atoi((const char*)show[j]);
                                             ESP_LOGI(TAG, "-------guimen_gk_temp--dIndx=%d--.\r\n",guimen_gk_temp); 
 
-                                            if(guimen_gk_temp >=SHENYU_GEZI_MAX)
+                                            if((guimen_gk_temp >=SHENYU_GEZI_MAX)||(0==guimen_gk_temp))
                                             {
                                                 ESP_LOGI(TAG, "--gekou set fail--.\r\n");   
                                                 goto gekou_z_fail;
@@ -1973,7 +1976,7 @@ gekou_fail:
                                     //save
 
                                     memset(tx_Buffer2,0,200);
-                                    send_cmd_to_lcd_bl_len(BL_GK_SZ_D,tx_Buffer2,data_rx_t[2]-1);//clear
+                                    send_cmd_to_lcd_bl_len(BL_GK_SZ_Z,tx_Buffer2,data_rx_t[2]-1);//clear
 
 
                                     send_cmd_to_lcd_pic(GEKOU_OK_PIC);
@@ -4027,6 +4030,8 @@ static void oneshot_timer_callback(void* arg)
 void app_main(void)
 {
     u8 ensure;
+    u8 buff_temp1[150]={0};
+    u8 buff_temp2[150]={0};
 
 
     gpio_pad_select_gpio(RE_485_GPIO);
@@ -4152,11 +4157,22 @@ void app_main(void)
 
 
 
-    uint16_t j=0;
+    uint16_t j=0,k=0,l=0;
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
     {
         if(1== database_gz[i].state_fenpei_gz)
         {
+
+            if(1== database_gz[i].dzx_mode_gz)
+            {
+                buff_temp1[k++] = database_gz[i].dIndx_gz;
+            }
+            if(2== database_gz[i].dzx_mode_gz)
+            {
+                buff_temp2[l++] = database_gz[i].dIndx_gz;
+            }
+
+
             printf("index =%03d,cunwu_mode =%d,dzx_mode =%d,",\
                     i, database_gz[i].cunwu_mode_gz,database_gz[i].dzx_mode_gz);
 
@@ -4177,10 +4193,14 @@ void app_main(void)
             // }
             printf("\r\n");
         }
+
         //printf("---i=%d\r\n",i);
 
     }
     vTaskDelay(10 / portTICK_PERIOD_MS);
+
+    send_cmd_to_lcd_bl_len(BL_GK_BH_D,buff_temp1,0x9b);//clear
+    send_cmd_to_lcd_bl_len(BL_GK_BH_Z,buff_temp2,0x9b);//clear
 
 
     // err = save_restart_counter();
