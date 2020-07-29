@@ -184,16 +184,32 @@ const char *TAG = "uart_events";
 #define ECHO_TEST_CTS  (UART_PIN_NO_CHANGE)
 
 
-#define ECHO_TEST2_TXD  (GPIO_NUM_23)//2-deng    23
+//old
+#define ECHO_TEST2_TXD  (GPIO_NUM_23)//2-deng    23     hard UART2
 #define ECHO_TEST2_RXD  (GPIO_NUM_34)//34        22
 #define ECHO_TEST2_RTS  (UART_PIN_NO_CHANGE)
-#define ECHO_TEST2_CTS  (UART_PIN_NO_CHANGE)
+#define ECHO_TEST2_CTS  (UART_PIN_NO_CHANGE)//lock
 #define RE_485_GPIO     (GPIO_NUM_18)
 
-    #define ECHO_TEST3_TXD  (GPIO_NUM_19)
+    #define ECHO_TEST3_TXD  (GPIO_NUM_19)//zhiwen
     #define ECHO_TEST3_RXD  (GPIO_NUM_4)
     #define ECHO_TEST3_RTS  (UART_PIN_NO_CHANGE)
     #define ECHO_TEST3_CTS  (UART_PIN_NO_CHANGE)
+
+
+//xin debug
+// #define ECHO_TEST2_TXD  (GPIO_NUM_19)//2-deng    23    moni
+// #define ECHO_TEST2_RXD  (GPIO_NUM_4)//34        22
+// #define ECHO_TEST2_RTS  (UART_PIN_NO_CHANGE)
+// #define ECHO_TEST2_CTS  (UART_PIN_NO_CHANGE)//lock
+// #define RE_485_GPIO     (GPIO_NUM_18)
+
+//     #define ECHO_TEST3_TXD  (GPIO_NUM_23)//zhiwen 19    hard UART2
+//     #define ECHO_TEST3_RXD  (GPIO_NUM_34)//4
+//     #define ECHO_TEST3_RTS  (UART_PIN_NO_CHANGE)
+//     #define ECHO_TEST3_CTS  (UART_PIN_NO_CHANGE)
+
+
 
     #define ECHO_TEST4_TXD  (GPIO_NUM_21)
     #define ECHO_TEST4_RXD  (GPIO_NUM_36)//SVP
@@ -730,9 +746,9 @@ static void RS485_delay(u32 nCount)
 
 /*??????·?????*/
 //????????????,±??????????±????485???í?ê????
-#define RS485_RX_EN()			delay_ms(10); gpio_set_level(RE_485_GPIO, 0);delay_ms(10);//rx;  RS485_delay(1000);
+#define RS485_RX_EN()			delay_ms(10); gpio_set_level(RE_485_GPIO, 0);delay_ms(100);//rx;  RS485_delay(1000);
 //????·???????,±??????????±????485???í?ê????
-#define RS485_TX_EN()			delay_ms(10); gpio_set_level(RE_485_GPIO, 1);delay_ms(10);//rx;  RS485_delay(1000);
+#define RS485_TX_EN()			delay_ms(10); gpio_set_level(RE_485_GPIO, 1);delay_ms(100);//rx;  RS485_delay(1000);
 
 
 
@@ -808,9 +824,16 @@ void uart0_debug_data(uint8_t* data,uint8_t len)
         printf("%02x ",data[i]);
     printf("\r\n");
 }
+void uart0_debug_data_d(uint8_t* data,uint8_t len)
+{
+    printf("debug_data:");
+    for(uint8_t i=0;i<len;i++)
+        printf("%02d ",data[i]);
+    printf("\r\n");
+}
 
 //2字节
-void uart0_debug_data_dec(uint16_t* data,uint16_t len)
+void uart0_debug_data_dec(uint16_t* data,uint16_t len)//16
 {
     printf("--------debug_data:");
     for(uint16_t i=0;i<len;i++)
@@ -4030,9 +4053,11 @@ static void oneshot_timer_callback(void* arg)
 void app_main(void)
 {
     u8 ensure;
-    u8 buff_temp1[150]={0};
-    u8 buff_temp2[150]={0};
+    u16 buff_temp1[200]={0};
+    u16 buff_temp2[200]={0};
 
+    u8 buff_temp1_c[300]={0};//char
+    u8 buff_temp2_c[300]={0};//150
 
     gpio_pad_select_gpio(RE_485_GPIO);
     /* Set the GPIO as a push/pull output */
@@ -4165,11 +4190,20 @@ void app_main(void)
 
             if(1== database_gz[i].dzx_mode_gz)
             {
-                buff_temp1[k++] = database_gz[i].dIndx_gz;
+                //char *	_EXFUN(itoa,(int, char *, int));
+
+                buff_temp1[k] = database_gz[i].dIndx_gz;
+                printf("b_temp1[k]= %03d ",buff_temp1[k]);//xiangmenhao
+                
+                itoa(buff_temp1[k],(char*)(buff_temp1_c+4*(k)),10);//+4*(i-1)
+                k++;
             }
             if(2== database_gz[i].dzx_mode_gz)
             {
-                buff_temp2[l++] = database_gz[i].dIndx_gz;
+                buff_temp2[l] = database_gz[i].dIndx_gz;
+                printf("b_temp2[l]= %03d ",buff_temp2[l]);//xiangmenhao
+                itoa(buff_temp2[l],(char*)(buff_temp2_c+4*(l)),10);//+4*(i-1)
+                l++;
             }
 
 
@@ -4199,8 +4233,30 @@ void app_main(void)
     }
     vTaskDelay(10 / portTICK_PERIOD_MS);
 
-    send_cmd_to_lcd_bl_len(BL_GK_BH_D,buff_temp1,0x9b);//clear
-    send_cmd_to_lcd_bl_len(BL_GK_BH_Z,buff_temp2,0x9b);//clear
+    // uart0_debug_data_d(buff_temp1,0x9b);
+    // uart0_debug_data_d(buff_temp1,0x9b);
+
+
+    for(uint16_t i=1;i<=300;i++)
+    {
+        if(buff_temp2_c[i]==0)
+        {
+            buff_temp2_c[i]=0x20;
+        }
+        if(buff_temp1_c[i]==0)
+        {
+            buff_temp1_c[i]=0x20;
+        }
+    }
+
+
+    vTaskDelay(30 / portTICK_PERIOD_MS);
+    printf("-----gekouleixing-----\r\n");
+    send_cmd_to_lcd_bl_len(BL_GK_BH_Z,buff_temp2_c,0x9b);//
+    vTaskDelay(1 / portTICK_PERIOD_MS);
+    send_cmd_to_lcd_bl_len(BL_GK_BH_D,buff_temp1_c,0x9b);//
+    vTaskDelay(1 / portTICK_PERIOD_MS);
+
 
 
     // err = save_restart_counter();
