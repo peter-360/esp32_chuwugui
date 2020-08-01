@@ -395,6 +395,8 @@ shujuku_struct_gz database_gz[SHENYU_GEZI_MAX];//i/lock  idx
 uint8_t phone_weishu_ok;
 uint8_t phone_weishu_ok_a;
 
+uint8_t mima_weishu_ok_a1;
+
 //lock 格口编号
 //weiyi xuhao
 
@@ -752,6 +754,12 @@ esp_err_t read_u64_value(const char* name,char* key, uint64_t* out_value)
 
 
 
+
+
+
+
+
+
 #define usart2_baund  57600//串口2波特率，根据指纹模块波特率更改
 
 SysPara AS608Para;//指纹模块AS608参数
@@ -1099,7 +1107,13 @@ void send_cmd_to_lcd_bl(uint16_t opCode, uint16_t temp)//变量
 #define  XIN_CHANGQI_OK_PIC 0x001c//ok
 #define  UN_CHANGQI_OK_PIC 0x003f//ok
 
-#define  KAIJI_PIC 0x0026
+
+#define  XIN_MIMA_ADMIN_OK_PIC 0x0038//ok
+#define  FAIL_MIMA_ADMIN_OK_PIC 0x0037//
+
+
+#define  DEFAULT_ADMIN_OK_PIC 0x003a//ok
+
 #define  ALLOPEN_OK_PIC 0x003d//ok
 
 #define  CLEAR_ONE_OK_PIC 0x0024//ok
@@ -1112,6 +1126,7 @@ void send_cmd_to_lcd_bl(uint16_t opCode, uint16_t temp)//变量
 #define  BOOT_PIC 0x0041//qushezhi->guimen
 #define  GUIMEN_OK_PIC 0x0031//ok
 
+#define  KAIJI_PIC 0x0026
 
 
 #define  GEKOU_PIC 0x0032//da
@@ -1553,6 +1568,106 @@ void nvs_wr_shengyu_xiao_max(uint8_t mode)//->all
 
 
 
+void default_factory_set(void)
+{
+
+    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
+    {
+        database_cw.dIndx = i;
+
+
+        database_gz[database_cw.dIndx].dIndx_gz =0;
+        database_gz[database_cw.dIndx].state_fenpei_gz =0;
+
+        nvs_wr_index_gz(1);
+        nvs_wr_fenpei_gz(1);
+
+
+        database_gz[database_cw.dIndx].changqi = 0;
+        database_gz[database_cw.dIndx].lock = 0;
+        nvs_wr_glock_gz(1);
+        nvs_wr_glongtime_gz(1);
+
+
+        database_gz[database_cw.dIndx].cunwu_mode_gz = 0;
+        database_gz[database_cw.dIndx].dzx_mode_gz = 3;
+        nvs_wr_cunwu_mode_gz(1);
+        nvs_wr_dzx_mode_gz(1);
+
+        database_gz[database_cw.dIndx].phone_number_nvs_gz = 0;
+        database_gz[database_cw.dIndx].mima_number_nvs_gz = 0;
+        nvs_wr_phone_number_nvs_gz(1);
+        nvs_wr_mima_number_nvs_gz(1);
+
+        database_gz[database_cw.dIndx].state_gz =0;
+        nvs_wr_state_gz(1);
+
+    }
+
+
+
+    database_ad.mima_number_adm =666888;
+    //adm
+    nvs_wr_mima_number_adm(1);
+
+    printf("---database_ad.mima_number_adm=%d----\n",database_ad.mima_number_adm);
+
+    shengyu_da =0;
+    shengyu_zhong =0;
+    shengyu_xiao =0;
+    nvs_wr_shengyu_da(1);
+    nvs_wr_shengyu_zhong(1);
+    nvs_wr_shengyu_xiao(1);
+
+
+    shengyu_all = shengyu_da + shengyu_zhong + shengyu_xiao;
+
+
+    tongbu_gekou_shuliang_all(shengyu_all);
+    //vTaskDelay(10 / portTICK_PERIOD_MS);
+    tongbu_gekou_shuliang_d(shengyu_da);
+    //vTaskDelay(10 / portTICK_PERIOD_MS);
+    tongbu_gekou_shuliang_z(shengyu_zhong);
+    //vTaskDelay(10 / portTICK_PERIOD_MS);
+    tongbu_gekou_shuliang_x(shengyu_xiao);
+    //vTaskDelay(10 / portTICK_PERIOD_MS);
+
+
+
+
+
+    // printf("---shengyu_all=%d----\n",shengyu_all);
+    // printf("---shengyu_da=%d----\n",shengyu_da);
+    // printf("---shengyu_zhong=%d----\n",shengyu_zhong);
+    // printf("---shengyu_xiao=%d----\n",shengyu_xiao);
+
+    shengyu_da_max =0;
+    shengyu_zhong_max =0;
+    shengyu_xiao_max =0;
+    shengyu_all_max = 0;
+
+
+    nvs_wr_shengyu_all_max(1);//duoyu
+    nvs_wr_shengyu_da_max(1);
+    nvs_wr_shengyu_zhong_max(1);
+    nvs_wr_shengyu_xiao_max(1);
+
+
+
+
+    // //shengyu_all_max = shengyu_da_max + shengyu_zhong_max + shengyu_xiao_max;
+    printf("-2-shengyu_all_max=%d----\n",shengyu_all_max);
+    // printf("---shengyu_da_max=%d----\n",shengyu_da_max);
+    // printf("---shengyu_zhong_max=%d----\n",shengyu_zhong_max);
+    // printf("---shengyu_xiao_max=%d----\n",shengyu_xiao_max);
+
+    
+}
+
+
+
+
+
 
 void tongbu_da(void)
 {
@@ -1695,12 +1810,17 @@ void tongbu_zh(void)
 
 
 
+
+
 uint8_t phone_number[11]={0};  
 uint8_t mima_number[6]={0};  
 
 
 uint8_t phone_number_a[11]={0};  
 uint8_t mima_number_a[6]={0};  
+
+uint8_t mima_number_a1[6]={0};  
+uint8_t mima_number_a2[6]={0};  
 
 static void echo_task2()//lcd
 {
@@ -1815,7 +1935,7 @@ static void echo_task2()//lcd
                                 }
                                 printf("\r\n");
 
-                                if(data_rx_t[2] == 0x9c)
+                                if(data_rx_t[2] == 0x6A)//0x9c
                                 {
                                     char show[156][10];
                                     char *p = NULL;
@@ -1997,7 +2117,7 @@ static void echo_task2()//lcd
                                 }
                                 printf("\r\n");
 
-                                if(data_rx_t[2] == 0x9c)
+                                if(data_rx_t[2] == 0xCE)//0x9c)
                                 {
                                     char show[156][10];
                                     char *p = NULL;
@@ -2066,15 +2186,8 @@ static void echo_task2()//lcd
 
                                             }
                                             database_cw.dIndx =0;
-                                            for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
-                                            {
-                                                if((database_gz[i].dIndx_gz == guimen_gk_temp))
-                                                {
-                                                    database_cw.dIndx = i;
-                                                    ESP_LOGI(TAG, "----1---lock--dIndx=%d--.\r\n",database_cw.dIndx); 
-                                                }
-                                            
-                                            }
+                                            database_cw.dIndx = find_lock_index(guimen_gk_temp);
+
                                             ESP_LOGI(TAG, "---2----lock--dIndx=%d--.\r\n",database_cw.dIndx); 
                                             if(database_cw.dIndx ==0)
                                             {
@@ -2206,7 +2319,7 @@ gekou_fail:
                                 }
                                 printf("\r\n");
 
-                                if(data_rx_t[2] == 0x9c)
+                                if(data_rx_t[2] == 0xCE)//0x9c)
                                 {
                                     char show[156][10];
                                     char *p = NULL;
@@ -2276,15 +2389,8 @@ gekou_fail:
 
                                             }
                                             database_cw.dIndx =0;
-                                            for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
-                                            {
-                                                if((database_gz[i].dIndx_gz == guimen_gk_temp))//
-                                                {
-                                                    database_cw.dIndx = i;
-                                                    ESP_LOGI(TAG, "----1---lock--dIndx=%d--.\r\n",database_cw.dIndx); 
-                                                }
-                                            
-                                            }
+                                            database_cw.dIndx = find_lock_index(guimen_gk_temp);
+
                                             ESP_LOGI(TAG, "---2----lock--dIndx=%d--.\r\n",database_cw.dIndx); 
                                             if(database_cw.dIndx ==0)
                                             {
@@ -2414,7 +2520,7 @@ gekou_fail_z:
                                 }
                                 printf("\r\n");
 
-                                if(data_rx_t[2] == 0x9c)
+                                if(data_rx_t[2] == 0xCE)//0x9c)
                                 {
                                     char show[156][10];
                                     char *p = NULL;
@@ -2484,15 +2590,8 @@ gekou_fail_z:
 
                                             }
                                             database_cw.dIndx =0;
-                                            for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
-                                            {
-                                                if((database_gz[i].dIndx_gz == guimen_gk_temp))//
-                                                {
-                                                    database_cw.dIndx = i;
-                                                    ESP_LOGI(TAG, "----1---lock--dIndx=%d--.\r\n",database_cw.dIndx); 
-                                                }
-                                            
-                                            }
+                                            database_cw.dIndx = find_lock_index(guimen_gk_temp);
+
                                             ESP_LOGI(TAG, "---2----lock--dIndx=%d--.\r\n",database_cw.dIndx); 
                                             if(database_cw.dIndx ==0)
                                             {
@@ -2507,19 +2606,19 @@ gekou_fail_z:
                                                 // no gai
                                                 shengyu_da_max--;
                                                 //shengyu_zhong_max++;
-                                                shengyu_xiao_max--;
+                                                shengyu_xiao_max++;
                                                 shengyu_da --;
                                                 //shengyu_zhong++;
-                                                shengyu_xiao --;
+                                                shengyu_xiao ++;
 
                                                 break;
                                             case 2:
                                                 //shengyu_da_max++;
                                                 shengyu_zhong_max--;
-                                                shengyu_xiao_max--;
+                                                shengyu_xiao_max++;
                                                 //shengyu_da ++;
                                                 shengyu_zhong--;
-                                                shengyu_xiao --;
+                                                shengyu_xiao ++;
                                                 break;
                                             case 3:
                                                 // shengyu_zhong_max++;
@@ -2710,19 +2809,7 @@ gekou_fail_x:
                                     ESP_LOGI(TAG, "-------guimen_gk_temp--dIndx=%d--.\r\n",guimen_gk_temp); 
 
                                     database_cw.dIndx =0;
-                                    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
-                                    {
-                                        if((database_gz[i].dIndx_gz == guimen_gk_temp))
-                                        {
-                                            if(database_gz[i].lock ==1)
-                                            {
-                                                lock_flag = 1;
-                                            }
-                                            database_cw.dIndx = i;
-                                            ESP_LOGI(TAG, "-------lock--dIndx=%d--.\r\n",database_cw.dIndx); 
-                                        }
-                                       
-                                    }
+                                    database_cw.dIndx = find_lock_index(guimen_gk_temp);
 
 
 
@@ -2922,15 +3009,7 @@ wuci_xmh_q:
                                     ESP_LOGI(TAG, "-------guimen_gk_temp--dIndx=%d--.\r\n",guimen_gk_temp); 
 
                                     database_cw.dIndx =0;
-                                    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
-                                    {
-                                        if(database_gz[i].dIndx_gz == guimen_gk_temp)
-                                        {
-                                            database_cw.dIndx = i;
-                                            ESP_LOGI(TAG, "-------lock--dIndx=%d--.\r\n",database_cw.dIndx); 
-                                        }
-                                       
-                                    }
+                                    database_cw.dIndx = find_lock_index(guimen_gk_temp);
 
 
 
@@ -3095,15 +3174,7 @@ wuci_xmh_lk:
                                     ESP_LOGI(TAG, "-------guimen_gk_temp--dIndx=%d--.\r\n",guimen_gk_temp); 
 
                                     database_cw.dIndx =0;
-                                    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
-                                    {
-                                        if(database_gz[i].dIndx_gz == guimen_gk_temp)
-                                        {
-                                            database_cw.dIndx = i;
-                                            ESP_LOGI(TAG, "-------lock--dIndx=%d--.\r\n",database_cw.dIndx); 
-                                        }
-                                       
-                                    }
+                                    database_cw.dIndx = find_lock_index(guimen_gk_temp);
 
 
 
@@ -3272,16 +3343,7 @@ wuci_xmh_unlk:
                                     ESP_LOGI(TAG, "-------guimen_gk_temp--dIndx=%d--.\r\n",guimen_gk_temp); 
 
                                     database_cw_adm.dIndx =0;
-                                    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
-                                    {
-                                        if(database_gz[i].dIndx_gz == guimen_gk_temp)
-                                        {
-
-                                            database_cw_adm.dIndx = i;
-                                            ESP_LOGI(TAG, "-------lock--dIndx=%d--.\r\n",database_cw_adm.dIndx); 
-                                        }
-                                       
-                                    }
+                                    database_cw_adm.dIndx = find_lock_index(guimen_gk_temp);
 
 
 
@@ -3712,10 +3774,6 @@ wuci_xmh_xinz:
 
                                         //unique number
 
-                                    
-
-                                    
-
 
                                 }
                                 else
@@ -3731,12 +3789,12 @@ done_longtime:
 
                                 ESP_LOGI(TAG, "----test3-done--.\r\n");  
 
-                                send_cmd_to_lcd_bl(0x1050,0);//phone
-                                send_cmd_to_lcd_bl(0x1060,0);//key
+                                send_cmd_to_lcd_bl(0x1100,0);//phone
+                                send_cmd_to_lcd_bl(0x1110,0);//key
                                 
                                 database_cw.cunwu_mode =0;
                                 database_cw.dzx_mode = 0 ;
-                                database_cw.state=0;
+
 
                                 // phone_weishu_ok =0;
 
@@ -3775,15 +3833,7 @@ done_longtime:
                                     ESP_LOGI(TAG, "-------guimen_gk_temp--dIndx=%d--.\r\n",guimen_gk_temp); 
 
                                     database_cw.dIndx =0;
-                                    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
-                                    {
-                                        if(database_gz[i].dIndx_gz == guimen_gk_temp)
-                                        {
-                                            database_cw.dIndx = i;
-                                            ESP_LOGI(TAG, "-------lock--dIndx=%d--.\r\n",database_cw.dIndx); 
-                                        }
-                                       
-                                    }
+                                    database_cw.dIndx = find_lock_index(guimen_gk_temp);
 
 
 
@@ -3911,6 +3961,167 @@ wuci_xmh_unchangqi:
 
                                 
                                 break;
+
+
+
+
+
+
+
+
+
+
+
+
+
+                            case 0x11e0:
+                                //5A A5 10 83   10 50   06    31 32 33 34 35 36 37 38 39 30  31 00
+                                ESP_LOGI(TAG, "-a1-mima number--.\r\n");
+                                //panduan   -  zan cun quanju
+                                //if has, todo  -----------------------------------
+
+                                //ESP_LOGI(TAG, "data_rx_t[6]=%d---.\r\n",data_rx_t[6]);
+                                if(04== data_rx_t[6])//12
+                                {
+                                    //zancun
+                                    mima_weishu_ok_a1 =1;
+                                    
+                                    memcpy( mima_number_a1,data_rx_t+7 ,6);
+
+
+                                    printf("mima_number=");
+                                    uart0_debug_str(mima_number_a1,6);
+
+
+
+                                    for (int i = 7; i < 7+ data_rx_t[6] *2 -2; i++) {
+                                        printf("0x%.2X ", (uint8_t)data_rx_t[i]);
+                                        if(data_rx_t[i] == 0xFF)
+                                        {
+                                            mima_weishu_ok_a1 =0;
+                                            ESP_LOGI(TAG, "--no--mima_weishu_ok_a1=%d---.\r\n",mima_weishu_ok_a1);
+                                        }
+                                    }
+                                    printf("\r\n");
+
+                                    if(mima_weishu_ok_a1 == 1)
+                                        ESP_LOGI(TAG, "-yes-mima_weishu_ok_a1=%d---.\r\n",mima_weishu_ok_a1);
+
+                                }
+                                else
+                                {
+                                    ESP_LOGI(TAG, "-------1 - mima weishu err--------.\r\n");
+                                }
+                                
+                                break;
+
+                            case 0x11f0:
+                                
+                                //5A A5 0A 83   10 60   03   31 32 33 34 35 36 
+                                ESP_LOGI(TAG, "-a2-mima2 number--.\r\n");
+                                //ESP_LOGI(TAG, "---phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
+
+
+
+                                //存物的格口编号（123）、格口类型（1：小，2：中，3：大）
+                                //存物手机号（11位）密码（6位）            或者指纹(----)   
+
+
+                                if((1 == mima_weishu_ok_a1)&&(04== data_rx_t[6]))//6   ok todo shoujihao yiyou
+                                {
+                                    
+                                    mima_weishu_ok_a1 =0;
+                                    memcpy( mima_number_a2,data_rx_t+7 ,6);
+
+                                    printf("mima_number1=");
+                                    uart0_debug_str(mima_number_a1,6);
+
+                                    printf("mima_number2=");
+                                    uart0_debug_str(mima_number_a2,6);
+
+
+
+                                    for (int i = 7; i < 7+ data_rx_t[6] *2 -2 ; i++) {
+                                        printf("0x%.2X ", (uint8_t)data_rx_t[i]);
+                                        if(data_rx_t[i] == 0xFF)
+                                        {
+                                            ESP_LOGI(TAG, "--no--mima_weishu_ok---.\r\n");
+                                            goto done_mima_nosame;
+                                        }
+                                    }
+                                    printf("\r\n");
+
+
+                                    uint16_t j=0,k=0;
+                                    uint32_t mima_number_adm_temp1;  //
+                                    uint32_t mima_number_adm_temp2;  //
+   
+
+                                    mima_number_adm_temp1 = atoi((const char*)mima_number_a1);
+                                    mima_number_adm_temp2 = atoi((const char*)mima_number_a2);
+
+                                    printf("mima1?=%6u,mima2?=%6u,", mima_number_adm_temp1, mima_number_adm_temp2);
+                                    if(mima_number_adm_temp1 == mima_number_adm_temp2)
+                                    {
+                                        database_ad.mima_number_adm = mima_number_adm_temp2;
+                                    }
+                                    else
+                                    {
+                                        goto done_mima_nosame;
+                                    }
+
+                                    send_cmd_to_lcd_bl(0x10e0,database_gz[database_cw.dIndx].dIndx_gz);
+                                    send_cmd_to_lcd_pic(XIN_MIMA_ADMIN_OK_PIC);
+                                
+
+                                    ESP_LOGI(TAG, "-----2-----[ * ] gai -mima success");
+                                    nvs_wr_mima_number_adm(1);
+
+
+                                }
+                                else
+                                {
+                                    if(03!= data_rx_t[6])
+                                    {
+                                      ESP_LOGI(TAG, "----------------2 - mima weishu err---------------.\r\n");  
+                                    }
+done_mima_nosame:
+                                    ESP_LOGI(TAG, "----test2-error--.\r\n");  
+                                    send_cmd_to_lcd_pic(FAIL_MIMA_ADMIN_OK_PIC);
+                                }
+
+                                ESP_LOGI(TAG, "----test3-done--.\r\n");  
+
+                                send_cmd_to_lcd_bl(0x11e0,0);//key
+                                send_cmd_to_lcd_bl(0x11f0,0);//key2
+
+
+                                break;
+
+
+
+
+
+
+
+                            case 0x2070:
+                                ESP_LOGI(TAG, "--will default--.\r\n");
+
+
+                                ESP_LOGI(TAG, "----test--.\r\n");  
+
+
+                                send_cmd_to_lcd_pic(DEFAULT_ADMIN_OK_PIC);
+                                default_factory_set();
+                                send_cmd_to_lcd_pic(BOOT_PIC);
+
+                                
+
+
+                                break;
+
+
+
 
 
 
@@ -6038,7 +6249,7 @@ void read_nvs_guizi_all()
 
     nvs_wr_mima_number_adm(0);//key
 
-
+    printf("---database_ad.mima_number_adm=%d----\n",database_ad.mima_number_adm);
     
 
     shengyu_all = shengyu_da + shengyu_zhong + shengyu_xiao;
@@ -6084,6 +6295,68 @@ void read_nvs_guizi_all()
 }
 
 
+#if 0
+void log_debug(void)
+{
+    
+    uint16_t j=0,k=0,l=0;
+    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
+    {
+        if(1== database_gz[i].state_fenpei_gz)
+        {
+
+            printf("index =%03d,cunwu_mode =%d,dzx_mode =%d,",\
+                    i, database_gz[i].cunwu_mode_gz,database_gz[i].dzx_mode_gz);
+
+
+            printf("phone?=%11llu,mima?=%6u,", database_gz[i].phone_number_nvs_gz, database_gz[i].mima_number_nvs_gz);
+
+            printf("fenpei?=%d, state?=%d,lock?=%d,changqi?=%d, ",\
+                    database_gz[i].state_fenpei_gz,\
+                    database_gz[i].state_gz,\
+                    database_gz[i].lock,\
+                    database_gz[i].changqi);
+            
+            // if(database_gz[i].state_fenpei_gz == 1)
+            // {
+                j++;
+                printf("xmh dIndx= %03d, ",database_gz[i].dIndx_gz);
+                printf("xm j= %03d, ",j);//xiangmenhao
+            // }
+
+
+
+
+            if(1== database_gz[i].dzx_mode_gz)
+            {
+                //char *	_EXFUN(itoa,(int, char *, int));
+
+                buff_temp1[k] = database_gz[i].dIndx_gz;
+                printf("b_temp1[k]= %03d ",buff_temp1[k]);//xiangmenhao
+                
+                itoa(buff_temp1[k],(char*)(buff_temp1_c+4*(k)),10);//+4*(i-1)
+                k++;
+            }
+            if(2== database_gz[i].dzx_mode_gz)
+            {
+                buff_temp2[l] = database_gz[i].dIndx_gz;
+                printf("b_temp2[l]= %03d ",buff_temp2[l]);//xiangmenhao
+                itoa(buff_temp2[l],(char*)(buff_temp2_c+4*(l)),10);//+4*(i-1)
+                l++;
+            }
+
+
+
+
+
+            printf("\r\n");
+        }
+
+        //printf("---i=%d\r\n",i);
+
+    }
+}
+#endif
 
 
 static void oneshot_timer_callback(void* arg)
@@ -6195,48 +6468,8 @@ void app_main(void)
     printf("-1-shengyu_all_max=%d----\n",shengyu_all_max);
     if(shengyu_all_max == 0)
     {
+        default_factory_set();
         send_cmd_to_lcd_pic(BOOT_PIC);
-
-        nvs_wr_mima_number_adm(1);
-        // for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
-        // {
-        //     database_cw.dIndx = i;
-
-        //     database_gz[i].dIndx_gz =0;
-        //     database_gz[i].state_fenpei_gz =0;
-        //     database_gz[i].dzx_mode_gz =3;
-        //     database_gz[i].state_gz =0;
-            
-        //     nvs_wr_index_gz(1);
-        //     nvs_wr_fenpei_gz(1);
-        //     nvs_wr_dzx_mode_gz(1);
-        //     nvs_wr_state_gz(1);
-
-        //     //lock----------------todo---------------------
-        //     //changqi
-        // }
-
-
-
-        // for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
-        // {
-        //     database_cw.dIndx = i;
-
-        //     database_gz[i].dIndx_gz =0;
-        //     database_gz[i].state_fenpei_gz =0;
-        //     database_gz[i].dzx_mode_gz =3;
-        //     database_gz[i].state_gz =0;
-            
-        //     nvs_wr_index_gz(1);
-        //     nvs_wr_fenpei_gz(1);
-        //     nvs_wr_dzx_mode_gz(1);
-        //     nvs_wr_state_gz(1);
-
-        //     //lock----------------todo---------------------
-        //     //changqi
-        // }
-
-
     }
     else
     {
@@ -6246,64 +6479,69 @@ void app_main(void)
     
     ESP_LOGI(TAG,"切换到开机画面!!!\r\n");
 
-
-
-    uint16_t j=0,k=0,l=0;
-    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
+    //log_debug();
+    if(1)
     {
-        if(1== database_gz[i].state_fenpei_gz)
+        uint16_t j=0,k=0,l=0;
+        for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
         {
-
-            printf("index =%03d,cunwu_mode =%d,dzx_mode =%d,",\
-                    i, database_gz[i].cunwu_mode_gz,database_gz[i].dzx_mode_gz);
-
-
-            printf("phone?=%11llu,mima?=%6u,", database_gz[i].phone_number_nvs_gz, database_gz[i].mima_number_nvs_gz);
-
-            printf("fenpei?=%d, state?=%d,lock?=%d,changqi?=%d, ",\
-                    database_gz[i].state_fenpei_gz,\
-                    database_gz[i].state_gz,\
-                    database_gz[i].lock,\
-                    database_gz[i].changqi);
-            
-            // if(database_gz[i].state_fenpei_gz == 1)
-            // {
-                j++;
-                printf("xmh dIndx= %03d, ",database_gz[i].dIndx_gz);
-                printf("xm j= %03d, ",j);//xiangmenhao
-            // }
-
-
-
-
-            if(1== database_gz[i].dzx_mode_gz)
+            if(1== database_gz[i].state_fenpei_gz)
             {
-                //char *	_EXFUN(itoa,(int, char *, int));
 
-                buff_temp1[k] = database_gz[i].dIndx_gz;
-                printf("b_temp1[k]= %03d ",buff_temp1[k]);//xiangmenhao
+                printf("index =%03d,cunwu_mode =%d,dzx_mode =%d,",\
+                        i, database_gz[i].cunwu_mode_gz,database_gz[i].dzx_mode_gz);
+
+
+                printf("phone?=%11llu,mima?=%6u,", database_gz[i].phone_number_nvs_gz, database_gz[i].mima_number_nvs_gz);
+
+                printf("fenpei?=%d, state?=%d,lock?=%d,changqi?=%d, ",\
+                        database_gz[i].state_fenpei_gz,\
+                        database_gz[i].state_gz,\
+                        database_gz[i].lock,\
+                        database_gz[i].changqi);
                 
-                itoa(buff_temp1[k],(char*)(buff_temp1_c+4*(k)),10);//+4*(i-1)
-                k++;
+                // if(database_gz[i].state_fenpei_gz == 1)
+                // {
+                    j++;
+                    printf("xmh dIndx= %03d, ",database_gz[i].dIndx_gz);
+                    printf("xm j= %03d, ",j);//xiangmenhao
+                // }
+
+
+
+
+                if(1== database_gz[i].dzx_mode_gz)
+                {
+                    //char *	_EXFUN(itoa,(int, char *, int));
+
+                    buff_temp1[k] = database_gz[i].dIndx_gz;
+                    printf("b_temp1[k]= %03d ",buff_temp1[k]);//xiangmenhao
+                    
+                    itoa(buff_temp1[k],(char*)(buff_temp1_c+4*(k)),10);//+4*(i-1)
+                    k++;
+                }
+                if(2== database_gz[i].dzx_mode_gz)
+                {
+                    buff_temp2[l] = database_gz[i].dIndx_gz;
+                    printf("b_temp2[l]= %03d ",buff_temp2[l]);//xiangmenhao
+                    itoa(buff_temp2[l],(char*)(buff_temp2_c+4*(l)),10);//+4*(i-1)
+                    l++;
+                }
+
+
+
+
+
+                printf("\r\n");
             }
-            if(2== database_gz[i].dzx_mode_gz)
-            {
-                buff_temp2[l] = database_gz[i].dIndx_gz;
-                printf("b_temp2[l]= %03d ",buff_temp2[l]);//xiangmenhao
-                itoa(buff_temp2[l],(char*)(buff_temp2_c+4*(l)),10);//+4*(i-1)
-                l++;
-            }
 
+            //printf("---i=%d\r\n",i);
 
-
-
-
-            printf("\r\n");
         }
-
-        //printf("---i=%d\r\n",i);
-
     }
+
+
+
     vTaskDelay(30 / portTICK_PERIOD_MS);
 
     // uart0_debug_data_d(buff_temp1,0x9b);
