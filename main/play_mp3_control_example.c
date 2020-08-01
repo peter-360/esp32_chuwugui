@@ -422,8 +422,13 @@ typedef struct
 
 
 
-    //格口编号 箱门-nolock
+    //lock编号 箱门-nolock
 	uint16_t dIndx;//dangqian rcv
+
+    //编号 箱门-nolock
+	//uint16_t tmp_dIndx_gz;//dangqian rcv
+
+
 
     //取物唯一编号 time
     uint16_t unique_number;
@@ -474,7 +479,22 @@ shujuku_struct_user database_cw_adm=
 
 
 
-
+uint16_t find_lock_index(uint16_t guimen_index)
+{
+    uint16_t lock_index=0;
+    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
+    {
+        if(database_gz[i].dIndx_gz == guimen_index)
+        {
+            lock_index = i;
+            ESP_LOGI(TAG, "--ok--lock_index=%d--.\r\n",lock_index); 
+            return lock_index;
+        }
+        
+    }
+    ESP_LOGI(TAG, "--err--lock_index no find--.\r\n"); 
+    return 0;
+}
 
 
 
@@ -2716,15 +2736,17 @@ gekou_fail_x:
 
                                     ESP_LOGI(TAG, "------lock open--dIndx=%d--.\r\n",database_cw.dIndx); 
                                     guimen_gk_temp = database_cw.dIndx ;
+
                                     uint16_t j=0,k=0;
-                                    // while(guimen_gk_temp/24 >0)
-                                    // {
-                                    //     k++;
-                                    //     guimen_gk_temp=guimen_gk_temp-24;
-                                    // }
-                                    // j = guimen_gk_temp;
+
                                     k = guimen_gk_temp/24;
                                     j = guimen_gk_temp%24;
+
+                                    if(guimen_gk_temp%24 ==0)
+                                    {
+                                        k = guimen_gk_temp/24 -1;
+                                        j = 24;
+                                    }
                                     printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
 
 
@@ -2923,15 +2945,17 @@ wuci_xmh_q:
 
                                     ESP_LOGI(TAG, "------lock open--dIndx=%d--.\r\n",database_cw.dIndx); 
                                     guimen_gk_temp = database_cw.dIndx ;
+
                                     uint16_t j=0,k=0;
-                                    // while(guimen_gk_temp/24 >0)
-                                    // {
-                                    //     k++;
-                                    //     guimen_gk_temp=guimen_gk_temp-24;
-                                    // }
-                                    // j = guimen_gk_temp;
+
                                     k = guimen_gk_temp/24;
                                     j = guimen_gk_temp%24;
+
+                                    if(guimen_gk_temp%24 ==0)
+                                    {
+                                        k = guimen_gk_temp/24 -1;
+                                        j = 24;
+                                    }
                                     printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
 
 
@@ -3094,15 +3118,17 @@ wuci_xmh_lk:
 
                                     ESP_LOGI(TAG, "------lock open--dIndx=%d--.\r\n",database_cw.dIndx); 
                                     guimen_gk_temp = database_cw.dIndx ;
+
                                     uint16_t j=0,k=0;
-                                    // while(guimen_gk_temp/24 >0)
-                                    // {
-                                    //     k++;
-                                    //     guimen_gk_temp=guimen_gk_temp-24;
-                                    // }
-                                    // j = guimen_gk_temp;
+
                                     k = guimen_gk_temp/24;
                                     j = guimen_gk_temp%24;
+
+                                    if(guimen_gk_temp%24 ==0)
+                                    {
+                                        k = guimen_gk_temp/24 -1;
+                                        j = 24;
+                                    }
                                     printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
 
 
@@ -3248,7 +3274,7 @@ wuci_xmh_unlk:
                                     database_cw_adm.dIndx =0;
                                     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
                                     {
-                                        if((database_gz[i].dIndx_gz == guimen_gk_temp))
+                                        if(database_gz[i].dIndx_gz == guimen_gk_temp)
                                         {
 
                                             database_cw_adm.dIndx = i;
@@ -3271,17 +3297,27 @@ wuci_xmh_unlk:
 
                                     ESP_LOGI(TAG, "------lock open--dIndx=%d--.\r\n",database_cw_adm.dIndx); 
                                     guimen_gk_temp = database_cw_adm.dIndx ;
+
+                                    // database_cw_adm.tmp_dIndx_gz = find_lock_index(database_cw_adm.dIndx);
+
+
+
                                     uint16_t j=0,k=0;
 
                                     k = guimen_gk_temp/24;
                                     j = guimen_gk_temp%24;
+
+                                    if(guimen_gk_temp%24 ==0)
+                                    {
+                                        k = guimen_gk_temp/24 -1;
+                                        j = 24;
+                                    }
                                     printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
 
 
 
                                     ESP_LOGI(TAG, "-da-lock:%d ok--.\r\n",j);
                                     //send_cmd_to_lock(k+1,j);
-                                    send_cmd_to_lcd_bl(0x10e0,database_gz[database_cw_adm.dIndx].dIndx_gz);
             
                                     send_cmd_to_lcd_pic(0x001c);
 
@@ -3565,14 +3601,15 @@ wuci_xmh_xinz:
                                     guimen_gk_temp = database_cw.dIndx ;
 
                                     j=0,k=0;
-                                    // while(guimen_gk_temp/24 >0)
-                                    // {
-                                    //     k++;
-                                    //     guimen_gk_temp=guimen_gk_temp-24;
-                                    // }
-                                    // j = guimen_gk_temp;
+
                                     k = guimen_gk_temp/24;
                                     j = guimen_gk_temp%24;
+
+                                    if(guimen_gk_temp%24 ==0)
+                                    {
+                                        k = guimen_gk_temp/24 -1;
+                                        j = 24;
+                                    }
                                     printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
 
 
@@ -3581,7 +3618,7 @@ wuci_xmh_xinz:
                                     send_cmd_to_lock(k+1,j);
                                     
 
-                                    send_cmd_to_lcd_bl(0x10e0,database_cw.dIndx);
+                                    send_cmd_to_lcd_bl(0x10e0,database_gz[database_cw.dIndx].dIndx_gz);
                                     send_cmd_to_lcd_pic(XIN_CHANGQI_OK_PIC);
 
 
@@ -3714,7 +3751,7 @@ done_longtime:
 
 
                            case 0x1120://
-                                ESP_LOGI(TAG, "--changqi clear--.\r\n");   
+                                ESP_LOGI(TAG, "--changqi clear exe--.\r\n");   
                                 // j=0;
                                 // for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
                                 //     printf("0x%.2X ", (uint8_t)data_rx_t[i]);
@@ -3761,15 +3798,17 @@ done_longtime:
 
                                     ESP_LOGI(TAG, "------lock open--dIndx=%d--.\r\n",database_cw.dIndx); 
                                     guimen_gk_temp = database_cw.dIndx ;
+
                                     uint16_t j=0,k=0;
-                                    // while(guimen_gk_temp/24 >0)
-                                    // {
-                                    //     k++;
-                                    //     guimen_gk_temp=guimen_gk_temp-24;
-                                    // }
-                                    // j = guimen_gk_temp;
+
                                     k = guimen_gk_temp/24;
                                     j = guimen_gk_temp%24;
+
+                                    if(guimen_gk_temp%24 ==0)
+                                    {
+                                        k = guimen_gk_temp/24 -1;
+                                        j = 24;
+                                    }
                                     printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
 
 
@@ -4733,17 +4772,32 @@ done:
 
 
                                         guimen_gk_temp = database_cw.dIndx ;
+
                                         uint16_t j=0,k=0;
-                                        while(guimen_gk_temp/24 >0)
+
+                                        k = guimen_gk_temp/24;
+                                        j = guimen_gk_temp%24;
+
+                                        if(guimen_gk_temp%24 ==0)
                                         {
-                                            k++;
-                                            guimen_gk_temp=guimen_gk_temp-24;
+                                            k = guimen_gk_temp/24 -1;
+                                            j = 24;
                                         }
-                                        j = guimen_gk_temp;
                                         printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
 
 
-                                
+
+                                        // uint16_t j=0,k=0;
+
+                                        // k = guimen_gk_temp/24;
+                                        // j = guimen_gk_temp%24;
+
+                                        // if(guimen_gk_temp%24 ==0)
+                                        // {
+                                        //     k = guimen_gk_temp/24 -1;
+                                        //     j = 24;
+                                        // }
+                                    
                 
 
                                         ESP_LOGI(TAG, "--lock:%d ok--.\r\n",j);
@@ -4871,7 +4925,8 @@ done_qu:
 
                                 //mima 666888 todo----------------
 
-                                if(03== data_rx_t[6])
+                                //if(03== data_rx_t[6])
+                                if(1)
                                 {   
                                     memcpy( mima_number,data_rx_t+7 ,6);
 
@@ -4937,16 +4992,18 @@ done_kai_admin:
                                     ESP_LOGI(TAG, "-------guimen_gk_temp--dIndx=%d--.\r\n",guimen_gk_temp); 
 
                                     database_cw.dIndx =0;
-                                    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
-                                    {
-                                        if(database_gz[i].dIndx_gz == guimen_gk_temp)
-                                        {
-                                            database_cw.dIndx = i;
-                                            ESP_LOGI(TAG, "-------lock--dIndx=%d--.\r\n",database_cw.dIndx); 
-                                        }
+                                    // for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
+                                    // {
+                                    //     if(database_gz[i].dIndx_gz == guimen_gk_temp)
+                                    //     {
+                                    //         database_cw.dIndx = i;
+                                    //         ESP_LOGI(TAG, "-------lock--dIndx=%d--.\r\n",database_cw.dIndx); 
+                                    //     }
                                        
-                                    }
+                                    // }
 
+
+                                    database_cw.dIndx = find_lock_index(guimen_gk_temp);
 
 
                                     // if( ((int16_t)guimen_gk_temp - guimen_x_gk_max[k]) <=0)
@@ -4973,15 +5030,33 @@ done_kai_admin:
 
                                     ESP_LOGI(TAG, "------lock open--dIndx=%d--.\r\n",database_cw.dIndx); 
                                     guimen_gk_temp = database_cw.dIndx ;
-                                    uint16_t j=0,k=0;
-                                    // while(guimen_gk_temp/24 >0)
+
+
+      
+                                    printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
+
+                                    // uint16_t j=0,k=0;
+                                    // while((guimen_gk_temp/24 >0)&&(guimen_gk_temp%24 >0))
                                     // {
                                     //     k++;
                                     //     guimen_gk_temp=guimen_gk_temp-24;
                                     // }
                                     // j = guimen_gk_temp;
+                                    // printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
+
+
+
+                                    uint16_t j=0,k=0;
+
                                     k = guimen_gk_temp/24;
                                     j = guimen_gk_temp%24;
+
+                                    if(guimen_gk_temp%24 ==0)
+                                    {
+                                        k = guimen_gk_temp/24 -1;
+                                        j = 24;
+                                    }
+
                                     printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
 
 
@@ -5244,14 +5319,25 @@ bool spear_uart_process_data(uint8_t byt)
 
 
 
+                                    
+
+
 static void lock_all_open_task()
 {
-    
+    uint16_t j=0,k=0;
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
     {
         if(1== database_gz[i].state_fenpei_gz)
         {
-            send_cmd_to_lock(i/24 +1, i%24);
+            k = i/24;
+            j = i%24;
+
+            if(i%24 ==0)
+            {
+                k = i/24 -1;
+                j = 24;
+            }
+            send_cmd_to_lock(k+1, j);
             vTaskDelay(300 / portTICK_PERIOD_MS);
         }
     }
@@ -5269,6 +5355,7 @@ static void lock_all_clear_task()
 {
 
     int j=0,k=0,l=0;
+    uint16_t m=0,n=0;
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
     {
         database_cw.dIndx =i;
@@ -5314,7 +5401,16 @@ static void lock_all_clear_task()
 
             }
 
-            send_cmd_to_lock(i/24 +1, i%24);
+            m = i/24;
+            n = i%24;
+
+            if(i%24 ==0)
+            {
+                m = i/24 -1;
+                n = 24;
+            }
+            send_cmd_to_lock(m+1, n);
+            //send_cmd_to_lock(i/24 +1, i%24);
             vTaskDelay(300 / portTICK_PERIOD_MS);
         }
     }
