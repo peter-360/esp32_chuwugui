@@ -181,6 +181,8 @@ const char *TAG = "uart_events";
     // #define ECHO_TEST3_RXD  (GPIO_NUM_18)
     // #define ECHO_TEST3_RTS  (UART_PIN_NO_CHANGE)
     // #define ECHO_TEST3_CTS  (UART_PIN_NO_CHANGE)
+#define UART_NUM_LOCK UART_NUM_0
+
 
 
 #define ECHO_TEST_TXD  GPIO_NUM_32//32(GPIO_NUM_33)//GPIO_NUM_4
@@ -189,24 +191,39 @@ const char *TAG = "uart_events";
 #define ECHO_TEST_CTS  (UART_PIN_NO_CHANGE)
 
 
-//old
-#define ECHO_TEST2_TXD  (GPIO_NUM_23)//2-deng    23     hard UART2
+//xin 1
+#define ECHO_TEST2_TXD  (GPIO_NUM_23)//2-deng    23     hard UART2 0
 #define ECHO_TEST2_RXD  (GPIO_NUM_34)//34        22
 #define ECHO_TEST2_RTS  (UART_PIN_NO_CHANGE)
-#define ECHO_TEST2_CTS  (UART_PIN_NO_CHANGE)//lock
-#define RE_485_GPIO     (GPIO_NUM_18)
+#define ECHO_TEST2_CTS  (UART_PIN_NO_CHANGE)//zhiwen
 
-    #define ECHO_TEST3_TXD  (GPIO_NUM_19)//zhiwen
+
+    #define ECHO_TEST3_TXD  (GPIO_NUM_19)//lock  uart3
     #define ECHO_TEST3_RXD  (GPIO_NUM_4)
     #define ECHO_TEST3_RTS  (UART_PIN_NO_CHANGE)
     #define ECHO_TEST3_CTS  (UART_PIN_NO_CHANGE)
+    #define RE_485_GPIO     (GPIO_NUM_18)
+
+//xin 0
+// #define ECHO_TEST2_TXD  (GPIO_NUM_23)//2-deng    23     hard UART2 0
+// #define ECHO_TEST2_RXD  (GPIO_NUM_34)//34        22
+// #define ECHO_TEST2_RTS  (UART_PIN_NO_CHANGE)
+// #define ECHO_TEST2_CTS  (UART_PIN_NO_CHANGE)//lock
+// #define RE_485_GPIO     (GPIO_NUM_18)
+
+//     #define ECHO_TEST3_TXD  (GPIO_NUM_19)//zhiwen  uart3
+//     #define ECHO_TEST3_RXD  (GPIO_NUM_4)
+//     #define ECHO_TEST3_RTS  (UART_PIN_NO_CHANGE)
+//     #define ECHO_TEST3_CTS  (UART_PIN_NO_CHANGE)
 
 
-//xin debug
+
+
+// //old debug
 // #define ECHO_TEST2_TXD  (GPIO_NUM_19)//2-deng    23    moni
 // #define ECHO_TEST2_RXD  (GPIO_NUM_4)//34        22
 // #define ECHO_TEST2_RTS  (UART_PIN_NO_CHANGE)
-// #define ECHO_TEST2_CTS  (UART_PIN_NO_CHANGE)//lock
+// #define ECHO_TEST2_CTS  (UART_PIN_NO_CHANGE)//lock   or uart3 uart0
 // #define RE_485_GPIO     (GPIO_NUM_18)
 
 //     #define ECHO_TEST3_TXD  (GPIO_NUM_23)//zhiwen 19    hard UART2
@@ -216,10 +233,10 @@ const char *TAG = "uart_events";
 
 
 
-    #define ECHO_TEST4_TXD  (GPIO_NUM_21)
-    #define ECHO_TEST4_RXD  (GPIO_NUM_36)//SVP
-    #define ECHO_TEST4_RTS  (UART_PIN_NO_CHANGE)
-    #define ECHO_TEST4_CTS  (UART_PIN_NO_CHANGE)
+    // #define ECHO_TEST4_TXD  (GPIO_NUM_21)
+    // #define ECHO_TEST4_RXD  (GPIO_NUM_36)//SVP
+    // #define ECHO_TEST4_RTS  (UART_PIN_NO_CHANGE)
+    // #define ECHO_TEST4_CTS  (UART_PIN_NO_CHANGE)
 
 
 
@@ -787,9 +804,9 @@ static void RS485_delay(u32 nCount)
 
 /*??????·?????*/
 //????????????,±??????????±????485???í?ê????
-#define RS485_RX_EN()			delay_ms(10); gpio_set_level(RE_485_GPIO, 0);delay_ms(10);//rx;  RS485_delay(1000);
+#define RS485_RX_EN()			delay_ms(100); gpio_set_level(RE_485_GPIO, 0);delay_ms(100);//rx;  RS485_delay(1000);
 //????·???????,±??????????±????485???í?ê????
-#define RS485_TX_EN()			delay_ms(10); gpio_set_level(RE_485_GPIO, 1);delay_ms(10);//rx;  RS485_delay(1000);
+#define RS485_TX_EN()			delay_ms(100); gpio_set_level(RE_485_GPIO, 1);delay_ms(100);//rx;  RS485_delay(1000);
 
 
 
@@ -1197,7 +1214,7 @@ void send_cmd_to_lock(uint8_t board_addr, uint8_t lock_addr)//变量
 
     printf("tx_Buffer2=");
     uart0_debug_data(tx_Buffer2, 13);
-    uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
+    uart_write_bytes(UART_NUM_LOCK, (const char *) tx_Buffer2, 13);
     RS485_RX_EN();
 
 }
@@ -1221,7 +1238,7 @@ void send_cmd_to_lock_all(uint8_t opcode, uint8_t board_addr)//变量
 
     printf("tx_Buffer2=");
     uart0_debug_data(tx_Buffer2, 11);
-    uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 11);
+    uart_write_bytes(UART_NUM_LOCK, (const char *) tx_Buffer2, 11);
     RS485_RX_EN();
 
 }
@@ -6003,21 +6020,21 @@ void uart_init_all(void)
         .stop_bits = UART_STOP_BITS_1,
         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
     };
-    uart_config_t uart_config2 = {
-        .baud_rate = 9600,// lock
-        .data_bits = UART_DATA_8_BITS,
-        .parity    = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
-    };
-
-    // uart_config_t uart_config3 = {
-    //     .baud_rate = 57600,// zhiwen
+    // uart_config_t uart_config2 = {
+    //     .baud_rate = 9600,// lock
     //     .data_bits = UART_DATA_8_BITS,
     //     .parity    = UART_PARITY_DISABLE,
     //     .stop_bits = UART_STOP_BITS_1,
     //     .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
     // };
+
+    uart_config_t uart_config2 = {
+        .baud_rate = 57600,// zhiwen
+        .data_bits = UART_DATA_8_BITS,
+        .parity    = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
+    };
 
 
         // Set UART log level
@@ -6036,9 +6053,15 @@ void uart_init_all(void)
     uart_set_pin(UART_NUM_1, ECHO_TEST_TXD, ECHO_TEST_RXD, ECHO_TEST_RTS, ECHO_TEST_CTS);
     uart_driver_install(UART_NUM_1, BUF_SIZE * 2, 0, 0, NULL, 0);
 
-    //2
+    // //2
+    // uart_param_config(UART_NUM_2, &uart_config2);
+    // uart_set_pin(UART_NUM_2, ECHO_TEST2_TXD, ECHO_TEST2_RXD, ECHO_TEST2_RTS, ECHO_TEST2_CTS);
+    // uart_driver_install(UART_NUM_2, BUF_SIZE * 2, 0, 0, NULL, 0);
+
+
+    //3 io moni
     uart_param_config(UART_NUM_2, &uart_config2);
-    uart_set_pin(UART_NUM_2, ECHO_TEST2_TXD, ECHO_TEST2_RXD, ECHO_TEST2_RTS, ECHO_TEST2_CTS);
+    uart_set_pin(UART_NUM_2,  ECHO_TEST2_TXD, ECHO_TEST2_RXD, ECHO_TEST2_RTS, ECHO_TEST2_CTS);
     uart_driver_install(UART_NUM_2, BUF_SIZE * 2, 0, 0, NULL, 0);
 
     // //3 io moni
@@ -6401,11 +6424,54 @@ static void oneshot_timer_callback(void* arg)
     send_cmd_to_lcd_pic(KAIJI_PIC);
 }
 
+void zhiwen_init(void )
+{
+    u8 ensure;
+    ESP_LOGI(TAG, "与AS608模块握手....\r\n");
+	while(PS_HandShake(&AS608Addr))//与AS608模块握手
+	{
+		delay_ms(400);
+        ESP_LOGI(TAG, "未检测到模块!!!\r\n");
+        delay_ms(800);
+        ESP_LOGI(TAG, "尝试连接模块...\r\n");	
 
+        // u8 data = 0x35;
+        // uart_write_bytes(UART_NUM_0, (const char *) &data, 1);//------UART_NUM_2------	  
+        // uart_write_bytes(UART_NUM_1, (const char *) &data, 1);//------UART_NUM_2------	  
+	}
+
+    ESP_LOGI(TAG,"通讯成功!!!\r\n");
+    ESP_LOGI(TAG,"波特率:%d   地址:%x\r\n",usart2_baund,AS608Addr);
+
+
+	ensure=PS_ValidTempleteNum(&ValidN);//读库指纹个数
+	if(ensure!=0x00)
+    {
+        ESP_LOGI(TAG,"1-ensure = %d\r\n",ensure);
+        ShowErrMessage(ensure);//显示确认码错误信息	
+    }
+		
+    delay_ms(100);
+
+	ensure=PS_ReadSysPara(&AS608Para);  //读参数 
+	if(ensure==0x00)
+	{
+			// mymemset(str,0,50);
+			// sprintf(str,"库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
+			// Show_Str(0,80,240,16,(u8*)str,16,0);
+        ESP_LOGI(TAG,"库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
+	}
+	else
+    {
+        ESP_LOGI(TAG,"2-ensure = %d\r\n",ensure);
+        ShowErrMessage(ensure);	
+    }
+
+
+}
 
 void app_main(void)
 {
-    u8 ensure;
     u16 buff_temp1[300]={0};
     u16 buff_temp2[300]={0};
 
@@ -6431,47 +6497,8 @@ void app_main(void)
 
 
 
-
-
-    // ESP_LOGI(TAG, "与AS608模块握手....\r\n");
-	// while(PS_HandShake(&AS608Addr))//与AS608模块握手
-	// {
-	// 	delay_ms(400);
-    //     ESP_LOGI(TAG, "未检测到模块!!!\r\n");
-    //     delay_ms(800);
-    //     ESP_LOGI(TAG, "尝试连接模块...\r\n");	
-
-    //     // u8 data = 0x35;
-    //     // uart_write_bytes(UART_NUM_0, (const char *) &data, 1);//------UART_NUM_2------	  
-    //     // uart_write_bytes(UART_NUM_1, (const char *) &data, 1);//------UART_NUM_2------	  
-	// }
-
-    // ESP_LOGI(TAG,"通讯成功!!!\r\n");
-    // ESP_LOGI(TAG,"波特率:%d   地址:%x\r\n",usart2_baund,AS608Addr);
-
-
-	// ensure=PS_ValidTempleteNum(&ValidN);//读库指纹个数
-	// if(ensure!=0x00)
-    // {
-    //     ESP_LOGI(TAG,"1-ensure = %d\r\n",ensure);
-    //     ShowErrMessage(ensure);//显示确认码错误信息	
-    // }
-		
-    // delay_ms(100);
-
-	// ensure=PS_ReadSysPara(&AS608Para);  //读参数 
-	// if(ensure==0x00)
-	// {
-	// 		// mymemset(str,0,50);
-	// 		// sprintf(str,"库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
-	// 		// Show_Str(0,80,240,16,(u8*)str,16,0);
-    //     ESP_LOGI(TAG,"库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
-	// }
-	// else
-    // {
-    //     ESP_LOGI(TAG,"2-ensure = %d\r\n",ensure);
-    //     ShowErrMessage(ensure);	
-    // }
+    //zhiwen
+    zhiwen_init();
 
 
 

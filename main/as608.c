@@ -25,9 +25,11 @@
 #include "esp_log.h"
 
 
+#define UART_NUM_ZHIWEN UART_NUM_2
+
 void debug_uart1_write_bytes(const char* src, size_t size)
 {
-	uart_write_bytes(UART_NUM_1, src, size);
+	uart_write_bytes(UART_NUM_ZHIWEN, src, size);
 }
 
 void Uart1SendString(char* Str)
@@ -35,7 +37,7 @@ void Uart1SendString(char* Str)
 	while(*Str)
 	{
 		//while(!UART_GetFlagStatus(UART_FLAG_TXFE));
-		uart_write_bytes(UART_NUM_1, (const char *) Str, 1);
+		uart_write_bytes(UART_NUM_ZHIWEN, (const char *) Str, 1);
 		Str++;
 		//while(SdkEvalComUARTBusy() == SET);//203400
 	}
@@ -43,27 +45,27 @@ void Uart1SendString(char* Str)
 
 static void DEBUG_MYUSART1_Sendchar(u8 data)
 {
-	// //uart_write_bytes(UART_NUM_1, (const char *) &0xaa, 1);
-	// uart_write_bytes(UART_NUM_1, (const char *) &((u8)(data +0x30)), 1);//------UART_NUM_2------
+	// //uart_write_bytes(UART_NUM_ZHIWEN, (const char *) &0xaa, 1);
+	// uart_write_bytes(UART_NUM_ZHIWEN, (const char *) &((u8)(data +0x30)), 1);//------UART_NUM_2------
 	// Uart1SendString("\r\n");
-	// //uart_write_bytes(UART_NUM_1, (const char *) &0xbb, 1);
+	// //uart_write_bytes(UART_NUM_ZHIWEN, (const char *) &0xbb, 1);
 
 	u8 data1 = data + 0x30;
-	uart_write_bytes(UART_NUM_1, (const char *) &data1, 1);//------UART_NUM_2------	
+	uart_write_bytes(UART_NUM_ZHIWEN, (const char *) &data1, 1);//------UART_NUM_2------	
 	Uart1SendString("\r\n");
 }
 static void DEBUG_MYUSART1_SendData(char data)
 {
-	// //uart_write_bytes(UART_NUM_1, (const char *) &0xaa, 1);
-	// uart_write_bytes(UART_NUM_1, (const char *) &((u8)(data +0x30)), 1);//------UART_NUM_2------
+	// //uart_write_bytes(UART_NUM_ZHIWEN, (const char *) &0xaa, 1);
+	// uart_write_bytes(UART_NUM_ZHIWEN, (const char *) &((u8)(data +0x30)), 1);//------UART_NUM_2------
 	// Uart1SendString("\r\n");
-	// //uart_write_bytes(UART_NUM_1, (const char *) &0xbb, 1);
+	// //uart_write_bytes(UART_NUM_ZHIWEN, (const char *) &0xbb, 1);
 
 	u8 data1 = 0xaa;
 	u8 data2 = 0xbb;
-	uart_write_bytes(UART_NUM_1, (const char *) &data1, 1);//------UART_NUM_2------	
-	uart_write_bytes(UART_NUM_1, (const char *) &data, 1);//------UART_NUM_2------	
-	uart_write_bytes(UART_NUM_1, (const char *) &data2, 1);//------UART_NUM_2------	
+	uart_write_bytes(UART_NUM_ZHIWEN, (const char *) &data1, 1);//------UART_NUM_2------	
+	uart_write_bytes(UART_NUM_ZHIWEN, (const char *) &data, 1);//------UART_NUM_2------	
+	uart_write_bytes(UART_NUM_ZHIWEN, (const char *) &data2, 1);//------UART_NUM_2------	
 
 }
 
@@ -604,7 +606,7 @@ u8 PS_ValidTempleteNum(u16 *ValidN)
 
 	// //u8 data1 = 0x35;
 	// Uart1SendString("data=");
-	// uart_write_bytes(UART_NUM_1, (const char *) &data, 1);//------UART_NUM_2------	
+	// uart_write_bytes(UART_NUM_ZHIWEN, (const char *) &data, 1);//------UART_NUM_2------	
 	// Uart1SendString("\r\n");
 
 	if(data)
