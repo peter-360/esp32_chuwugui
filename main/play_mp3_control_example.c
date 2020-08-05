@@ -4236,13 +4236,16 @@ done_mima_nosame:
 
 
 
-                                if((shengyu_xiao==0) && (shengyu_zhong==0))
+                                if(((shengyu_xiao==0) && (shengyu_zhong==0))
+                                    ||((shengyu_da==0) && (shengyu_xiao==0))
+                                    ||((shengyu_da==0) && (shengyu_zhong==0)))
                                 {
                                     if(01== data_rx_t[8])//zhiwen cun
                                     {
                                         ESP_LOGI(TAG, "--2 zhiwen--.\r\n");  
                                         //baocun 1
                                         send_cmd_to_lcd_pic(0x0004);
+                                        xTaskCreate(Add_FR, "add_zhiwen_task", 6* 1024, NULL, 2, NULL);//1024 10
                                     }
                                     else if(02== data_rx_t[8])//mi ma
                                     {
@@ -4253,39 +4256,6 @@ done_mima_nosame:
                                     ESP_LOGI(TAG, "---2 da---.\r\n");  
                                     database_cw.dzx_mode = 1;
                                 }
-                                else if((shengyu_da==0) && (shengyu_xiao==0))
-                                {
-                                    if(01== data_rx_t[8])//zhiwen cun
-                                    {
-                                        ESP_LOGI(TAG, "--2 zhiwen--.\r\n");  
-                                        //baocun 1
-                                        send_cmd_to_lcd_pic(0x0004);
-                                    }
-                                    else if(02== data_rx_t[8])//mi ma
-                                    {
-                                        ESP_LOGI(TAG, "--2 mima--.\r\n");  
-                                        //baocun 2
-                                        send_cmd_to_lcd_pic(0x0006);
-                                    }
-                                    ESP_LOGI(TAG, "---2 zhong---.\r\n");  
-                                    database_cw.dzx_mode = 2;
-                                }
-                                else if((shengyu_da==0) && (shengyu_zhong==0))
-                                {
-                                    if(01== data_rx_t[8])//zhiwen cun
-                                    {
-                                        ESP_LOGI(TAG, "--2zhiwen--.\r\n");  
-                                        //baocun 1
-                                        send_cmd_to_lcd_pic(0x0004);
-                                    }
-                                    else if(02== data_rx_t[8])//mi ma
-                                    {
-                                        ESP_LOGI(TAG, "--2 mima--.\r\n");  
-                                        send_cmd_to_lcd_pic(0x0006);
-                                    }
-                                    ESP_LOGI(TAG, "---2xiao---.\r\n");  
-                                    database_cw.dzx_mode = 3;
-                                }
                                 else
                                 {
                                     send_cmd_to_lcd_pic(0x0003);
@@ -4295,6 +4265,52 @@ done_mima_nosame:
                                 //database_cw.zhiwen_page_id = data_rx_t[7];
                                 //Add_FR();		//录指纹	
                                 break;
+
+                            case 0x1250://mima? zanwucunwu  close
+                                ESP_LOGI(TAG, "---zhiwen close---.\r\n");   
+                                //if -> huise tupian?
+
+                                if(((shengyu_xiao==0) && (shengyu_zhong==0))
+                                    ||((shengyu_da==0) && (shengyu_xiao==0))
+                                    ||((shengyu_da==0) && (shengyu_zhong==0)))
+                                {
+  
+                                    ESP_LOGI(TAG, "--2 cunwu--.\r\n");  
+                                    //baocun 1
+                                    send_cmd_to_lcd_pic(0x0002);
+                
+                                }
+                                else
+                                {
+                                    ESP_LOGI(TAG, "--2 gekou--.\r\n");  
+                                    send_cmd_to_lcd_pic(0x0003);
+                                }
+
+                                break;
+
+                            case 0x1260://zhiwen  close
+                                ESP_LOGI(TAG, "---zhiwen close---.\r\n");   
+                                //if -> huise tupian?
+
+                                if(((shengyu_xiao==0) && (shengyu_zhong==0))
+                                    ||((shengyu_da==0) && (shengyu_xiao==0))
+                                    ||((shengyu_da==0) && (shengyu_zhong==0)))
+                                {
+  
+                                    ESP_LOGI(TAG, "--2 cunwu--.\r\n");  
+                                    //baocun 1
+                                    send_cmd_to_lcd_pic(0x0002);
+                
+                                }
+                                else
+                                {
+                                    ESP_LOGI(TAG, "--2 gekou--.\r\n");  
+                                    send_cmd_to_lcd_pic(0x0003);
+                                }
+
+                                break;
+
+
 
                             case 0x2020://da zhong xiao    ke sheng
                                 ESP_LOGI(TAG, "----------------daxiao---------------.\r\n");   
@@ -4337,6 +4353,7 @@ done_mima_nosame:
                                     else if(01 == database_cw.cunwu_mode)//2010 指纹 ->指纹判断 0005 todo
                                     {
                                         send_cmd_to_lcd_pic(0x0004);
+                                        xTaskCreate(Add_FR, "add_zhiwen_task", 6* 1024, NULL, 2, NULL);//1024 10
                                     } 
                                 }
  
@@ -4507,12 +4524,16 @@ done_mima_nosame:
 
                                             guimen_gk_temp = database_cw.dIndx ;
                                             uint16_t j=0,k=0;
-                                            while(guimen_gk_temp/24 >0)
+
+                                            k = guimen_gk_temp/24;
+                                            j = guimen_gk_temp%24;
+
+                                            if(guimen_gk_temp%24 ==0)
                                             {
-                                                k++;
-                                                guimen_gk_temp=guimen_gk_temp-24;
+                                                k = guimen_gk_temp/24 -1;
+                                                j = 24;
                                             }
-                                            j = guimen_gk_temp;
+
                                             printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
 
 
@@ -4599,12 +4620,16 @@ done_mima_nosame:
 
                                             guimen_gk_temp = database_cw.dIndx ;
                                             uint16_t j=0,k=0;
-                                            while(guimen_gk_temp/24 >0)
+
+                                            k = guimen_gk_temp/24;
+                                            j = guimen_gk_temp%24;
+
+                                            if(guimen_gk_temp%24 ==0)
                                             {
-                                                k++;
-                                                guimen_gk_temp=guimen_gk_temp-24;
+                                                k = guimen_gk_temp/24 -1;
+                                                j = 24;
                                             }
-                                            j = guimen_gk_temp;
+
                                             printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
 
 
@@ -4654,7 +4679,6 @@ done_mima_nosame:
                                     else if(3 == database_cw.dzx_mode)
                                     {
 
-
                                         for (uint16_t i = 1; i <= SHENYU_GEZI_MAX; i++)//todo changqi and suoding
                                         {
                                             if((database_gz[i].state_gz ==0) //no use
@@ -4691,13 +4715,17 @@ done_mima_nosame:
 
 
                                             guimen_gk_temp = database_cw.dIndx ;
-                                            uint16_t j=0,k=0;
-                                            while(guimen_gk_temp/24 >0)
+                                                uint16_t j=0,k=0;
+
+                                            k = guimen_gk_temp/24;
+                                            j = guimen_gk_temp%24;
+
+                                            if(guimen_gk_temp%24 ==0)
                                             {
-                                                k++;
-                                                guimen_gk_temp=guimen_gk_temp-24;
+                                                k = guimen_gk_temp/24 -1;
+                                                j = 24;
                                             }
-                                            j = guimen_gk_temp;
+
                                             printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
 
 
@@ -4908,7 +4936,6 @@ done:
                                 
                                 xTaskCreate(Add_FR, "add_zhiwen_task", 6* 1024, NULL, 2, NULL);//1024 10
                                 //database_cw.zhiwen_page_id = data_rx_t[7];
-                                // Add_FR();		//录指纹	
                                 
                                 //Del_FR(0);		//删指纹
                                 break;
@@ -5976,6 +6003,7 @@ void Add_FR()
                         {
                             //LCD_Fill(0,120,lcddev.width,160,WHITE);
                             ESP_LOGI(TAG,"--0-no-对比完成,指纹已存在 ");
+                            send_cmd_to_lcd_pic(0x0005);
                             i=0;
 	                        processnum=0;//跳回第一步	
                             ESP_LOGI(TAG,"--0-no-3-ensure=%d",ensure);
@@ -5983,6 +6011,7 @@ void Add_FR()
                         }
                         else 
                         {
+                            
                             ESP_LOGI(TAG,"--0-ok-对比成功,新的指纹");
                             i=0;
                             processnum=1;//跳到第二步	
@@ -6025,6 +6054,7 @@ void Add_FR()
                             ////LCD_Fill(0,120,lcddev.width,160,WHITE);
                             
                             ESP_LOGI(TAG,"--1-no-对比完成,指纹已存在 ");
+                            send_cmd_to_lcd_pic(0x0005);
                             ShowErrMessage(ensure);	
                             i=0;
                             processnum=0;//跳回第一步	
@@ -6071,6 +6101,7 @@ void Add_FR()
                             ////LCD_Fill(0,120,lcddev.width,160,WHITE);
                             
                             ESP_LOGI(TAG,"--2-no-对比完成,指纹已存在 ");
+                            send_cmd_to_lcd_pic(0x0005);
                             ShowErrMessage(ensure);	
                             i=0;
                             processnum=0;//跳回第一步	
@@ -6200,7 +6231,7 @@ void Add_FR()
 
                     //database_cw.zhiwen_page_id = 0x0c;//todo
                     //ensure=PS_StoreChar(CharBuffer3,database_cw.zhiwen_page_id);//储存模板
-                    ensure=PS_StoreChar(CharBuffer1,0x0A);//储存模板
+                    ensure=PS_StoreChar(CharBuffer1,database_cw.zhiwen_page_id);//储存模板
                     ESP_LOGI(TAG,"----3------ensure=%d",ensure);
                     if(ensure==0x00) 
                     {			
@@ -6211,9 +6242,13 @@ void Add_FR()
                         ESP_LOGI(TAG,"AS608Para.PS_max=%d, ValidN =%d ",AS608Para.PS_max, ValidN);
                         ESP_LOGI(TAG,"zhiwen number=%d ",AS608Para.PS_max-ValidN);
                         delay_ms(1500);
+                        
+                        send_cmd_to_lcd_pic(0x0008);
                         //LCD_Fill(0,100,240,160,WHITE);
                         //return ;
                         vTaskDelete(NULL);
+
+                        
                     }
                     else 
                     {
