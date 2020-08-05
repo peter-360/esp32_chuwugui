@@ -14,6 +14,8 @@
 
 #include <string.h>
 #include <stdlib.h>
+//#include "time.h"
+#include <sys/time.h>
 #include "esp_log.h"
 
 
@@ -295,6 +297,8 @@ uint8_t flag_rx2;
 
 #define SHENYU_GEZI_MAX 50//all kong
 
+#define ZHIWEN_PAGE_ID_MAX 300//all kong
+
 
 //admin   need save   实时更新
 //shuliang
@@ -353,6 +357,8 @@ int16_t guimen_x_gk_max[25];//600=24*25
 typedef struct
 {
     uint32_t mima_number_adm;  //
+    uint16_t zhiwen_page_id_adm[300];
+
     uint8_t shengyu1;
     uint8_t shengyu2;
 
@@ -386,6 +392,9 @@ typedef struct
 
     //zhiwen mima
     uint8_t cunwu_mode_gz;
+
+    //yonghu_zhiwen_id
+    uint16_t zhiwen_page_id_gz;
 
     //yonghu xin xi
     uint64_t phone_number_nvs_gz;  //
@@ -447,6 +456,8 @@ typedef struct
     //编号 箱门-nolock
 	//uint16_t tmp_dIndx_gz;//dangqian rcv
 
+
+    uint16_t zhiwen_page_id;//page id temp
 
 
     //取物唯一编号 time
@@ -787,7 +798,7 @@ void Del_FR(u16 num);	//删除指纹
 void press_FR(void);//刷指纹
 void ShowErrMessage(u8 ensure);//显示确认码错误信息
 
-u8 zhiwen_num_id;
+// u16 zhiwen_num_id;//page id
 
 
 void delay_ms(u16 nms)
@@ -3566,8 +3577,7 @@ wuci_xmh_xinz:
 
                         
 
-                                //zhiwen_num_id =0;
-                                //zhiwen_num_id = data_rx_t[7];
+                                //database_cw.zhiwen_page_id = data_rx_t[7];
                                 //Add_FR();		//录指纹	
                                 break;
 
@@ -4282,8 +4292,7 @@ done_mima_nosame:
 
                                 }
 
-                                //zhiwen_num_id =0;
-                                //zhiwen_num_id = data_rx_t[7];
+                                //database_cw.zhiwen_page_id = data_rx_t[7];
                                 //Add_FR();		//录指纹	
                                 break;
 
@@ -4485,6 +4494,7 @@ done_mima_nosame:
 
                                         if(j>0)
                                         {
+                                            srand((unsigned int) time(NULL));
                                             database_cw.dIndx = database_gz_temp[rand()%j];//随机获取哪个门没用
 
                                             database_cw.state=1;
@@ -4577,6 +4587,7 @@ done_mima_nosame:
 
                                         if(j>0)
                                         {
+                                            srand((unsigned int) time(NULL));
                                             database_cw.dIndx = database_gz_temp[rand()%j];//随机获取哪个门没用
 
                                             database_cw.state=1;
@@ -4668,6 +4679,7 @@ done_mima_nosame:
 
                                         if(j>0)
                                         {
+                                            srand((unsigned int) time(NULL));
                                             database_cw.dIndx = database_gz_temp[rand()%j];//随机获取哪个门没用
 
                                             database_cw.state=1;
@@ -4894,9 +4906,9 @@ done:
                             case 0x2090:
                                 ESP_LOGI(TAG, "----------------zhiwen uart2test uart3 todo---------------.\r\n");
                                 
-                                //zhiwen_num_id =0;
-                                //zhiwen_num_id = data_rx_t[7];
-                                //Add_FR();		//录指纹	
+                                xTaskCreate(Add_FR, "add_zhiwen_task", 6* 1024, NULL, 2, NULL);//1024 10
+                                //database_cw.zhiwen_page_id = data_rx_t[7];
+                                // Add_FR();		//录指纹	
                                 
                                 //Del_FR(0);		//删指纹
                                 break;
@@ -5711,6 +5723,17 @@ static void lock_all_clear_task()
 }
 
 
+
+static void echo_task3()//zhiwen
+{
+    printf("--echo_task3-- \n");
+
+
+    vTaskDelay(1);
+    //vTaskDelay(10 / portTICK_PERIOD_MS);
+    vTaskDelete(NULL);
+}
+
 static void echo_task()
 {
     
@@ -5734,12 +5757,13 @@ static void echo_task()
             flag_rx2 =1;
             len_rx2_m = len_rx2;
             memcpy(data_rx2_m,data_rx2,len_rx2_m);
-            ESP_LOGI(TAG, "uart2-Received %u bytes:", len_rx2_m);
+            ESP_LOGI(TAG, "rcv_zhiwen_uart2-Received %u bytes:", len_rx2_m);
             for (int i = 0; i < len_rx2_m; i++) {
                 printf("0x%.2X ", (uint8_t)data_rx2_m[i]);
             }
             printf("] \n");
 
+            xTaskCreate(echo_task3, "uart_echo_task2",2* 1024, NULL, 2, NULL);//uart2
             //uart_write_bytes(UART_NUM_2, (const char *) data_rx2, len_rx2);
         }
 
@@ -5748,16 +5772,6 @@ static void echo_task()
 
 
         if (len_rx > 0) {
-
-            // if(len_rx!= g_data.len +3)
-            // {
-            //     len_rx = g_data.len +3;
-            // }
-
-            // if(len_rx!= data_rx[2] +3)
-            // {
-            //     len_rx = data_rx[2] +3;
-            // }
 
             ESP_LOGI(TAG, "uart1-Received %u bytes:", len_rx);
             for (int i = 0; i < len_rx; i++) {
@@ -5774,11 +5788,8 @@ static void echo_task()
             printf("] \n");
 
             //vTaskDelay(2 / portTICK_PERIOD_MS);
-            xTaskCreate(echo_task2, "uart_echo_task2",8* 1024, NULL, 2, NULL);
+            xTaskCreate(echo_task2, "uart_echo_task2",8* 1024, NULL, 2, NULL);//uart1
 
-            //echo_task2();
-
-            //uart_write_bytes(UART_NUM_1, (const char *) data_rx, len_rx);
         }
 	
     }
@@ -5797,22 +5808,160 @@ static void echo_task()
 //显示确认码错误信息
 void ShowErrMessage(u8 ensure)
 {
-		ESP_LOGI(TAG,"%s\r\n",(u8*)EnsureMessage(ensure));
+		ESP_LOGI(TAG,"err=%s\r\n",(u8*)EnsureMessage(ensure));
 }
+// //录指纹
+// void Add_FR(void)
+// {
+// 	u8 i=0,ensure ,processnum=0;
+// 	//u16 ID;
+// 	while(1)
+// 	{
+//         //vTaskDelay(100 / portTICK_PERIOD_MS);
+// 		switch (processnum)
+// 		{
+// 			case 0:
+// 				i++;
+// 				//LCD_Fill(0,100,lcddev.width,160,WHITE);
+// 				//ESP_LOGI(TAG,"请按指纹");
+//                 ESP_LOGI(TAG,"---0--an-请按指纹");
+// 				ensure=PS_GetImage();
+// 				if(ensure==0x00) 
+// 				{
+// 					//BEEP=1;------------------------
+// 					ensure=PS_GenChar(CharBuffer1);//生成特征
+// 					//BEEP=0;
+// 					if(ensure==0x00)
+// 					{
+// 						//LCD_Fill(0,120,lcddev.width,160,WHITE);
+// 						ESP_LOGI(TAG,"--0-ok--指纹正常");
+// 						i=0;
+// 						processnum=1;//跳到第二步						
+// 					}
+//                     else 
+//                     {
+//                         ESP_LOGI(TAG,"-0-no-1-ensure=%d",ensure);
+//                         ShowErrMessage(ensure);			
+//                     }
+                        	
+// 				}
+//                 else 
+//                 {
+//                     ESP_LOGI(TAG,"-0-no-2-ensure=%d",ensure);
+//                     ShowErrMessage(ensure);	
+//                 }
+                    					
+// 				break;
+			
+// 			case 1:
+// 				i++;
+// 				////LCD_Fill(0,100,lcddev.width,160,WHITE);
+// 				ESP_LOGI(TAG,"---1-zaian--请按再按一次指纹");
+// 				ensure=PS_GetImage();
+// 				if(ensure==0x00) 
+// 				{
+// 					//BEEP=1;
+// 					ensure=PS_GenChar(CharBuffer2);//生成特征
+// 					//BEEP=0;
+// 					if(ensure==0x00)
+// 					{
+// 						////LCD_Fill(0,120,lcddev.width,160,WHITE);
+// 						ESP_LOGI(TAG,"--1-ok--指纹正常 ");
+// 						i=0;
+// 						processnum=2;//跳到第三步
+// 					}else ShowErrMessage(ensure);	
+// 				}else ShowErrMessage(ensure);		
+// 				break;
+
+// 			case 2:
+// 				////LCD_Fill(0,100,lcddev.width,160,WHITE);
+// 				ESP_LOGI(TAG,"--2-duibi--对比两次指纹 ");
+// 				//ensure=PS_Match();
+//                 SearchResult *p_rsp=NULL;
+//                 //ensure = PS_Search(0x02, 0x0000, 0x00AA, p_rsp);
+//                 ensure =0;
+//                 //ESP_LOGI(TAG,"--2-pageID=%d, mathscore=%d",p_rsp->pageID,p_rsp->mathscore);
+// 				if(ensure==0x00) 
+// 				{
+// 					//LCD_Fill(0,120,lcddev.width,160,WHITE);
+// 					ESP_LOGI(TAG,"--2-ok对比成功,两次指纹一样 ");
+// 					processnum=3;//跳到第四步
+// 				}
+// 				else 
+// 				{
+// 					//LCD_Fill(0,100,lcddev.width,160,WHITE);
+// 					ESP_LOGI(TAG,"--2-no对比失败，请重新录入指纹 ");
+// 					ShowErrMessage(ensure);
+// 					i=0;
+// 					processnum=0;//跳回第一步		
+// 				}
+// 				delay_ms(1200);
+// 				break;
+
+// 			case 3:
+// 				//LCD_Fill(0,100,lcddev.width,160,WHITE);
+// 				ESP_LOGI(TAG,"----3 shengcheng-----生成指纹模板 ");
+// 				ensure=PS_RegModel();
+// 				if(ensure==0x00) 
+// 				{
+// 					//LCD_Fill(0,120,lcddev.width,160,WHITE);
+// 					ESP_LOGI(TAG,"--3-ok生成指纹模板成功 ");
+// 					processnum=4;//跳到第五步
+// 				}else {processnum=0;ShowErrMessage(ensure);}
+// 				delay_ms(1200);
+// 				break;
+				
+// 			case 4:	
+// 				//LCD_Fill(0,100,lcddev.width,160,WHITE);
+// 				ESP_LOGI(TAG,"----4 input id-----请输入储存ID,按Enter保存 ");
+// 				ESP_LOGI(TAG,"0=< ID <=299 ");// 0 - 100---------------------
+
+                
+// 				// do
+// 				// 	ID=GET_NUM();
+// 				while(!(database_cw.zhiwen_page_id<AS608Para.PS_max));//输入ID必须小于最大存储数值
+
+
+
+// 				ensure=PS_StoreChar(CharBuffer2,database_cw.zhiwen_page_id);//储存模板
+// 				if(ensure==0x00) 
+// 				{			
+// 					//LCD_Fill(0,100,lcddev.width,160,WHITE);					
+// 					ESP_LOGI(TAG,"--4-ok录入指纹成功 ");
+// 					PS_ValidTempleteNum(&ValidN);//读库指纹个数
+// 					ESP_LOGI(TAG,"zhiwen number=%d ",AS608Para.PS_max-ValidN);
+// 					delay_ms(1500);
+// 					//LCD_Fill(0,100,240,160,WHITE);
+// 					return ;
+// 				}else {processnum=0;ShowErrMessage(ensure);}					
+// 				break;				
+// 		}
+// 		delay_ms(400);
+// 		if(i==5)//超过5次没有按手指则退出
+// 		{
+//             ESP_LOGI(TAG,"---->5 input id-----请输入储存ID,按Enter保存 ");
+// 			//LCD_Fill(0,100,lcddev.width,160,WHITE);
+// 			break;	
+// 		}				
+// 	}
+// }
+
 //录指纹
-void Add_FR(void)
+void Add_FR()
 {
 	u8 i=0,ensure ,processnum=0;
+    SearchResult p_rsp;
 	//u16 ID;
 	while(1)
 	{
-        //vTaskDelay(100 / portTICK_PERIOD_MS);
+        vTaskDelay(1 / portTICK_PERIOD_MS);
 		switch (processnum)
 		{
 			case 0:
 				i++;
 				//LCD_Fill(0,100,lcddev.width,160,WHITE);
-				ESP_LOGI(TAG,"请按指纹\r\n");
+				//ESP_LOGI(TAG,"请按指纹");
+                ESP_LOGI(TAG,"---0--an-请按指纹");
 				ensure=PS_GetImage();
 				if(ensure==0x00) 
 				{
@@ -5821,21 +5970,37 @@ void Add_FR(void)
 					//BEEP=0;
 					if(ensure==0x00)
 					{
-						//LCD_Fill(0,120,lcddev.width,160,WHITE);
-						ESP_LOGI(TAG,"指纹正常\r\n");
-						i=0;
-						processnum=1;//跳到第二步						
+                        ESP_LOGI(TAG,"--0-ok--指纹正常");
+                        ensure = PS_Search(CharBuffer1, 0x0000, 0x00AA, &p_rsp);//0x02
+                        if(ensure==0x00)
+                        {
+                            //LCD_Fill(0,120,lcddev.width,160,WHITE);
+                            ESP_LOGI(TAG,"--0-no-对比完成,指纹已存在 ");
+                            i=0;
+	                        processnum=0;//跳回第一步	
+                            ESP_LOGI(TAG,"--0-no-3-ensure=%d",ensure);
+                            ShowErrMessage(ensure);	
+                        }
+                        else 
+                        {
+                            ESP_LOGI(TAG,"--0-ok-对比成功,新的指纹");
+                            i=0;
+                            processnum=1;//跳到第二步	
+
+                        }
+                        delay_ms(1200);
+				
 					}
                     else 
                     {
-                        ESP_LOGI(TAG,"2-ensure=%d\r\n",ensure);
+                        ESP_LOGI(TAG,"-0-no-2-ensure=%d",ensure);
                         ShowErrMessage(ensure);			
                     }
                         	
 				}
                 else 
                 {
-                    ESP_LOGI(TAG,"1-ensure=%d\r\n",ensure);
+                    ESP_LOGI(TAG,"-0-no-1-ensure=%d",ensure);
                     ShowErrMessage(ensure);	
                 }
                     					
@@ -5844,7 +6009,7 @@ void Add_FR(void)
 			case 1:
 				i++;
 				////LCD_Fill(0,100,lcddev.width,160,WHITE);
-				ESP_LOGI(TAG,"请按再按一次指纹\r\n");
+				ESP_LOGI(TAG,"---1-zaian--请按再按一次指纹");
 				ensure=PS_GetImage();
 				if(ensure==0x00) 
 				{
@@ -5853,43 +6018,124 @@ void Add_FR(void)
 					//BEEP=0;
 					if(ensure==0x00)
 					{
-						////LCD_Fill(0,120,lcddev.width,160,WHITE);
-						ESP_LOGI(TAG,"指纹正常\r\n");
-						i=0;
-						processnum=2;//跳到第三步
-					}else ShowErrMessage(ensure);	
-				}else ShowErrMessage(ensure);		
+                        ESP_LOGI(TAG,"--1-ok--指纹正常 ");
+                        ensure = PS_Search(CharBuffer2, 0x0000, 0x00AA, &p_rsp);//0x02
+                        if(ensure==0x00)
+                        {
+                            ////LCD_Fill(0,120,lcddev.width,160,WHITE);
+                            
+                            ESP_LOGI(TAG,"--1-no-对比完成,指纹已存在 ");
+                            ShowErrMessage(ensure);	
+                            i=0;
+                            processnum=0;//跳回第一步	
+                            	
+                        }
+                        else 
+                        {
+                            ESP_LOGI(TAG,"--1-ok-对比成功,新的指纹");
+                            i=0;
+                            processnum=2;//跳到第三步			
+
+                        }
+                        delay_ms(1200);
+
+					}
+                    else 
+                    {
+                        ShowErrMessage(ensure);	
+                    }   
+				}
+                else 
+                {
+                    ShowErrMessage(ensure);		
+                }
+                    
 				break;
 
-			case 2:
+            case 2:
+				i++;
 				////LCD_Fill(0,100,lcddev.width,160,WHITE);
-				ESP_LOGI(TAG,"对比两次指纹\r\n");
-				ensure=PS_Match();
+				ESP_LOGI(TAG,"---2-zaian--请按再按一次指纹");
+				ensure=PS_GetImage();
 				if(ensure==0x00) 
 				{
-					//LCD_Fill(0,120,lcddev.width,160,WHITE);
-					ESP_LOGI(TAG,"对比成功,两次指纹一样\r\n");
-					processnum=3;//跳到第四步
+					//BEEP=1;
+					ensure=PS_GenChar(CharBuffer3);//生成特征
+					//BEEP=0;
+					if(ensure==0x00)
+					{
+                        ESP_LOGI(TAG,"--2-ok--指纹正常 ");
+                        ensure = PS_Search(CharBuffer3, 0x0000, 0x00AA, &p_rsp);//0x02
+                        if(ensure==0x00)
+                        {
+                            ////LCD_Fill(0,120,lcddev.width,160,WHITE);
+                            
+                            ESP_LOGI(TAG,"--2-no-对比完成,指纹已存在 ");
+                            ShowErrMessage(ensure);	
+                            i=0;
+                            processnum=0;//跳回第一步	
+                            	
+                        }
+                        else 
+                        {
+                            ESP_LOGI(TAG,"--2-ok-对比成功,新的指纹");
+                            i=0;
+                            processnum=3;//跳到第三步			
+
+                        }
+                        delay_ms(1200);
+
+					}
+                    else 
+                    {
+                        ShowErrMessage(ensure);	
+                    }   
 				}
-				else 
-				{
-					//LCD_Fill(0,100,lcddev.width,160,WHITE);
-					ESP_LOGI(TAG,"对比失败，请重新录入指纹\r\n");
-					ShowErrMessage(ensure);
-					i=0;
-					processnum=0;//跳回第一步		
-				}
-				delay_ms(1200);
+                else 
+                {
+                    ShowErrMessage(ensure);		
+                }
+                    
 				break;
+
+			// case 2:
+			// 	////LCD_Fill(0,100,lcddev.width,160,WHITE);
+			// 	ESP_LOGI(TAG,"--2-duibi--对比两次指纹 ");
+			// 	//ensure=PS_Match();
+            //     SearchResult p_rsp;
+            //     ensure = PS_Search(0x02, 0x0000, 0x00AA, &p_rsp);
+            //     //ensure =0;
+            //     //ESP_LOGI(TAG,"--2-pageID=%d, mathscore=%d",p_rsp->pageID,p_rsp->mathscore);
+			// 	if(ensure==0x00) 
+			// 	{
+			// 		//LCD_Fill(0,120,lcddev.width,160,WHITE);
+			// 		ESP_LOGI(TAG,"--2-ok对比成功,两次指纹一样 ");
+			// 		processnum=3;//跳到第四步
+			// 	}
+			// 	else 
+			// 	{
+			// 		//LCD_Fill(0,100,lcddev.width,160,WHITE);
+			// 		ESP_LOGI(TAG,"--2-no对比失败，请重新录入指纹 ");
+			// 		ShowErrMessage(ensure);
+			// 		i=0;
+			// 		processnum=0;//跳回第一步		
+			// 	}
+			// 	delay_ms(1200);
+			// 	break;
+
+
+
+
+
 
 			case 3:
 				//LCD_Fill(0,100,lcddev.width,160,WHITE);
-				ESP_LOGI(TAG,"生成指纹模板\r\n");
+				ESP_LOGI(TAG,"----3 shengcheng-----生成指纹模板 ");
 				ensure=PS_RegModel();
 				if(ensure==0x00) 
 				{
 					//LCD_Fill(0,120,lcddev.width,160,WHITE);
-					ESP_LOGI(TAG,"生成指纹模板成功\r\n");
+					ESP_LOGI(TAG,"--3-ok生成指纹模板成功 ");
 					processnum=4;//跳到第五步
 				}else {processnum=0;ShowErrMessage(ensure);}
 				delay_ms(1200);
@@ -5897,36 +6143,103 @@ void Add_FR(void)
 				
 			case 4:	
 				//LCD_Fill(0,100,lcddev.width,160,WHITE);
-				ESP_LOGI(TAG,"请输入储存ID,按Enter保存\r\n");
-				ESP_LOGI(TAG,"0=< ID <=299\r\n");// 0 - 100---------------------
+				ESP_LOGI(TAG,"----4 input id-----请输入储存ID,按Enter保存 ");
+				ESP_LOGI(TAG,"0=< ID <=299 ");// 0 - 100---------------------
 
+                uint16_t page_id_temp1[ZHIWEN_PAGE_ID_MAX]={0};
+                uint16_t page_id_temp2[ZHIWEN_PAGE_ID_MAX]={0};
+
+
+                ensure = PS_ReadSysPara(&AS608Para);  //读参数 
+                if(ensure==0x00)
+                {
+                    //ESP_LOGI(TAG,"AS608Para.PS_max=%d, ValidN =%d ",AS608Para.PS_max, ValidN);
+                    ESP_LOGI(TAG,"库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
+                }
+                else
+                {
+                    ESP_LOGI(TAG,"4-1-ensure = %d\r\n",ensure);
+                    ShowErrMessage(ensure);	
+                }
+
+
+
+                //AS608Para.PS_max-ValidN
+                uint16_t j =0, k=0;
+                int rand_temp=0;
+                for(uint16_t i=1;i<=AS608Para.PS_max;i++)
+                {
+                    if(database_ad.zhiwen_page_id_adm[i] ==0)//weiyong
+                    {
+                        page_id_temp1[j++] = i;
+                    }
+                    else//yi yong
+                    {
+                        page_id_temp2[k++] = i;
+                    }
+                }
+                printf("shengyu j=%d, onuse k=%d\r\n",j,k);
+                uart0_debug_data_dec(page_id_temp1,j);
+                uart0_debug_data_dec(page_id_temp2,k);
                 
-				// do
-				// 	ID=GET_NUM();
-				while(!(zhiwen_num_id<AS608Para.PS_max));//输入ID必须小于最大存储数值
+                if(j>0)
+                {
+                    srand((unsigned int) time(NULL));
+                    rand_temp = rand();
+                    printf("rand_temp=%d\r\n",rand_temp);
+                    database_cw.zhiwen_page_id = page_id_temp1[rand_temp%j];//随机获取哪个门没用
+                    
+                    database_ad.zhiwen_page_id_adm[database_cw.zhiwen_page_id] =1;
+                    // database_gz[database_cw.dIndx].state_gz =database_cw.state;
+                    printf("-------add---database_cw.zhiwen_page_id=%d\r\n",database_cw.zhiwen_page_id);
+
+                    // do
+                    // 	ID=GET_NUM();
+                    //while(!(database_cw.zhiwen_page_id<AS608Para.PS_max));//输入ID必须小于最大存储数值
 
 
+                    //database_cw.zhiwen_page_id = 0x0c;//todo
+                    //ensure=PS_StoreChar(CharBuffer3,database_cw.zhiwen_page_id);//储存模板
+                    ensure=PS_StoreChar(CharBuffer1,0x0A);//储存模板
+                    ESP_LOGI(TAG,"----3------ensure=%d",ensure);
+                    if(ensure==0x00) 
+                    {			
+                        //LCD_Fill(0,100,lcddev.width,160,WHITE);					
+                        ESP_LOGI(TAG,"--4-ok录入指纹成功 ");
+                        // PS_ReadSysPara(&AS608Para);  //读参数 
+                        PS_ValidTempleteNum(&ValidN);//读库指纹个数
+                        ESP_LOGI(TAG,"AS608Para.PS_max=%d, ValidN =%d ",AS608Para.PS_max, ValidN);
+                        ESP_LOGI(TAG,"zhiwen number=%d ",AS608Para.PS_max-ValidN);
+                        delay_ms(1500);
+                        //LCD_Fill(0,100,240,160,WHITE);
+                        //return ;
+                        vTaskDelete(NULL);
+                    }
+                    else 
+                    {
+                        processnum=0;
+                        ShowErrMessage(ensure);
+                    }		
 
-				ensure=PS_StoreChar(CharBuffer2,zhiwen_num_id);//储存模板
-				if(ensure==0x00) 
-				{			
-					//LCD_Fill(0,100,lcddev.width,160,WHITE);					
-					ESP_LOGI(TAG,"录入指纹成功\r\n");
-					PS_ValidTempleteNum(&ValidN);//读库指纹个数
-					ESP_LOGI(TAG,"zhiwen number=%d\r\n",AS608Para.PS_max-ValidN);
-					delay_ms(1500);
-					//LCD_Fill(0,100,240,160,WHITE);
-					return ;
-				}else {processnum=0;ShowErrMessage(ensure);}					
-				break;				
+                }			
+				break;	
+
+            default:
+                ESP_LOGI(TAG,"--default-zhiwen add ");
+                break;		
 		}
 		delay_ms(400);
 		if(i==5)//超过5次没有按手指则退出
 		{
+            ESP_LOGI(TAG,"---->5 超过5次没有按手指则退出 ");
 			//LCD_Fill(0,100,lcddev.width,160,WHITE);
 			break;	
 		}				
 	}
+    vTaskDelay(1);
+    //vTaskDelay(10 / portTICK_PERIOD_MS);
+    vTaskDelete(NULL);
+
 }
 
 //刷指纹
@@ -5943,13 +6256,15 @@ void press_FR(void)
 		if(ensure==0x00) //生成特征成功
 		{		
 			//BEEP=0;//关闭蜂鸣器	-------------
-			ensure=PS_HighSpeedSearch(CharBuffer1,0,AS608Para.PS_max,&seach);
+			//ensure=PS_HighSpeedSearch(CharBuffer1,0,AS608Para.PS_max,&seach);
+            ensure=PS_Search(CharBuffer1,0,AS608Para.PS_max,&seach);
+            
 			if(ensure==0x00)//搜索成功
 			{				
 				//LCD_Fill(0,100,lcddev.width,160,WHITE);
-				ESP_LOGI(TAG,"刷指纹成功\r\n");				
+				ESP_LOGI(TAG,"刷指纹成功 ");				
 
-				ESP_LOGI(TAG,"确有此人,ID:%d  匹配得分:%d\r\n",seach.pageID,seach.mathscore);
+				ESP_LOGI(TAG,"确有此人,ID:%d  匹配得分:%d ",seach.pageID,seach.mathscore);
 
 				//myfree(SRAMIN,str);
 			}
@@ -5971,9 +6286,9 @@ void Del_FR(u16 num)
 	u8  ensure;
 	//u16 num;
 	//LCD_Fill(0,100,lcddev.width,160,WHITE);
-	ESP_LOGI(TAG,"删除指纹\r\n");
-	ESP_LOGI(TAG,"请输入指纹ID按Enter发送\r\n");
-	ESP_LOGI(TAG,"0=< ID <=299\r\n");
+	ESP_LOGI(TAG,"删除指纹 ");
+	ESP_LOGI(TAG,"请输入指纹ID按Enter发送 ");
+	ESP_LOGI(TAG,"0=< ID <=299 ");
 	delay_ms(50);
 	//AS608_load_keyboard(0,170,(u8**)kbd_delFR);
 	//num=GET_NUM();//获取返回的数值
@@ -5988,14 +6303,14 @@ void Del_FR(u16 num)
 	if(ensure==0)
 	{
 		//LCD_Fill(0,120,lcddev.width,160,WHITE);
-		ESP_LOGI(TAG,"删除指纹成功\r\n");		
+		ESP_LOGI(TAG,"删除指纹成功 ");		
 	}
   else
 		ShowErrMessage(ensure);	
 	delay_ms(1200);
 	PS_ValidTempleteNum(&ValidN);//读库指纹个数
 	//LCD_ShowNum(56,80,AS608Para.PS_max-ValidN,3,16);
-    ESP_LOGI(TAG,"zhiwen number =%d\r\n",AS608Para.PS_max-ValidN);
+    ESP_LOGI(TAG,"zhiwen number =%d ",AS608Para.PS_max-ValidN);
 //MENU:	
 	//LCD_Fill(0,100,lcddev.width,160,WHITE);
 	delay_ms(50);
@@ -6459,6 +6774,7 @@ void zhiwen_init(void )
 			// mymemset(str,0,50);
 			// sprintf(str,"库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
 			// Show_Str(0,80,240,16,(u8*)str,16,0);
+        ESP_LOGI(TAG,"AS608Para.PS_max=%d, ValidN =%d ",AS608Para.PS_max, ValidN);
         ESP_LOGI(TAG,"库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
 	}
 	else

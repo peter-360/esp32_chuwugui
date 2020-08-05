@@ -26,6 +26,7 @@
 
 
 #define UART_NUM_ZHIWEN UART_NUM_2
+#define UART_NUM_LOCK UART_NUM_0
 
 void debug_uart1_write_bytes(const char* src, size_t size)
 {
@@ -50,8 +51,9 @@ static void DEBUG_MYUSART1_Sendchar(u8 data)
 	// Uart1SendString("\r\n");
 	// //uart_write_bytes(UART_NUM_ZHIWEN, (const char *) &0xbb, 1);
 
+	Uart1SendString("------to zhiwen data=");
 	u8 data1 = data + 0x30;
-	uart_write_bytes(UART_NUM_ZHIWEN, (const char *) &data1, 1);//------UART_NUM_2------	
+	uart_write_bytes(UART_NUM_LOCK, (const char *) &data1, 1);//------UART_NUM_2------	
 	Uart1SendString("\r\n");
 }
 static void DEBUG_MYUSART1_SendData(char data)
@@ -84,7 +86,10 @@ static void MYUSART_SendData(u8 data)
 {
 	// while((USART2->SR&0X40)==0); 
 	// USART2->DR = data;
-	uart_write_bytes(UART_NUM_2, (const char *) &data, 1);//------UART_NUM_2------
+	uart_write_bytes(UART_NUM_ZHIWEN, (const char *) &data, 1);//------UART_NUM_2------
+	//uart_write_bytes(UART_NUM_LOCK, (const char *) &data, 1);//------UART_NUM_2------
+	printf("tozw data=%02x\r\n",data);
+	
 }
 //发送包头
 static void SendHead(void)
@@ -147,14 +152,14 @@ static u8 *JudgeStr(u16 waittime)
 			flag_rx2 =0;
 			data=strstr((const char*)data_rx2_m,(const char*)str);
 			
-			ESP_LOGI(TAG,"------ok-------!!!\r\n");
+			ESP_LOGI(TAG,"------JudgeStr ok-------!!!\r\n");
 			//ESP_LOGI(TAG,"data = %d\r\n",(u32)data);
 			if(data)
 				return (u8*)data;	
 		}
 		else
 		{
-			ESP_LOGI(TAG,"--------err--------!!!\r\n");
+			ESP_LOGI(TAG,"--------JudgeStr err--------!!!\r\n");
 		}
 		
 		
@@ -172,10 +177,11 @@ u8 PS_GetImage(void)
 	SendHead();
 	SendAddr();
 	SendFlag(0x01);//命令包标识
-	SendLength(0x03);
+	SendLength(0x03);//2
 	Sendcmd(0x01);
   temp =  0x01+0x03+0x01;
 	SendCheck(temp);
+	//delay_ms(100);//---------------------
 	data=JudgeStr(2000);
 	if(data)
 		ensure=data[9];
@@ -200,6 +206,7 @@ u8 PS_GenChar(u8 BufferID)
 	MYUSART_SendData(BufferID);
 	temp = 0x01+0x04+0x02+BufferID;
 	SendCheck(temp);
+	//delay_ms(100);//---------------------
 	data=JudgeStr(2000);
 	if(data)
 		ensure=data[9];
@@ -278,6 +285,7 @@ u8 PS_RegModel(void)
 	Sendcmd(0x05);
 	temp = 0x01+0x03+0x05;
 	SendCheck(temp);
+	delay_ms(100);//---------------------
 	data=JudgeStr(2000);
 	if(data)
 		ensure=data[9];
@@ -306,6 +314,7 @@ u8 PS_StoreChar(u8 BufferID,u16 PageID)
 	temp = 0x01+0x06+0x06+BufferID
 	+(PageID>>8)+(u8)PageID;
 	SendCheck(temp);
+	delay_ms(100);//---------------------
 	data=JudgeStr(2000);
 	if(data)
 		ensure=data[9];
@@ -620,11 +629,14 @@ u8 PS_ValidTempleteNum(u16 *ValidN)
 	if(ensure==0x00)
 	{
 		;
-		//printf("\r\n有效指纹个数=%d",(data[10]<<8)+data[11]);
+		printf("\r\n-printf youxiaozhiwengeshu-有效指纹个数= %d \r\n",(data[10]<<8)+data[11]);
 	}
 	else
+	{
 		;
-		//printf("\r\n----error2--%s",EnsureMessage(ensure));
+		printf("\r\n----error2--%s",EnsureMessage(ensure));
+	}
+
 	return ensure;
 }
 //与AS608握手 PS_HandShake

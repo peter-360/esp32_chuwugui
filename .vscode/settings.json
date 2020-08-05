@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "*.inc": "c",
-        "*.ipp": "c"
+        "*.ipp": "c",
+        "algorithm": "c"
     }
 }

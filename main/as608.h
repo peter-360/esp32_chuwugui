@@ -11,6 +11,7 @@ typedef uint8_t  u8;
 #define PS_Sta   PAin(6)//读指纹模块状态引脚
 #define CharBuffer1 0x01
 #define CharBuffer2 0x02
+#define CharBuffer3 0x03
 
 extern u32 AS608Addr;//模块地址
 
