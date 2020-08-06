@@ -881,21 +881,21 @@ uint16_t CRC16(uint8_t *puchMsg, uint16_t usDataLen)
 //版权声明：本文为CSDN博主「lhsfly」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
 //原文链接：https://blog.csdn.net/lhsfly/java/article/details/84072316
 
-void uart0_debug_str(uint8_t* str,uint8_t len)
+void uart0_debug_str(uint8_t* str,uint16_t len)
 {
     printf("debug_str:");
     for(uint8_t i=0;i<len;i++)
         printf("%c ",str[i]);
     printf("\r\n");
 }
-void uart0_debug_data(uint8_t* data,uint8_t len)
+void uart0_debug_data(uint8_t* data,uint16_t len)
 {
     printf("-------debug_data:");
     for(uint8_t i=0;i<len;i++)
         printf("%02x ",data[i]);
     printf("\r\n");
 }
-void uart0_debug_data_d(uint8_t* data,uint8_t len)
+void uart0_debug_data_d(uint8_t* data,uint16_t len)
 {
     printf("debug_data:");
     for(uint8_t i=0;i<len;i++)
@@ -1065,15 +1065,18 @@ void tongbu_gekou_shuliang_x(uint16_t temp)
 #define  BL_GK_BH_Z 0x1230
 #define  BL_GK_BH_CHANGQI 0x1210
 
-#define  BL_GK_BH_D_LEN 0x132//306
+#define  BL_GK_BH_D_LEN (0xCD)
+//0x132//306
+
 #define  BL_GK_BH_Z_LEN 0x23
 
-#define  BL_GK_BH_CHANGQI_LEN 0xCD//0xCE
+#define  BL_GK_BH_CHANGQI_LEN (0xCD)
+//0xCD//0xCE
 
 //数组
-void send_cmd_to_lcd_bl_len(uint16_t opCode, uint8_t* buff_temp,uint8_t data_len)//变量
+void send_cmd_to_lcd_bl_len(uint16_t opCode, uint8_t* buff_temp,uint16_t data_len)//变量
 {
-    uint8_t tx_Buffer[200]={0};  
+    uint8_t tx_Buffer[300]={0};  
     uint16_t crc16_temp=0;
     //xiao
     tx_Buffer[0] = 0x5A;
@@ -1084,7 +1087,7 @@ void send_cmd_to_lcd_bl_len(uint16_t opCode, uint8_t* buff_temp,uint8_t data_len
     tx_Buffer[4] = opCode/256;
     tx_Buffer[5] = opCode%256;//dizhi
 
-
+    printf("-------data_len=%d--------\r\n",data_len);
     for (int i = 0; i < data_len-2 ; i++) {
         tx_Buffer[6+i] = buff_temp[i];
         //printf("0x%.2X ", (uint8_t)buff_temp[i]);
@@ -1098,8 +1101,9 @@ void send_cmd_to_lcd_bl_len(uint16_t opCode, uint8_t* buff_temp,uint8_t data_len
 
     tx_Buffer[3+ data_len-2 ] = crc16_temp&0xff;
     tx_Buffer[3+ data_len-2 +1] = (crc16_temp>>8)&0xff;
+    printf("---------debug1---------\r\n");
     uart_write_bytes(UART_NUM_1, (const char *) tx_Buffer, 3+ data_len);
-
+    printf("---------debug2---------\r\n");
     uart0_debug_data( (const char *) tx_Buffer, 3+ data_len);
 }
 
@@ -1642,6 +1646,12 @@ void nvs_wr_adm_zwpageid_flag(uint8_t mode,uint16_t zhiwen_page_id_temp)//->all
 
 void default_factory_set(void)
 {
+    for(uint16_t i=0;i<AS608Para.PS_max;i++)
+    {
+        database_ad.zhiwen_page_id_adm[i] =0;
+        nvs_wr_adm_zwpageid_flag(0,i);
+    }
+
 
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
     {
@@ -1673,6 +1683,9 @@ void default_factory_set(void)
 
         database_gz[database_cw.dIndx].state_gz =0;
         nvs_wr_state_gz(1);
+
+        database_gz[database_cw.dIndx].zhiwen_page_id_gz =0;
+        nvs_wr_zw_pageid_gz(0);
 
     }
 
@@ -1850,6 +1863,7 @@ void tongbu_changqi(void)
     uint16_t j=0,k=0,l=0;
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
     {
+        //vTaskDelay(1);
         if(1== database_gz[i].state_fenpei_gz)
         {
 
@@ -1859,9 +1873,9 @@ void tongbu_changqi(void)
                 printf("b_temp2[l]= %03d ",buff_temp2[l]);//xiangmenhao
                 itoa(buff_temp2[l],(char*)(buff_temp2_c+4*(l)),10);//+4*(i-1)
                 l++;
+                printf("\r\n");
             }
 
-            printf("\r\n");
         }
 
         //printf("---i=%d\r\n",i);
@@ -1875,15 +1889,17 @@ void tongbu_changqi(void)
 
     for(uint16_t i=1;i<=300;i++)
     {
+        //vTaskDelay(1);
         if(buff_temp2_c[i]==0)
         {
             buff_temp2_c[i]=0x20;
+            printf("kong ");
         }
     }
 
 
     vTaskDelay(5 / portTICK_PERIOD_MS);
-    printf("-----gekouleixing-z-----\r\n");
+    printf("-----changqi--sync----\r\n");
     send_cmd_to_lcd_bl_len(BL_GK_BH_CHANGQI,buff_temp2_c,BL_GK_BH_CHANGQI_LEN);//300 0x23 30
     vTaskDelay(1 / portTICK_PERIOD_MS);
 
@@ -1975,7 +1991,7 @@ static void echo_task2()//lcd
                         {
 
                         case 0x4F4B:
-                            ESP_LOGI(TAG, "-----ok-----.\r\n");
+                            ESP_LOGI(TAG, "---lcd---ok-----.\r\n");
                             //todo
                             break;
 
@@ -2836,7 +2852,7 @@ gekou_fail_x:
                                 // j=0;
                                 //uint16_t k=0;
 
-                                xTaskCreate(lock_all_clear_task, "lk_all_clear_open_task", 2* 1024, NULL, 2, NULL);//1024 10
+                                xTaskCreate(lock_all_clear_task, "lk_all_clear_open_task", 4* 1024, NULL, 2, NULL);//1024 10
 
                                 //send_cmd_to_lcd_pic(KAIJI_PIC);
                                 break;
@@ -2855,24 +2871,6 @@ gekou_fail_x:
                                 // }
                                 // printf("\r\n");
 
-                                // printf("shengyu_all_max= %3d\r\n", shengyu_all_max);
-                                // guimen_gk_temp = shengyu_all_max ;
-                                // j=0;
-                                // uint16_t k=0;
-                                // while(guimen_gk_temp/24 >0)
-                                // {
-                                //     k++;
-                                //     guimen_gk_temp=guimen_gk_temp-24;
-                                // }
-                                // j = guimen_gk_temp;
-
-                                // for (int i =0; i < k+1 ; i++)
-                                // {
-                                //     send_cmd_to_lock_all(0x90, i+1);
-                                //     vTaskDelay(10 / portTICK_PERIOD_MS);
-                                // }
-                                // printf("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
-                       
 
                                 //xTaskCreate(lock_all_open_task, "lk_all_open_task", 2* 1024, NULL, 2, NULL);//1024 10
                                 
@@ -5639,7 +5637,7 @@ static void lock_all_clear_task()
     {
         vTaskDelay(1);
         database_cw.dIndx =i;
-        nvs_wr_fenpei_gz(0);//2
+        nvs_wr_fenpei_gz(0);//2  _dz_fp
        
         if(1== database_gz[i].state_fenpei_gz)
         {
@@ -5670,12 +5668,14 @@ static void lock_all_clear_task()
                     database_gz[database_cw.dIndx].mima_number_nvs_gz = 0;
                     database_gz[database_cw.dIndx].state_gz =0;
                     database_gz[database_cw.dIndx].changqi =0;
+                    database_gz[database_cw.dIndx].zhiwen_page_id_gz =0;
                     nvs_wr_cunwu_mode_gz(1);
                     //nvs_wr_dzx_mode_gz(1);
                     nvs_wr_phone_number_nvs_gz(1);
                     nvs_wr_mima_number_nvs_gz(1);
                     nvs_wr_state_gz(1);
                     nvs_wr_glongtime_gz(1);
+                    nvs_wr_zw_pageid_gz(1);
                     
                 }
 
@@ -5695,9 +5695,16 @@ static void lock_all_clear_task()
         }
     }
 
+
+    for(uint16_t i=0;i<AS608Para.PS_max;i++)
+    {
+        database_ad.zhiwen_page_id_adm[i] =0;
+        nvs_wr_adm_zwpageid_flag(0,i);
+    }
+
+
     tongbu_changqi();
 
-    
     shengyu_da = j;
     shengyu_zhong = k;
     shengyu_xiao = l;
@@ -5718,6 +5725,7 @@ static void lock_all_clear_task()
     nvs_wr_shengyu_da(1);
     nvs_wr_shengyu_zhong(1);
     nvs_wr_shengyu_xiao(1);
+
 
 
 
@@ -6941,6 +6949,7 @@ void read_nvs_guizi_all()
     ESP_LOGI(TAG,"AS608Para.PS_max=%d, ValidN =%d ",AS608Para.PS_max, ValidN);
     for(uint16_t i=0;i<AS608Para.PS_max;i++)
     {
+        // database_ad.zhiwen_page_id_adm[i] =0;
         nvs_wr_adm_zwpageid_flag(0,i);
     }
 
@@ -7182,8 +7191,8 @@ void app_main(void)
     u16 buff_temp1[300]={0};
     u16 buff_temp2[300]={0};
 
-    u8 buff_temp1_c[300]={0};//char
-    u8 buff_temp2_c[300]={0};//150
+    u8 buff_temp1_c[400]={0};//char
+    u8 buff_temp2_c[400]={0};//150
 
     gpio_pad_select_gpio(RE_485_GPIO);
     /* Set the GPIO as a push/pull output */
@@ -7337,7 +7346,7 @@ void app_main(void)
     printf("-----gekouleixing-----\r\n");
     send_cmd_to_lcd_bl_len(BL_GK_BH_Z,buff_temp2_c,BL_GK_BH_Z_LEN);//300 0x23 30
     vTaskDelay(1 / portTICK_PERIOD_MS);
-    send_cmd_to_lcd_bl_len(BL_GK_BH_D,buff_temp1_c,BL_GK_BH_D_LEN);//300
+    send_cmd_to_lcd_bl_len(BL_GK_BH_D,buff_temp1_c,BL_GK_BH_D_LEN);//300   空格
     vTaskDelay(30 / portTICK_PERIOD_MS);
 
 
