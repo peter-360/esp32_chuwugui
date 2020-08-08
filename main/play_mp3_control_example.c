@@ -7329,8 +7329,8 @@ void app_main(void)
 
 
 
-    //zhiwen
-    zhiwen_init();
+    //---------------zhiwen-----------------
+    //zhiwen_init();
 
 
 
