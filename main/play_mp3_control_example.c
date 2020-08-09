@@ -2009,6 +2009,7 @@ static void echo_task2()//lcd
                             //uart_write_bytes(UART_NUM_2, (const char *) (data_rx_t+4), len_rx_t-4);
                             bl_addr = (data_rx_t[4]<<8) + data_rx_t[5];
                             ESP_LOGI(TAG, "--0x83--.bl_addr=%04x\r\n",bl_addr);
+                            printf("--0x83--.bl_addr=%04x\r\n",bl_addr);
 
                             //uint8_t tx_Buffer[50]={0};  
                             uint8_t tx_Buffer2[200]={0};  
@@ -2035,6 +2036,7 @@ static void echo_task2()//lcd
 
                                 if(data_rx_t[2] == 0x6A)//0x9c
                                 {
+                                    send_cmd_to_lcd_bl(0x11A0,0);
                                     char show[156][10];
                                     char *p = NULL;
                                     char *q = NULL;
@@ -2102,7 +2104,7 @@ static void echo_task2()//lcd
                                     uint16_t shengyu_all_max_temp=0;//shengyu max admin, guding
                                     int16_t guimen_x_gk_max_temp[BOARD_GK_MAX]={0};
 
-                                    printf("hang_shu_max=%03d\r\n",hang_shu_max);
+                                    printf("hang_shu_max+1=%03d\r\n",hang_shu_max+1);//0
                                     if(hang_shu_max<=BOARD_GK_MAX)
                                     {
                                         printf("show2=");
@@ -2125,7 +2127,7 @@ static void echo_task2()//lcd
                                                 {
                                                     database_gz[j*24 + k].state_fenpei_gz = 0;
                                                     database_gz[j*24 + k].dIndx_gz =0;
-                                                    printf("-1-lock index=%03d\r\n",j*24 + k);
+                                                    printf("-2-lock index=%03d\r\n",j*24 + k);
                                                 }
                                             }
 
@@ -2136,13 +2138,14 @@ static void echo_task2()//lcd
 
                                         for(j = hang_shu_max+1; j <= BOARD_GK_MAX; j++)//i 个柜子
                                         {
-                                            guimen_x_gk_max_temp[j] =0;
-                                            for(int k=1; k<= guimen_x_gk_max_temp[j]; k++)//列
+                                            //guimen_x_gk_max_temp[j] =0;
+                                            for(int k=1; k<= 24; k++)//列
                                             {
                                                 if(database_gz[j*24 + k].state_fenpei_gz == 1)
                                                 {
                                                     database_gz[j*24 + k].state_fenpei_gz = 0;
                                                     database_gz[j*24 + k].dIndx_gz =0;
+                                                    printf("-3-lock index=%03d\r\n",j*24 + k);
                                                 }
 
                                             }
@@ -2157,9 +2160,12 @@ static void echo_task2()//lcd
                                         {
                                             printf("2-------shengyu_all_max_temp=%03d\r\n",shengyu_all_max_temp);
                                             shengyu_all_max = shengyu_all_max_temp;
-                                            memcpy(guimen_x_gk_max,guimen_x_gk_max_temp,BOARD_GK_MAX);
+                                            memcpy(guimen_x_gk_max,guimen_x_gk_max_temp,BOARD_GK_MAX);//????????
 
+                                            printf("2-hang_shu_max=%03d\r\n",hang_shu_max);
                                             uart0_debug_data_d(guimen_x_gk_max,BOARD_GK_MAX);
+                                            printf("3-hang_shu_max=%03d\r\n",hang_shu_max);
+                                            uart0_debug_data_d(guimen_x_gk_max_temp,BOARD_GK_MAX);
 
 
                                             // nvs_wr_shengyu_all_max(0);//1
@@ -2218,8 +2224,9 @@ static void echo_task2()//lcd
                                             j=0;
                                             for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
                                             {
-                                                
+                                                database_cw.dIndx = i;
                                                 // printf("fenpei?=%d, ", database_gz[i].state_fenpei_gz);
+                                                nvs_wr_fenpei_gz(1);
                                                 if(database_gz[i].state_fenpei_gz == 1)
                                                 {
                                                     j++;
@@ -2230,9 +2237,7 @@ static void echo_task2()//lcd
                                                     printf("-2-lock index =%03d, ",i);
                                                     printf("-2-xmh index j= %03d",j);
                                                     printf("\r\n");
-    
                                                     nvs_wr_index_gz(1);
-                                                    nvs_wr_fenpei_gz(1);
                 
                                                     // if(1== database_gz[i].dzx_mode_gz)
                                                     // {
@@ -2409,7 +2414,7 @@ static void echo_task2()//lcd
                                 {
                                     ESP_LOGI(TAG, "--hangshu cuowu--.\r\n");   
                                 }
-                                        
+                                
                                 //todo 每次设置不是all
 
                                 break;
@@ -3328,7 +3333,7 @@ wuci_xmh_q:
 
                                     ESP_LOGI(TAG, "-da-lock:%d ok--.\r\n",j);
                                     // send_cmd_to_lock(k+1,j);
-                                    // send_cmd_to_lcd_bl(0x1150,database_gz[database_cw.dIndx].dIndx_gz);
+                                    send_cmd_to_lcd_bl(0x1150,database_gz[database_cw.dIndx].dIndx_gz);
             
                                     //send_cmd_to_lcd_pic(0x0024);
                                     send_cmd_to_lcd_pic(LK_OK_PIC);
@@ -3494,7 +3499,7 @@ wuci_xmh_lk:
 
                                     ESP_LOGI(TAG, "-da-lock:%d ok--.\r\n",j);
                                     // send_cmd_to_lock(k+1,j);
-                                    // send_cmd_to_lcd_bl(0x1180,database_gz[database_cw.dIndx].dIndx_gz);
+                                    send_cmd_to_lcd_bl(0x1180,database_gz[database_cw.dIndx].dIndx_gz);
             
                                     //send_cmd_to_lcd_pic(0x0024);
                                     send_cmd_to_lcd_pic(UNLK_OK_PIC);
@@ -4406,7 +4411,8 @@ done_mima_nosame:
                                     database_cw.cunwu_mode = 2;
                                 }
 
-
+                                send_cmd_to_lcd_bl(0x1050,0);//phone
+                                send_cmd_to_lcd_bl(0x1060,0);//key
 
 
                                 if(((shengyu_xiao==0) && (shengyu_zhong==0))
@@ -4542,7 +4548,8 @@ done_mima_nosame:
                                     } 
                                 }
  
-
+                                send_cmd_to_lcd_bl(0x1050,0);//phone
+                                send_cmd_to_lcd_bl(0x1060,0);//key
 
                                 
 
@@ -4670,6 +4677,12 @@ done_mima_nosame:
                                     uint16_t database_gz_temp_onuse[SHENYU_GEZI_MAX]={0};
 
                                     // start ----------------------------------------
+                                    if((int16_t)shengyu_all<=0)
+                                    {
+                                        send_cmd_to_lcd_pic(0x0001);
+                                        goto done_2;
+                                    }
+
                                     if(1 == database_cw.dzx_mode)
                                     {
                                         
@@ -5754,7 +5767,7 @@ static void lock_all_clear_task()
     send_cmd_to_lcd_pic(CLEAR_ALL_OK_PIC);
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
     {
-        vTaskDelay(1);
+        //vTaskDelay(1);
         database_cw.dIndx =i;
         nvs_wr_fenpei_gz(0);//2  _dz_fp
        
@@ -5763,8 +5776,8 @@ static void lock_all_clear_task()
 
             if(0== database_gz[database_cw.dIndx].lock)
             {
-                if((0 != database_gz[database_cw.dIndx].state_gz)
-                    ||(0 != database_gz[database_cw.dIndx].changqi))
+                // if((0 == database_gz[database_cw.dIndx].state_gz)
+                //     ||(0 == database_gz[database_cw.dIndx].changqi))
                 {
 
                     if(1== database_gz[database_cw.dIndx].dzx_mode_gz)
