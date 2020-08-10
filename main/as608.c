@@ -138,13 +138,15 @@ static u8 *JudgeStr(u16 waittime)
 	str[3]=AS608Addr>>16;str[4]=AS608Addr>>8;
 	str[5]=AS608Addr;str[6]=0x07;str[7]='\0';
 	//USART2_RX_STA=0;
-	delay_ms(50);//---------------------
+	//delay_ms(50);//---------------------
 	while(--waittime)//--------------
 	{
-		delay_ms(1);
+		//delay_ms(1);
 		//if(USART2_RX_STA&0X8000)//接收到一次数据
-		ESP_LOGI(TAG,"flag_rx2 = %d\r\n",flag_rx2);
-		ESP_LOGI(TAG,"len_rx2_m = %d\r\n",len_rx2_m);
+		printf("as-waittime = %d\r\n",waittime);
+		// ESP_LOGI(TAG,"as-waittime = %d\r\n",waittime);
+		ESP_LOGI(TAG,"as-flag_rx2 = %d\r\n",flag_rx2);
+		ESP_LOGI(TAG,"as-len_rx2_m = %d\r\n",len_rx2_m);
 		// debug_uart1_write_bytes((const char*)data_rx2_m, len_rx2_m);
 		if(flag_rx2 ==1)
 		{

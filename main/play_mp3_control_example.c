@@ -1919,6 +1919,7 @@ uint8_t mima_number_a[6]={0};
 
 uint8_t mima_number_a1[6]={0};  
 uint8_t mima_number_a2[6]={0};  
+uint8_t buff_t[12]={0};
 
 static void echo_task2()//lcd
 {
@@ -1928,6 +1929,7 @@ static void echo_task2()//lcd
     uint8_t data_rx_t[BUF_SIZE] = {0};
     uint16_t len_rx_t= len_rx;
     int16_t guimen_gk_temp =0;
+
 
     memcpy(data_rx_t,data_rx,len_rx_t);
     //while(1)
@@ -3071,6 +3073,7 @@ gekou_fail_x:
 
                            case 0x1130://
                                 ESP_LOGI(TAG, "--qingxiang--.\r\n");   
+                                send_cmd_to_lcd_bl_len(0x1130,(uint8_t*)buff_t,2*2+5);//
                                 // j=0;
                                 // for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
                                 //     printf("0x%.2X ", (uint8_t)data_rx_t[i]);
@@ -3092,7 +3095,7 @@ gekou_fail_x:
                                 bool lock_flag =0;
                                 //uint8_t temp_xiangmen_uint=0; //16
                                 memcpy(temp_xiangmen,data_rx_t+7,3);//len todo 
-                                if(02== data_rx_t[6])//-------------------------
+                                if((02== data_rx_t[6])||(03== data_rx_t[6]))//-------------------------
                                 {
                                     guimen_gk_temp = atoi((const char*)temp_xiangmen);
                                     ESP_LOGI(TAG, "-------guimen_gk_temp--dIndx=%d--.\r\n",guimen_gk_temp); 
@@ -3277,7 +3280,7 @@ wuci_xmh_q:
 
 
                            case 0x1150://
-                                ESP_LOGI(TAG, "--lock suoding--.\r\n");   
+                                ESP_LOGI(TAG, "--lock ding--.\r\n");   
                                 // j=0;
                                 // for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
                                 //     printf("0x%.2X ", (uint8_t)data_rx_t[i]);
@@ -3288,14 +3291,14 @@ wuci_xmh_q:
                                 // }
                                 // printf("\r\n");
 
-                                
+                                send_cmd_to_lcd_bl_len(0x1150,(uint8_t*)buff_t,2*2+5);//
                                 //uint8_t temp_xiangmen[4]={0}; 
                                 memset(temp_xiangmen,0,4);
                                 j=0;
                                 k=0;//k:board  j:lock
                                 //uint8_t temp_xiangmen_uint=0; //16
                                 memcpy(temp_xiangmen,data_rx_t+7,3);//len todo 
-                                if(02== data_rx_t[6])//-------------------------
+                                if((02== data_rx_t[6])||(03== data_rx_t[6]))//-------------------------
                                 {
                                     guimen_gk_temp = atoi((const char*)temp_xiangmen);
                                     ESP_LOGI(TAG, "-------guimen_gk_temp--dIndx=%d--.\r\n",guimen_gk_temp); 
@@ -3334,6 +3337,9 @@ wuci_xmh_q:
                                     ESP_LOGI(TAG, "-da-lock:%d ok--.\r\n",j);
                                     // send_cmd_to_lock(k+1,j);
                                     send_cmd_to_lcd_bl(0x1150,database_gz[database_cw.dIndx].dIndx_gz);
+
+                                    // uint8_t buff_temp1[6]={0x01,0x64,0x31};
+                                    // send_cmd_to_lcd_bl_len(0x1150,buff_temp1,6+5);
             
                                     //send_cmd_to_lcd_pic(0x0024);
                                     send_cmd_to_lcd_pic(LK_OK_PIC);
@@ -3344,7 +3350,8 @@ wuci_xmh_q:
 
 
                                     ESP_LOGE(TAG, "database_gz[database_cw.dIndx].state_gz = %d", database_gz[database_cw.dIndx].state_gz);
-                                    if(0 == database_gz[database_cw.dIndx].state_gz)
+                                    if((0 == database_gz[database_cw.dIndx].state_gz)
+                                        &&(0 == database_gz[database_cw.dIndx].changqi))
                                     {
                                         switch (database_gz[database_cw.dIndx].dzx_mode_gz)
                                         {
@@ -3454,14 +3461,14 @@ wuci_xmh_lk:
                                 // }
                                 // printf("\r\n");
 
-                                
+                                send_cmd_to_lcd_bl_len(0x1180,(uint8_t*)buff_t,2*2+5);//
                                 //uint8_t temp_xiangmen[4]={0}; 
                                 memset(temp_xiangmen,0,4);
                                 j=0;
                                 k=0;//k:board  j:lock
                                 //uint8_t temp_xiangmen_uint=0; //16
                                 memcpy(temp_xiangmen,data_rx_t+7,3);//len todo 
-                                if(02== data_rx_t[6])//-------------------------
+                                if((02== data_rx_t[6])||(03== data_rx_t[6]))//-------------------------
                                 {
                                     guimen_gk_temp = atoi((const char*)temp_xiangmen);
                                     ESP_LOGI(TAG, "-------guimen_gk_temp--dIndx=%d--.\r\n",guimen_gk_temp); 
@@ -3632,23 +3639,33 @@ wuci_xmh_unlk:
                                 memcpy(temp_xiangmen,data_rx_t+7,3);//len todo 
                                 if(02== data_rx_t[6])//-------------------------
                                 {
+                                    send_cmd_to_lcd_bl_len(0x10e0,(uint8_t*)buff_t,2*2+5);//
                                     guimen_gk_temp = atoi((const char*)temp_xiangmen);
                                     ESP_LOGI(TAG, "-------guimen_gk_temp--dIndx=%d--.\r\n",guimen_gk_temp); 
 
                                     database_cw_adm.dIndx =0;
                                     database_cw_adm.dIndx = find_lock_index(guimen_gk_temp);
 
+                                    ESP_LOGI(TAG, "1------lock open--dIndx=%d--.\r\n",database_cw_adm.dIndx); 
+                                    ESP_LOGI(TAG, "database_gz[database_cw.dIndx].dIndx_gz=%d--.\r\n",database_gz[database_cw_adm.dIndx].dIndx_gz); 
 
-
+                                    if((database_gz[database_cw_adm.dIndx].changqi == 1)
+                                        ||(database_gz[database_cw_adm.dIndx].state_gz == 1))
+                                    {
+                                        send_cmd_to_lcd_bl(0x10e0,database_gz[database_cw_adm.dIndx].dIndx_gz);
+                                        send_cmd_to_lcd_pic(0x0029);
+                                        break;
+                                    }
                                     
- 
+
                                     if((database_gz[database_cw_adm.dIndx].state_fenpei_gz == 0)
                                         ||(database_gz[database_cw_adm.dIndx].lock == 1)
-                                        ||(database_gz[database_cw_adm.dIndx].changqi == 1)
                                         ||(database_cw_adm.dIndx ==0))
                                     {
                                         goto wuci_xmh_xinz;
                                     }
+
+                                    
 
                                     ESP_LOGI(TAG, "------lock open--dIndx=%d--.\r\n",database_cw_adm.dIndx); 
                                     guimen_gk_temp = database_cw_adm.dIndx ;
@@ -3728,28 +3745,17 @@ wuci_xmh_xinz:
                                     ESP_LOGI(TAG, "--zhiwen--.\r\n");  
                                     //baocun 1
                                     database_cw_adm.cunwu_mode = 1;
+									send_cmd_to_lcd_pic(0x001b);
+                                    xTaskCreate(Add_FR, "add_zhiwen_task", 6* 1024, NULL, 2, NULL);//1024 10
                                 }
                                 else if(02== data_rx_t[8])//mi ma
                                 {
                                     ESP_LOGI(TAG, "--mima--.\r\n");  
                                     //baocun 2
+									send_cmd_to_lcd_pic(0x001d);
                                     database_cw_adm.cunwu_mode = 2;
                                 }
 
-
-
-                                if(01== data_rx_t[8])//zhiwen cun
-                                {
-                                    ESP_LOGI(TAG, "--2 zhiwen--.\r\n");  
-                                    //baocun 1
-                                    send_cmd_to_lcd_pic(0x001b);
-                                }
-                                else if(02== data_rx_t[8])//mi ma
-                                {
-                                    ESP_LOGI(TAG, "--2 mima--.\r\n");  
-                                    //baocun 2
-                                    send_cmd_to_lcd_pic(0x001d);
-                                }
 
                         
 
@@ -3801,7 +3807,8 @@ wuci_xmh_xinz:
                                 //5A A5 0A 83   10 60   03   31 32 33 34 35 36 
                                 ESP_LOGI(TAG, "-a-password--.\r\n");
                                 //ESP_LOGI(TAG, "---phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
-
+                                send_cmd_to_lcd_bl_len(0x1100,(uint8_t*)buff_t,12+5);//phone
+                                send_cmd_to_lcd_bl_len(0x1110,(uint8_t*)buff_t,6+5);//key
 
 
                                 //存物的格口编号（123）、格口类型（1：小，2：中，3：大）
@@ -3820,6 +3827,11 @@ wuci_xmh_xinz:
                                     printf("mima_number=");
                                     uart0_debug_str(mima_number_a,6);
 
+                                    if(0==memcmp(mima_number,buff_t,6))
+                                    {
+                                        ESP_LOGI(TAG, "------mima all=0-------.\r\n");
+                                        goto done_longtime;
+                                    }
 
                                     for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
                                         printf("0x%.2X ", (uint8_t)data_rx_t[i]);
@@ -3960,14 +3972,14 @@ wuci_xmh_xinz:
                                         // char key_name[15];//15
                                         // esp_err_t err;
 
-                                        //database_gz[database_cw_adm.dIndx].cunwu_mode_gz = 0;
+                                        database_gz[database_cw_adm.dIndx].cunwu_mode_gz = database_cw_adm.cunwu_mode;
                                         //database_gz[database_cw_adm.dIndx].dzx_mode_gz = 0;
   
                                         //database_gz[database_cw_adm.dIndx].state_gz =0;
 
                                         database_gz[database_cw_adm.dIndx].changqi =1;
                                         //database_gz[database_cw_adm.dIndx].lock =0;
-                                        //nvs_wr_cunwu_mode_gz(1);
+                                        nvs_wr_cunwu_mode_gz(1);
                                         //nvs_wr_dzx_mode_gz(1);
          
                                         //nvs_wr_state_gz(1);
@@ -4054,6 +4066,7 @@ done_longtime_2:
                                 memcpy(temp_xiangmen,data_rx_t+7,3);//len todo 
                                 if(02== data_rx_t[6])//-----------  --------------
                                 {
+                                    send_cmd_to_lcd_bl_len(0x1120,(uint8_t*)buff_t,2*2+5);//
                                     guimen_gk_temp = atoi((const char*)temp_xiangmen);
                                     ESP_LOGI(TAG, "-------guimen_gk_temp--dIndx=%d--.\r\n",guimen_gk_temp); 
 
@@ -4596,11 +4609,13 @@ done_mima_nosame:
 
                             case 0x1060:
                                 
+                                
                                 //5A A5 0A 83   10 60   03   31 32 33 34 35 36 
                                 ESP_LOGI(TAG, "--password--.\r\n");
                                 //ESP_LOGI(TAG, "---phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
 
-
+                                send_cmd_to_lcd_bl_len(0x1050,(uint8_t*)buff_t,12+5);//phone
+                                send_cmd_to_lcd_bl_len(0x1060,(uint8_t*)buff_t,6+5);//key
 
                                 //存物的格口编号（123）、格口类型（1：小，2：中，3：大）
                                 //存物手机号（11位）密码（6位）            或者指纹(----)   
@@ -4617,13 +4632,18 @@ done_mima_nosame:
                                     printf("mima_number=");
                                     uart0_debug_str(mima_number,6);
 
+                                    if(0==memcmp(mima_number,buff_t,6))
+                                    {
+                                        ESP_LOGI(TAG, "------mima all=0-------.\r\n");
+                                        goto done;
+                                    }
 
                                     for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
                                         printf("0x%.2X ", (uint8_t)data_rx_t[i]);
                                         if(data_rx_t[i] == 0xFF)
                                         {
                                             ESP_LOGI(TAG, "--no--mima_weishu_ok---.\r\n");
-                                            send_cmd_to_lcd_pic(0x001F);
+                                            // send_cmd_to_lcd_pic(0x001F);
                                             goto done;
                                         }
                                     }
@@ -5022,8 +5042,12 @@ done_2:
                                 phone_weishu_ok =0;
                                 ESP_LOGI(TAG, "----test3-done--.\r\n");  
 
-                                send_cmd_to_lcd_bl(0x1050,0);//phone
-                                send_cmd_to_lcd_bl(0x1060,0);//key
+                                // send_cmd_to_lcd_bl(0x1050,0);//phone
+                                // send_cmd_to_lcd_bl(0x1060,0);//key
+                                
+
+                                send_cmd_to_lcd_bl_len(0x1050,(uint8_t*)buff_t,12+5);//phone
+                                send_cmd_to_lcd_bl_len(0x1060,(uint8_t*)buff_t,6+5);//key
                                 
                                 database_cw.cunwu_mode =0;
                                 database_cw.dzx_mode = 0 ;
@@ -5414,6 +5438,8 @@ done_kai_admin:
 
 
                             case 0x10c0://xiangmenhao   kaixiang
+                                send_cmd_to_lcd_bl_len(0x10c0,(uint8_t*)buff_t,2*2+5);//key
+                                
                                 ESP_LOGI(TAG, "----admin --mima-----.\r\n");
                                 //uint8_t temp_xiangmen[4]={0}; 
                                 memset(temp_xiangmen,0,4);
@@ -5529,7 +5555,7 @@ wuci_xmh:
                                     ESP_LOGI(TAG, "----admin --wu ci xiangmenhao-----.\r\n");
                                 }
                                 //send_cmd_to_lcd_bl(0x10C0,database_gz[database_cw.dIndx].dIndx_gz);//xiangmen------------
-
+                                
                                 break;
 
 
@@ -7343,7 +7369,7 @@ void app_main(void)
 
 
     //---------------zhiwen-----------------
-    //zhiwen_init();
+    zhiwen_init();
 
 
 
@@ -7450,7 +7476,7 @@ void app_main(void)
         }
     }
 
-
+    ESP_LOGI(TAG, "database_gz[database_cw.dIndx].dIndx_gz=%d--.\r\n",database_gz[1].dIndx_gz); 
 
     vTaskDelay(30 / portTICK_PERIOD_MS);
 
