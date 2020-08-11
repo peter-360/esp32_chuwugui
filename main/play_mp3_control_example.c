@@ -300,7 +300,7 @@ uint8_t flag_rx2;
 
 
 
-#define SHENYU_GEZI_MAX 310//all kong
+#define SHENYU_GEZI_MAX 150//310//all kong
 
 #define ZHIWEN_PAGE_ID_MAX 300//all kong
 
@@ -1059,21 +1059,25 @@ void tongbu_gekou_shuliang_x(uint16_t temp)
 
 
 #define  BL_XM_SZ 0x11A0
-#define  BL_GK_SZ_D 0x11B0
-#define  BL_GK_SZ_Z 0x11C0
-#define  BL_GK_SZ_X 0x11D0
+#define  BL_GK_SZ_D 0x1600
+#define  BL_GK_SZ_Z 0x1700
+#define  BL_GK_SZ_X 0x1800
 
 
 #define  BL_GK_BH_D 0x1400//0x1240
 #define  BL_GK_BH_Z 0x1300//0x1230
 #define  BL_GK_BH_CHANGQI 0x1500//0x1210
 
-#define  BL_GK_BH_D_LEN 0xCD//0x23//(0xCD)
+
+#define  BL_GK_BH_MAX_LEN 0xFC//
+
+
+#define  BL_GK_BH_D_LEN 0xFC//0xCE//0x23//(0xCD)
 //0x132//306
 
-#define  BL_GK_BH_Z_LEN 0xCD//0x23
+#define  BL_GK_BH_Z_LEN 0xFC//0x23
 
-#define  BL_GK_BH_CHANGQI_LEN 0xCD//(0xCD)
+#define  BL_GK_BH_CHANGQI_LEN 0xFC//(0xCD)
 //0xCD//0xCE
 
 //数组
@@ -1927,7 +1931,7 @@ uint8_t mima_number_a[6]={0};
 
 uint8_t mima_number_a1[6]={0};  
 uint8_t mima_number_a2[6]={0};  
-uint8_t buff_t[12]={0};
+uint8_t buff_t[100]={0};
 
 uint8_t return_cause;
 
@@ -2045,10 +2049,12 @@ static void echo_task2()//lcd
                                     j++;
                                 }
                                 DB_PR("\r\n");
+                                
 
                                 if(data_rx_t[2] == 0x6A)//0x9c
                                 {
-                                    send_cmd_to_lcd_bl(0x11A0,0);
+                                    send_cmd_to_lcd_bl_len(0x11A0,(uint8_t*)buff_t,30*4+5);//
+                                    // send_cmd_to_lcd_bl(0x11A0,0);
                                     char show[156][10];
                                     char *p = NULL;
                                     char *q = NULL;
@@ -2391,7 +2397,8 @@ static void echo_task2()//lcd
 
                             //-------------格口设置 dazhongxiao
                             //da
-                            case 0x11B0://
+                            case BL_GK_SZ_D://
+                                
                                 DB_PR("--da gekou--.\r\n");   
                                 j=0;
                                 for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
@@ -2402,9 +2409,10 @@ static void echo_task2()//lcd
                                     j++;
                                 }
                                 DB_PR("\r\n");
-
+                                hang_shu_max =0;
                                 if(data_rx_t[2] == 0xCE)//0x9c)
                                 {
+                                    send_cmd_to_lcd_bl_len(BL_GK_SZ_D,(uint8_t*)buff_t,BL_GK_BH_MAX_LEN);//
                                     char show[156][10];
                                     char *p = NULL;
                                     char *q = NULL;
@@ -2593,8 +2601,9 @@ gekou_fail:
 
                             //-------------格口设置 dazhongxiao
                             //zh
-                            case 0x11C0://
+                            case BL_GK_SZ_Z://
                                 DB_PR("--zh gekou--.\r\n");   
+                                
                                 j=0;
                                 for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
                                     DB_PR("0x%.2X ", (uint8_t)data_rx_t[i]);
@@ -2607,6 +2616,7 @@ gekou_fail:
 
                                 if(data_rx_t[2] == 0xCE)//0x9c)
                                 {
+                                    send_cmd_to_lcd_bl_len(BL_GK_SZ_Z,(uint8_t*)buff_t,BL_GK_BH_MAX_LEN);//
                                     char show[156][10];
                                     char *p = NULL;
                                     char *q = NULL;
@@ -2794,8 +2804,9 @@ gekou_fail_z:
 
                             //-------------格口设置 dazhongxiao
                             //xiao
-                            case 0x11D0://
+                            case BL_GK_SZ_X://
                                 DB_PR("--xiao gekou--.\r\n");   
+                                
                                 j=0;
                                 for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
                                     DB_PR("0x%.2X ", (uint8_t)data_rx_t[i]);
@@ -2808,6 +2819,7 @@ gekou_fail_z:
 
                                 if(data_rx_t[2] == 0xCE)//0x9c)
                                 {
+                                    send_cmd_to_lcd_bl_len(BL_GK_SZ_X,(uint8_t*)buff_t,BL_GK_BH_MAX_LEN);//
                                     char show[156][10];
                                     char *p = NULL;
                                     char *q = NULL;
@@ -4027,8 +4039,10 @@ done_longtime:
 done_longtime_2:
                                 DB_PR("----test3-done--.\r\n");  
 
-                                send_cmd_to_lcd_bl(0x1100,0);//phone
-                                send_cmd_to_lcd_bl(0x1110,0);//key
+                                send_cmd_to_lcd_bl_len(0x1100,(uint8_t*)buff_t,30+5);//phone
+                                send_cmd_to_lcd_bl_len(0x1110,(uint8_t*)buff_t,30+5);//key
+                                // send_cmd_to_lcd_bl(0x1100,0);//phone
+                                // send_cmd_to_lcd_bl(0x1110,0);//key
                                 
                                 database_cw.cunwu_mode =0;
                                 database_cw.dzx_mode = 0 ;
@@ -4218,12 +4232,12 @@ wuci_xmh_unchangqi:
 
                             case 0x11e0:
                                 //5A A5 10 83   10 50   06    31 32 33 34 35 36 37 38 39 30  31 00
-                                DB_PR("-admin1-mima number--.\r\n");
+                                DB_PR("-admin1-mima1 number--.\r\n");
                                 //panduan   -  zan cun quanju
                                 //if has, todo  -----------------------------------
 
                                 //DB_PR("data_rx_t[6]=%d---.\r\n",data_rx_t[6]);
-                                if(04== data_rx_t[6])//12
+                                if(06== data_rx_t[6])//12 04
                                 {
                                     //zancun
                                     mima_weishu_ok_a1 =1;
@@ -4236,7 +4250,7 @@ wuci_xmh_unchangqi:
 
 
 
-                                    for (int i = 7; i < 7+ data_rx_t[6] *2 -2; i++) {
+                                    for (int i = 7; i < 7+ data_rx_t[6] *2 -2 -6; i++) {
                                         DB_PR("0x%.2X ", (uint8_t)data_rx_t[i]);
                                         if(data_rx_t[i] == 0xFF)
                                         {
@@ -4269,7 +4283,7 @@ wuci_xmh_unchangqi:
                                 //存物手机号（11位）密码（6位）            或者指纹(----)   
 
 
-                                if((1 == mima_weishu_ok_a1)&&(04== data_rx_t[6]))//6   ok todo shoujihao yiyou
+                                if((1 == mima_weishu_ok_a1)&&(03== data_rx_t[6]))//6  04   ok todo shoujihao yiyou
                                 {
                                     
                                     mima_weishu_ok_a1 =0;
@@ -4335,9 +4349,10 @@ done_mima_nosame:
 
                                 DB_PR("----test3-done--.\r\n");  
 
-                                send_cmd_to_lcd_bl(0x11e0,0);//key
-                                send_cmd_to_lcd_bl(0x11f0,0);//key2
-
+                                // send_cmd_to_lcd_bl(0x11e0,0);//key
+                                // send_cmd_to_lcd_bl(0x11f0,0);//key2
+                                send_cmd_to_lcd_bl_len(0x11e0,(uint8_t*)buff_t,30+5);//key
+                                send_cmd_to_lcd_bl_len(0x11f0,(uint8_t*)buff_t,30+5);//key2
 
                                 break;
 
@@ -4426,8 +4441,11 @@ done_mima_nosame:
                                     database_cw.cunwu_mode = 2;
                                 }
 
-                                send_cmd_to_lcd_bl(0x1050,0);//phone
-                                send_cmd_to_lcd_bl(0x1060,0);//key
+
+                                send_cmd_to_lcd_bl_len(0x1050,(uint8_t*)buff_t,30+5);//phone
+                                send_cmd_to_lcd_bl_len(0x1060,(uint8_t*)buff_t,30+5);//key
+                                // send_cmd_to_lcd_bl(0x1050,0);//phone
+                                // send_cmd_to_lcd_bl(0x1060,0);//key
 
 
                                 if(((shengyu_xiao==0) && (shengyu_zhong==0))
@@ -4563,9 +4581,10 @@ done_mima_nosame:
                                     } 
                                 }
  
-                                send_cmd_to_lcd_bl(0x1050,0);//phone
-                                send_cmd_to_lcd_bl(0x1060,0);//key
-
+                                // send_cmd_to_lcd_bl(0x1050,0);//phone
+                                // send_cmd_to_lcd_bl(0x1060,0);//key
+                                send_cmd_to_lcd_bl_len(0x1050,(uint8_t*)buff_t,30+5);//phone
+                                send_cmd_to_lcd_bl_len(0x1060,(uint8_t*)buff_t,30+5);//key
                                 
 
                                 break;
@@ -5123,6 +5142,9 @@ done_2:
                                     database_cw.cunwu_mode = 1;
                                     send_cmd_to_lcd_pic(0x000c);     
                                 }
+                                send_cmd_to_lcd_bl_len(0x1080,(uint8_t*)buff_t,30+5);//phone
+                                send_cmd_to_lcd_bl_len(0x1090,(uint8_t*)buff_t,30+5);//key
+
                                 break;
 
                             case 0x1080:
@@ -5154,7 +5176,8 @@ done_2:
                                 break;
                             case 0x1090:
                                 DB_PR("---q--mima-----.\r\n");
-
+                                send_cmd_to_lcd_bl_len(0x1080,(uint8_t*)buff_t,30+5);//phone
+                                send_cmd_to_lcd_bl_len(0x1090,(uint8_t*)buff_t,30+5);//key
                                 //DB_PR("---phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
 
                                 //存物的格口编号（123）、格口类型（1：小，2：中，3：大）
@@ -5368,8 +5391,11 @@ done_qu:
                                 DB_PR("----test3-done--.\r\n");  
 
                                 
-                                send_cmd_to_lcd_bl(0x1080,0);//phone
-                                send_cmd_to_lcd_bl(0x1090,0);//key
+                                // send_cmd_to_lcd_bl(0x1080,0);//phone
+                                // send_cmd_to_lcd_bl(0x1090,0);//key
+                                send_cmd_to_lcd_bl_len(0x1080,(uint8_t*)buff_t,30+5);//phone
+                                send_cmd_to_lcd_bl_len(0x1090,(uint8_t*)buff_t,30+5);//key
+
                                 database_cw.cunwu_mode =0;
                                 database_cw.dzx_mode = 0 ;
                                 database_cw.state=0;
@@ -5433,8 +5459,9 @@ done_kai_admin:
                                     send_cmd_to_lcd_pic(0x0010);
                                     DB_PR("----admin --mima weisu err-----.\r\n");
                                 }
-
-                                send_cmd_to_lcd_bl(0x10B0,0);//key
+                                
+                                send_cmd_to_lcd_bl_len(0x10B0,(uint8_t*)buff_t,30+5);//key
+                                // send_cmd_to_lcd_bl(0x10B0,0);//key
   
                                 break;
 
