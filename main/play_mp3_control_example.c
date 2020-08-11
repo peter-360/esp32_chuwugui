@@ -1065,12 +1065,12 @@ void tongbu_gekou_shuliang_x(uint16_t temp)
 #define  BL_GK_BH_Z 0x1230
 #define  BL_GK_BH_CHANGQI 0x1210
 
-#define  BL_GK_BH_D_LEN (0xCD)
+#define  BL_GK_BH_D_LEN 0x23//(0xCD)
 //0x132//306
 
 #define  BL_GK_BH_Z_LEN 0x23
 
-#define  BL_GK_BH_CHANGQI_LEN (0xCD)
+#define  BL_GK_BH_CHANGQI_LEN 0x23//(0xCD)
 //0xCD//0xCE
 
 //数组
@@ -1777,9 +1777,11 @@ void tongbu_da(void)
                 
                 itoa(buff_temp1[k],(char*)(buff_temp1_c+4*(k)),10);//+4*(i-1)
                 k++;
+
+                printf("\r\n");
             }
 
-            printf("\r\n");
+            
         }
 
         // printf("---i=%d\r\n",i);
@@ -1796,6 +1798,7 @@ void tongbu_da(void)
         if(buff_temp1_c[i]==0)
         {
             buff_temp1_c[i]=0x20;
+            printf("kongd ");
         }
     }
 
@@ -1824,9 +1827,10 @@ void tongbu_zh(void)
                 printf("b_temp2[l]= %03d ",buff_temp2[l]);//xiangmenhao
                 itoa(buff_temp2[l],(char*)(buff_temp2_c+4*(l)),10);//+4*(i-1)
                 l++;
+                printf("\r\n");
             }
 
-            printf("\r\n");
+            
         }
 
         //printf("---i=%d\r\n",i);
@@ -1842,6 +1846,7 @@ void tongbu_zh(void)
     {
         if(buff_temp2_c[i]==0)
         {
+            printf("kongz ");
             buff_temp2_c[i]=0x20;
         }
     }
@@ -1920,6 +1925,8 @@ uint8_t mima_number_a[6]={0};
 uint8_t mima_number_a1[6]={0};  
 uint8_t mima_number_a2[6]={0};  
 uint8_t buff_t[12]={0};
+
+uint8_t return_cause;
 
 static void echo_task2()//lcd
 {
@@ -2241,30 +2248,14 @@ static void echo_task2()//lcd
                                                     printf("\r\n");
                                                     nvs_wr_index_gz(1);
                 
-                                                    // if(1== database_gz[i].dzx_mode_gz)
-                                                    // {
-                                                    //     //char *	_EXFUN(itoa,(int, char *, int));
-
-                                                    //     buff_temp1[k] = database_gz[i].dIndx_gz;
-                                                    //     printf("b_temp1[k]= %03d ",buff_temp1[k]);//xiangmenhao
-                                                        
-                                                    //     itoa(buff_temp1[k],(char*)(buff_temp1_c+4*(k)),10);//+4*(i-1)
-                                                    //     k++;
-                                                    // }
-                                                    // else if(2== database_gz[i].dzx_mode_gz)
-                                                    // {
-                                                    //     buff_temp2[l] = database_gz[i].dIndx_gz;
-                                                    //     printf("b_temp2[l]= %03d ",buff_temp2[l]);//xiangmenhao
-                                                    //     itoa(buff_temp2[l],(char*)(buff_temp2_c+4*(l)),10);//+4*(i-1)
-                                                    //     l++;
-                                                    // }
+     
 
                                                     if(database_gz[i].dzx_mode_gz ==1)
                                                     {
-                                                        buff_temp1[id_max] = database_gz[i].dIndx_gz;
-                                                        printf("b_temp1[id_max]= %03d ",buff_temp1[id_max]);//xiangmenhao
+                                                        // buff_temp1[id_max] = database_gz[i].dIndx_gz;
+                                                        // printf("b_temp1[id_max]= %03d ",buff_temp1[id_max]);//xiangmenhao
                                                         
-                                                        itoa(buff_temp1[id_max],(char*)(buff_temp1_c+4*(id_max)),10);//+4*(i-1)
+                                                        // itoa(buff_temp1[id_max],(char*)(buff_temp1_c+4*(id_max)),10);//+4*(i-1)
 
                                                         id_max++;
                                                         if((database_gz[i].state_gz ==0)
@@ -2276,9 +2267,9 @@ static void echo_task2()//lcd
                                                     }
                                                     else if(database_gz[i].dzx_mode_gz ==2)
                                                     {
-                                                        buff_temp2[iz_max] = database_gz[i].dIndx_gz;
-                                                        printf("b_temp2[iz_max]= %03d ",buff_temp2[iz_max]);//xiangmenhao
-                                                        itoa(buff_temp2[iz_max],(char*)(buff_temp2_c+4*(iz_max)),10);//+4*(i-1)
+                                                        // buff_temp2[iz_max] = database_gz[i].dIndx_gz;
+                                                        // printf("b_temp2[iz_max]= %03d ",buff_temp2[iz_max]);//xiangmenhao
+                                                        // itoa(buff_temp2[iz_max],(char*)(buff_temp2_c+4*(iz_max)),10);//+4*(i-1)
 
                                                         iz_max++;
                                                         if((database_gz[i].state_gz ==0)
@@ -2314,40 +2305,6 @@ static void echo_task2()//lcd
                                                 }
                                                 
                                             }
-
-                                            
-                                            for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
-                                            {
-                                                if(buff_temp2_c[i]==0)
-                                                {
-                                                    buff_temp2_c[i]=0x20;
-                                                }
-                                                if(buff_temp1_c[i]==0)
-                                                {
-                                                    buff_temp1_c[i]=0x20;
-                                                }
-                                            }
-
-
-
-
-                                            for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
-                                            {
-                                                if(buff_temp2_c[i]==0)
-                                                {
-                                                    buff_temp2_c[i]=0x20;
-                                                }
-                                                if(buff_temp1_c[i]==0)
-                                                {
-                                                    buff_temp1_c[i]=0x20;
-                                                }
-                                            }
-                                            vTaskDelay(50 / portTICK_PERIOD_MS);
-                                            printf("-----gekouleixing-----\r\n");
-                                            send_cmd_to_lcd_bl_len(BL_GK_BH_Z,buff_temp2_c,BL_GK_BH_Z_LEN);//300 0x23 30
-                                            vTaskDelay(1 / portTICK_PERIOD_MS);
-                                            send_cmd_to_lcd_bl_len(BL_GK_BH_D,buff_temp1_c,BL_GK_BH_D_LEN);//300   空格
-                                            vTaskDelay(30 / portTICK_PERIOD_MS);
 
 
 
@@ -2392,6 +2349,10 @@ static void echo_task2()//lcd
                                             //vTaskDelay(10 / portTICK_PERIOD_MS);
                                             tongbu_gekou_shuliang_x(shengyu_xiao);
                                             //vTaskDelay(10 / portTICK_PERIOD_MS);
+
+                                            tongbu_da();
+                                            //vTaskDelay(1530 / portTICK_PERIOD_MS);
+                                            tongbu_zh();
 
                                             tongbu_changqi();
 
@@ -3069,7 +3030,39 @@ gekou_fail_x:
                                 //send_cmd_to_lcd_pic(KAIJI_PIC);
                                 break;
 
+                           case 0x1270://
+                                ESP_LOGI(TAG, "--xm fail return_cause =%d--.\r\n",return_cause);   
 
+                                switch (return_cause)
+                                {
+                                    case 1:
+                                        send_cmd_to_lcd_pic(0x0013);
+                                        break;
+                                    case 2:
+                                        send_cmd_to_lcd_pic(0x0023);
+                                        break;
+
+                                    case 3:
+                                        send_cmd_to_lcd_pic(0x0028);
+                                        break;
+                                    case 4:
+                                        send_cmd_to_lcd_pic(0x002b);
+                                        break;
+
+                                    case 5:
+                                        send_cmd_to_lcd_pic(0x0018);
+                                        break;
+                                    case 6:
+                                        send_cmd_to_lcd_pic(0x0021);
+                                        break;
+
+                                    default:
+
+                                        break;
+                                }
+                                    
+                                return_cause =0;
+                                break;
 
                            case 0x1130://
                                 ESP_LOGI(TAG, "--qingxiang--.\r\n");   
@@ -3258,6 +3251,7 @@ gekou_fail_x:
                                 {
 wuci_xmh_q:
                                     send_cmd_to_lcd_pic(FAIL_XMH_PIC);
+                                    return_cause = 2;
                                     ESP_LOGI(TAG, "----admin --wu ci xiangmenhao-----.\r\n");
                                 }
                                 //send_cmd_to_lcd_bl(0x1130,database_gz[database_cw.dIndx].dIndx_gz);//xiangmen------------
@@ -3429,6 +3423,7 @@ wuci_xmh_q:
                                 {
 wuci_xmh_lk:
                                     send_cmd_to_lcd_pic(FAIL_XMH_PIC);
+                                    return_cause = 3;
                                     ESP_LOGI(TAG, "----admin --wu ci xiangmenhao-----.\r\n");
                                 }
                                 //send_cmd_to_lcd_bl(0x1130,database_gz[database_cw.dIndx].dIndx_gz);//xiangmen------------
@@ -3595,6 +3590,7 @@ wuci_xmh_lk:
                                 {
 wuci_xmh_unlk:
                                     send_cmd_to_lcd_pic(FAIL_XMH_PIC);
+                                    return_cause = 4;
                                     ESP_LOGI(TAG, "----admin --wu ci xiangmenhao-----.\r\n");
                                 }
                                 //send_cmd_to_lcd_bl(0x1130,database_gz[database_cw.dIndx].dIndx_gz);//xiangmen------------
@@ -3724,7 +3720,9 @@ wuci_xmh_unlk:
                                 else
                                 {
 wuci_xmh_xinz:
-                                    send_cmd_to_lcd_pic(FAIL_CHANGQI_PIC);
+                                    send_cmd_to_lcd_pic(FAIL_XMH_PIC);
+                                    return_cause = 5;
+                                    //send_cmd_to_lcd_pic(FAIL_CHANGQI_PIC);
                                     ESP_LOGI(TAG, "----admin --wu ci xiangmenhao-----.\r\n");
                                 }
                                 //send_cmd_to_lcd_bl(0x1130,database_gz[database_cw_adm.dIndx].dIndx_gz);//xiangmen------------
@@ -4194,6 +4192,7 @@ done_longtime_2:
                                 {
 wuci_xmh_unchangqi:
                                     send_cmd_to_lcd_pic(FAIL_XMH_PIC);
+                                    return_cause = 6;
                                     ESP_LOGI(TAG, "----admin --wu ci xiangmenhao-----.\r\n");
                                 }
                                 //send_cmd_to_lcd_bl(0x1130,database_gz[database_cw.dIndx].dIndx_gz);//xiangmen------------
@@ -5551,7 +5550,8 @@ done_kai_admin:
                                 else
                                 {
 wuci_xmh:
-                                    send_cmd_to_lcd_pic(0x0015);
+                                    send_cmd_to_lcd_pic(FAIL_XMH_PIC);
+                                    return_cause = 1;
                                     ESP_LOGI(TAG, "----admin --wu ci xiangmenhao-----.\r\n");
                                 }
                                 //send_cmd_to_lcd_bl(0x10C0,database_gz[database_cw.dIndx].dIndx_gz);//xiangmen------------
@@ -7446,23 +7446,23 @@ void app_main(void)
 
 
 
-                if(1== database_gz[i].dzx_mode_gz)
-                {
-                    //char *	_EXFUN(itoa,(int, char *, int));
+                // if(1== database_gz[i].dzx_mode_gz)
+                // {
+                //     //char *	_EXFUN(itoa,(int, char *, int));
 
-                    buff_temp1[k] = database_gz[i].dIndx_gz;
-                    printf("b_temp1[k]= %03d ",buff_temp1[k]);//xiangmenhao
+                //     buff_temp1[k] = database_gz[i].dIndx_gz;
+                //     printf("b_temp1[k]= %03d ",buff_temp1[k]);//xiangmenhao
                     
-                    itoa(buff_temp1[k],(char*)(buff_temp1_c+4*(k)),10);//+4*(i-1)
-                    k++;
-                }
-                else if(2== database_gz[i].dzx_mode_gz)
-                {
-                    buff_temp2[l] = database_gz[i].dIndx_gz;
-                    printf("b_temp2[l]= %03d ",buff_temp2[l]);//xiangmenhao
-                    itoa(buff_temp2[l],(char*)(buff_temp2_c+4*(l)),10);//+4*(i-1)
-                    l++;
-                }
+                //     itoa(buff_temp1[k],(char*)(buff_temp1_c+4*(k)),10);//+4*(i-1)
+                //     k++;
+                // }
+                // else if(2== database_gz[i].dzx_mode_gz)
+                // {
+                //     buff_temp2[l] = database_gz[i].dIndx_gz;
+                //     printf("b_temp2[l]= %03d ",buff_temp2[l]);//xiangmenhao
+                //     itoa(buff_temp2[l],(char*)(buff_temp2_c+4*(l)),10);//+4*(i-1)
+                //     l++;
+                // }
 
 
 
@@ -7484,28 +7484,31 @@ void app_main(void)
     // uart0_debug_data_d(buff_temp1,0x9b);
 
 
-    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
-    {
-        if(buff_temp2_c[i]==0)
-        {
-            buff_temp2_c[i]=0x20;
-        }
-        if(buff_temp1_c[i]==0)
-        {
-            buff_temp1_c[i]=0x20;
-        }
-    }
+    // for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
+    // {
+    //     if(buff_temp2_c[i]==0)
+    //     {
+    //         buff_temp2_c[i]=0x20;
+    //     }
+    //     if(buff_temp1_c[i]==0)
+    //     {
+    //         buff_temp1_c[i]=0x20;
+    //     }
+    // }
 
 
-    vTaskDelay(50 / portTICK_PERIOD_MS);
-    printf("-----gekouleixing-----\r\n");
-    send_cmd_to_lcd_bl_len(BL_GK_BH_Z,buff_temp2_c,BL_GK_BH_Z_LEN);//300 0x23 30
-    vTaskDelay(1 / portTICK_PERIOD_MS);
-    send_cmd_to_lcd_bl_len(BL_GK_BH_D,buff_temp1_c,BL_GK_BH_D_LEN);//300   空格
-    vTaskDelay(30 / portTICK_PERIOD_MS);
-
-
+    // vTaskDelay(50 / portTICK_PERIOD_MS);
+    // printf("-----gekouleixing-----\r\n");
+    // send_cmd_to_lcd_bl_len(BL_GK_BH_Z,buff_temp2_c,BL_GK_BH_Z_LEN);//300 0x23 30
+    // vTaskDelay(1 / portTICK_PERIOD_MS);
+    // send_cmd_to_lcd_bl_len(BL_GK_BH_D,buff_temp1_c,BL_GK_BH_D_LEN);//300   空格
+    // vTaskDelay(30 / portTICK_PERIOD_MS);
+    tongbu_da();
+    //vTaskDelay(1530 / portTICK_PERIOD_MS);
+    tongbu_zh();
+    //vTaskDelay(1530 / portTICK_PERIOD_MS);
     tongbu_changqi();
+    //vTaskDelay(1530 / portTICK_PERIOD_MS);
 
 
     // err = save_restart_counter();
