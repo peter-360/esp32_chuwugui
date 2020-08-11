@@ -88,7 +88,7 @@ static void MYUSART_SendData(u8 data)
 	// USART2->DR = data;
 	uart_write_bytes(UART_NUM_ZHIWEN, (const char *) &data, 1);//------UART_NUM_2------
 	//uart_write_bytes(UART_NUM_LOCK, (const char *) &data, 1);//------UART_NUM_2------
-	printf("tozw data=%02x\r\n",data);
+	DB_PR("tozw data=%02x\r\n",data);
 	
 }
 //发送包头
@@ -143,10 +143,10 @@ static u8 *JudgeStr(u16 waittime)
 	{
 		//delay_ms(1);
 		//if(USART2_RX_STA&0X8000)//接收到一次数据
-		printf("as-waittime = %d\r\n",waittime);
-		// ESP_LOGI(TAG,"as-waittime = %d\r\n",waittime);
-		ESP_LOGI(TAG,"as-flag_rx2 = %d\r\n",flag_rx2);
-		ESP_LOGI(TAG,"as-len_rx2_m = %d\r\n",len_rx2_m);
+		DB_PR("as-waittime = %d\r\n",waittime);
+		// DB_PR("as-waittime = %d\r\n",waittime);
+		DB_PR("as-flag_rx2 = %d\r\n",flag_rx2);
+		DB_PR("as-len_rx2_m = %d\r\n",len_rx2_m);
 		// debug_uart1_write_bytes((const char*)data_rx2_m, len_rx2_m);
 		if(flag_rx2 ==1)
 		{
@@ -154,14 +154,14 @@ static u8 *JudgeStr(u16 waittime)
 			flag_rx2 =0;
 			data=strstr((const char*)data_rx2_m,(const char*)str);
 			
-			ESP_LOGI(TAG,"------JudgeStr ok-------!!!\r\n");
-			//ESP_LOGI(TAG,"data = %d\r\n",(u32)data);
+			DB_PR("------JudgeStr ok-------!!!\r\n");
+			//DB_PR("data = %d\r\n",(u32)data);
 			if(data)
 				return (u8*)data;	
 		}
 		else
 		{
-			ESP_LOGI(TAG,"--------JudgeStr err--------!!!\r\n");
+			DB_PR("--------JudgeStr err--------!!!\r\n");
 		}
 		
 		
@@ -400,9 +400,9 @@ u8 PS_WriteReg(u8 RegNum,u8 DATA)
 	else
 		ensure=0xff;
 	if(ensure==0)
-		printf("\r\n设置参数成功！");
+		DB_PR("\r\n设置参数成功！");
 	else
-		printf("\r\n%s",EnsureMessage(ensure));
+		DB_PR("\r\n%s",EnsureMessage(ensure));
 	return ensure;
 }
 //读系统基本参数 PS_ReadSysPara
@@ -435,13 +435,13 @@ u8 PS_ReadSysPara(SysPara *p)
 		ensure=0xff;
 	if(ensure==0x00)
 	{
-		printf("\r\n模块最大指纹容量=%d",p->PS_max);
-		printf("\r\n对比等级=%d",p->PS_level);
-		printf("\r\n地址=%x",p->PS_addr);
-		printf("\r\n波特率=%d",p->PS_N*9600);
+		DB_PR("\r\n模块最大指纹容量=%d",p->PS_max);
+		DB_PR("\r\n对比等级=%d",p->PS_level);
+		DB_PR("\r\n地址=%x",p->PS_addr);
+		DB_PR("\r\n波特率=%d",p->PS_N*9600);
 	}
 	else 
-			printf("\r\n%s",EnsureMessage(ensure));
+			DB_PR("\r\n%s",EnsureMessage(ensure));
 	return ensure;
 }
 //设置模块地址 PS_SetAddr
@@ -475,9 +475,9 @@ u8 PS_SetAddr(u32 PS_addr)
 		
 	AS608Addr = PS_addr;//-----------------------
 	if(ensure==0x00)
-		printf("\r\n设置地址成功！");
+		DB_PR("\r\n设置地址成功！");
 	else
-		printf("\r\n%s",EnsureMessage(ensure));
+		DB_PR("\r\n%s",EnsureMessage(ensure));
 	return ensure;
 }
 //功能： 模块内部为用户开辟了256bytes的FLASH空间用于存用户记事本,
@@ -594,10 +594,10 @@ u8 PS_ValidTempleteNum(u16 *ValidN)
 	//delay_ms(200);//---------------------
   data=JudgeStr(2000);
 
-	// ESP_LOGI(TAG,"\r\n-----data--指纹个数=%d",(u32)data);
+	// DB_PR("\r\n-----data--指纹个数=%d",(u32)data);
 
-	// ESP_LOGI(TAG,"\r\n-----data--指纹个数=%d",data[9]);
-	// ESP_LOGI(TAG,"\r\n-----debug--指纹个数=%d",(data[10]<<8)+data[11]);
+	// DB_PR("\r\n-----data--指纹个数=%d",data[9]);
+	// DB_PR("\r\n-----debug--指纹个数=%d",(data[10]<<8)+data[11]);
 
 
 	// Uart1SendString("data[9]=");
@@ -631,12 +631,12 @@ u8 PS_ValidTempleteNum(u16 *ValidN)
 	if(ensure==0x00)
 	{
 		;
-		printf("\r\n-printf youxiaozhiwengeshu-有效指纹个数= %d \r\n",(data[10]<<8)+data[11]);
+		DB_PR("\r\n-DB_PR youxiaozhiwengeshu-有效指纹个数= %d \r\n",(data[10]<<8)+data[11]);
 	}
 	else
 	{
 		;
-		printf("\r\n----error2--%s",EnsureMessage(ensure));
+		DB_PR("\r\n----error2--%s",EnsureMessage(ensure));
 	}
 
 	return ensure;

@@ -80,5 +80,47 @@ extern int len_rx2;
 
 extern const char *TAG ;
 
+
+
+
+
+
+
+
+
+//ESP_LOGI(TAG,"--------JudgeStr err--------!!!\r\n");
+// int	_EXFUN(printf, (const char *__restrict, ...)
+//                _ATTRIBUTE ((__format__ (__printf__, 1, 2))));
+
+// #define __DEBUG__  
+// #ifdef __DEBUG__  
+// #define debug_print(format,...) printf("File: "__FILE__", Line: %05d: "format"/n", __LINE__, ##__VA_ARGS__)  
+// #else  
+// #define DEBUG(format,...)  
+// #endif  
+
+
+
+#define _DEBUG_ 0
+
+#if _DEBUG_
+#define DB_PR(...) printf(__VA_ARGS__)
+#else
+#define DB_PR(...) 
+#endif
+
+
+
+
+#define _DEBUG2_ 0
+#if _DEBUG2_
+#define DB_PR2(...) printf(__VA_ARGS__)
+#else
+#define DB_PR2(...) 
+#endif
+
+
+
+
 #endif
 
