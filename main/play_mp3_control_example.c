@@ -1936,6 +1936,7 @@ uint8_t buff_t[100]={0};
 uint8_t return_cause;//xiangmen fail
 
 uint8_t return_cause_zanwu_kx;
+uint8_t return_cause_has_be_lock;
 
 static void echo_task2()//lcd
 {
@@ -2412,7 +2413,7 @@ static void echo_task2()//lcd
                                 }
                                 DB_PR("\r\n");
                                 hang_shu_max =0;
-                                if(data_rx_t[2] == 0xCE)//0x9c)
+                                if(data_rx_t[2] == 0xCE)//0xFC)//0xCE)//0x9c)
                                 {
                                     send_cmd_to_lcd_bl_len(BL_GK_SZ_D,(uint8_t*)buff_t,BL_GK_BH_MAX_LEN);//
                                     char show[156][10];
@@ -3287,6 +3288,24 @@ wuci_xmh_q:
 
 
 
+                            case 0x1280://mima? zanwukongxiang close
+                                DB_PR("---return_cause_has_be_lock=%d---.\r\n",return_cause_has_be_lock);   
+                                //if -> huise tupian?
+                                if(return_cause_has_be_lock == 1)
+                                {
+                                    DB_PR("--2 lock--.\r\n");  
+                                    send_cmd_to_lcd_pic(0x0028);
+                                }
+                                else
+                                {
+                                    DB_PR("--other 111 --.\r\n");  
+                                    //baocun 1
+                                    send_cmd_to_lcd_pic(0x0011);
+                                }
+                                return_cause_has_be_lock =0;
+
+                                break;
+
 
 
 
@@ -3320,11 +3339,18 @@ wuci_xmh_q:
                                     database_cw.dIndx = find_lock_index(guimen_gk_temp);
 
 
-
+ 
+                                    if(database_gz[database_cw.dIndx].lock == 1)
+                                    {
+                                        DB_PR("--break, have been be lock--.\r\n");   
+                                        send_cmd_to_lcd_pic(0x004a);
+                                        return_cause_has_be_lock = 1;
+                                        break;
+                                        //goto wuci_xmh_lk;
+                                    }
                                     
  
                                     if((database_gz[database_cw.dIndx].state_fenpei_gz == 0)
-                                        ||(database_gz[database_cw.dIndx].lock == 1)
                                        ||(database_cw.dIndx ==0))
                                     {
                                         goto wuci_xmh_lk;
@@ -4523,11 +4549,9 @@ done_mima_nosame:
                                 //     ||((shengyu_da==0) && (shengyu_zhong==0)))
                                 if(return_cause_zanwu_kx == 3)
                                 {
-  
                                     DB_PR("--2 cunwu--.\r\n");  
                                     //baocun 1
                                     send_cmd_to_lcd_pic(0x0002);
-
                                 }
                                 else if(return_cause_zanwu_kx == 4)
                                 {
@@ -4536,8 +4560,14 @@ done_mima_nosame:
                                 }
                                 else if(return_cause_zanwu_kx == 1)
                                 {
-                                    DB_PR("--2 gekou--.\r\n");  
+                                    DB_PR("--2 zhuye--.\r\n");  
                                     send_cmd_to_lcd_pic(0x0026);
+                                }
+                                else
+                                {
+                                    DB_PR("--other cunwu --.\r\n");  
+                                    //baocun 1
+                                    send_cmd_to_lcd_pic(0x0002);
                                 }
                                 return_cause_zanwu_kx =0;
 
@@ -5188,7 +5218,9 @@ done_2:
                                 if(01== data_rx_t[8])//12 zhiwen
                                 {
                                     database_cw.cunwu_mode = 1;
-                                    send_cmd_to_lcd_pic(0x000c);     
+                                    send_cmd_to_lcd_pic(0x000c);   
+
+                                    xTaskCreate(press_FR, "shua_zhiwen_task", 6* 1024, NULL, 2, NULL);//1024 10  
                                 }
                                 send_cmd_to_lcd_bl_len(0x1080,(uint8_t*)buff_t,30+5);//phone
                                 send_cmd_to_lcd_bl_len(0x1090,(uint8_t*)buff_t,30+5);//key
@@ -5838,7 +5870,7 @@ static void lock_all_open_task()
 {
     uint16_t j=0,k=0;
 
-    send_cmd_to_lcd_pic(ALLOPEN_OK_PIC);
+    send_cmd_to_lcd_pic(0x0049);
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
     {
         vTaskDelay(1);
@@ -5856,6 +5888,7 @@ static void lock_all_open_task()
             //vTaskDelay(300 / portTICK_PERIOD_MS);
         }
     }
+    send_cmd_to_lcd_pic(ALLOPEN_OK_PIC);
 
     vTaskDelay(1);
     vTaskDelete(NULL);
@@ -5868,7 +5901,7 @@ static void lock_all_clear_task()
     int j=0,k=0,l=0;
     uint16_t m=0,n=0;
 
-    send_cmd_to_lcd_pic(CLEAR_ALL_OK_PIC);
+    send_cmd_to_lcd_pic(0x004b);
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
     {
         //vTaskDelay(1);
@@ -5962,7 +5995,7 @@ static void lock_all_clear_task()
     nvs_wr_shengyu_zhong(1);
     nvs_wr_shengyu_xiao(1);
 
-
+    send_cmd_to_lcd_pic(CLEAR_ALL_OK_PIC);
 
     vTaskDelay(1);
     
@@ -6866,7 +6899,8 @@ void press_FR(void)
 				DB_PR("刷指纹成功 ");				
 
 				DB_PR("确有此人,ID:%d  匹配得分:%d ",seach.pageID,seach.mathscore);
-
+                
+                Del_FR(seach.pageID);
 				//myfree(SRAMIN,str);
 			}
 			else 
@@ -6916,6 +6950,189 @@ void Del_FR(u16 num)
 	//LCD_Fill(0,100,lcddev.width,160,WHITE);
 	delay_ms(50);
 	//AS608_load_keyboard(0,170,(u8**)kbd_menu);
+
+
+
+
+
+    DB_PR("AS608Para.PS_max=%d, ValidN =%d ",AS608Para.PS_max, ValidN);
+    DB_PR("库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
+
+
+
+    if(database_ad.zhiwen_page_id_adm[num] ==1)
+    {
+        ;
+
+    }
+
+
+
+
+
+
+
+    // database_cw.dIndx = 0;
+    // for (uint16_t i = 1; i <= SHENYU_GEZI_MAX; i++)//todo changqi and suoding
+    // {
+
+    //     if(database_gz[i].phone_number_nvs_gz == phone_number_nvs_i)
+    //     {
+    //         if(database_gz[i].mima_number_nvs_gz == mima_number_nvs_i) 
+    //         {
+
+    //             //chongfu_flag =1;
+    //             database_cw.dIndx = i;//ok
+    //             DB_PR("---yes- phone_number and key_number has in database\r\n");
+    //         }
+
+    //     }
+    //     else//
+    //     {
+    //         //DB_PR("---phone_number and mima will xin\r\n");
+    //     }
+        
+    // }
+    if(database_cw.dIndx == 0)//
+    {
+        send_cmd_to_lcd_pic(0x000d); //
+        DB_PR("---no find phone\r\n");
+        // database_cw.dIndx = atoi((const char*)mima_number);//data_rx_t[7] - 0x30;
+        //goto done_qu_zanwu;//todo
+    }
+    else
+    {
+
+        DB_PR("---phone_number and mima etc... will be deleted\r\n");
+
+        // database_gz[database_cw.dIndx].state_gz =database_cw.state;
+        DB_PR("---add---database_cw.dIndx=%u\r\n",database_cw.dIndx);
+
+
+        int16_t guimen_gk_temp =0;
+
+        guimen_gk_temp = database_cw.dIndx ;
+
+        uint16_t j=0,k=0;
+
+        k = guimen_gk_temp/24;
+        j = guimen_gk_temp%24;
+
+        if(guimen_gk_temp%24 ==0)
+        {
+            k = guimen_gk_temp/24 -1;
+            j = 24;
+        }
+        DB_PR("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
+
+
+
+        // uint16_t j=0,k=0;
+
+        // k = guimen_gk_temp/24;
+        // j = guimen_gk_temp%24;
+
+        // if(guimen_gk_temp%24 ==0)
+        // {
+        //     k = guimen_gk_temp/24 -1;
+        //     j = 24;
+        // }
+    
+
+
+        DB_PR("--lock:%d ok--.\r\n",j);
+        send_cmd_to_lock(k+1,j);
+        send_cmd_to_lcd_bl(0x10a0,database_gz[database_cw.dIndx].dIndx_gz);//weishu bugou
+
+            
+
+
+
+
+
+        if((database_gz[database_cw.dIndx].lock == 0)
+            &&(database_gz[database_cw.dIndx].changqi == 0))
+        {
+            switch (database_gz[database_cw.dIndx].dzx_mode_gz)
+            {
+            case 1:
+                //d
+                shengyu_da ++;
+                tongbu_gekou_shuliang_d(shengyu_da); 
+                break;
+            case 2:
+                //z
+                shengyu_zhong ++;
+                tongbu_gekou_shuliang_z(shengyu_zhong); 
+                break;
+            case 3:
+                //x
+                shengyu_xiao ++;
+                tongbu_gekou_shuliang_x(shengyu_xiao); 
+                break;
+
+            default:
+                break;
+            }
+
+            shengyu_all ++ ;
+            tongbu_gekou_shuliang_all(shengyu_all);
+
+            nvs_wr_shengyu_da(1);
+            nvs_wr_shengyu_zhong(1);
+            nvs_wr_shengyu_xiao(1);
+
+        }
+
+
+
+
+        DB_PR("----test--.\r\n");  
+        
+
+        //if(0 != database_cw.dzx_mode)
+        {
+
+            // char key_name[15];//15
+            // esp_err_t err;
+
+
+
+            if(database_gz[database_cw.dIndx].changqi == 0)
+            {
+                database_gz[database_cw.dIndx].cunwu_mode_gz = 0;
+                //database_gz[database_cw.dIndx].dzx_mode_gz = 0;
+                nvs_wr_cunwu_mode_gz(1);
+                //nvs_wr_dzx_mode_gz(1);
+
+                database_gz[database_cw.dIndx].phone_number_nvs_gz = 0;
+                database_gz[database_cw.dIndx].mima_number_nvs_gz = 0;
+                nvs_wr_phone_number_nvs_gz(1);
+                nvs_wr_mima_number_nvs_gz(1);
+                database_gz[database_cw.dIndx].state_gz =0;
+                nvs_wr_state_gz(1);
+            }
+
+
+
+
+
+
+            //custumer   mingming kongjian   todo
+            // esp_err_t err = save_u16_value(STORAGE_NAMESPACE,"dw_dIndx",database_cw.dIndx);
+            // if (err != ESP_OK) DB_PR("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+            // err = read_u16_value(STORAGE_NAMESPACE,"dw_dIndx", (uint16_t*)(&database_cw.dIndx));
+            // if (err != ESP_OK) DB_PR("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+            //unique number
+
+        }
+
+        send_cmd_to_lcd_pic(0x000e); 
+    }
+
+
 }
 
 
