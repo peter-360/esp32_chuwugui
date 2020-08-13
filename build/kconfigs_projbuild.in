@@ -1,7 +1,0 @@
-source "D:/0_xitian/software/ESP32/0_code/esp-idf/components/app_update/Kconfig.projbuild"
-source "D:/0_xitian/software/ESP32/0_code/esp-idf/components/bootloader/Kconfig.projbuild"
-source "D:/0_xitian/software/ESP32/0_code/esp-idf/components/esptool_py/Kconfig.projbuild"
-source "D:/0_xitian/software/ESP32/0_code/esp-idf/components/partition_table/Kconfig.projbuild"
-source "D:/0_xitian/software/ESP32/0_code/esp-adf-me/esp-adf/components/audio_board/Kconfig.projbuild"
-source "D:/0_xitian/software/ESP32/0_code/esp-adf-me/esp-adf/components/esp-adf-libs/Kconfig.projbuild"
-source "D:/0_xitian/software/ESP32/0_code/esp-adf-me/esp-adf/components/esp-sr/Kconfig.projbuild"
