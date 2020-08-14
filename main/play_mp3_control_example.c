@@ -190,8 +190,8 @@ const char *TAG = "uart_events";
 
 
 
-#define ECHO_TEST_TXD  GPIO_NUM_32//32(GPIO_NUM_33)//GPIO_NUM_4
-#define ECHO_TEST_RXD  GPIO_NUM_33//33(GPIO_NUM_32)//GPIO_NUM_5
+#define ECHO_TEST_TXD  GPIO_NUM_33//32(GPIO_NUM_33)//GPIO_NUM_4
+#define ECHO_TEST_RXD  GPIO_NUM_32//33(GPIO_NUM_32)//GPIO_NUM_5
 #define ECHO_TEST_RTS  (UART_PIN_NO_CHANGE)
 #define ECHO_TEST_CTS  (UART_PIN_NO_CHANGE)
 
@@ -243,9 +243,14 @@ const char *TAG = "uart_events";
     // #define ECHO_TEST4_RTS  (UART_PIN_NO_CHANGE)
     // #define ECHO_TEST4_CTS  (UART_PIN_NO_CHANGE)
 
+#define LED_BLUE     (GPIO_NUM_2)
+#define LED_GRREN     (GPIO_NUM_22)
+#define LED_RED     (GPIO_NUM_27)
 
-
-
+#define GPIO_INPUT_IO_0     39//4
+// #define GPIO_INPUT_IO_1     5
+#define GPIO_INPUT_PIN_SEL  ((1ULL<<GPIO_INPUT_IO_0))// | (1ULL<<GPIO_INPUT_IO_1)
+#define ESP_INTR_FLAG_DEFAULT 0
 
 
 #define BUF_SIZE (1024)
@@ -6077,7 +6082,7 @@ static void echo_task()
             
             len_rx2_m = len_rx2;
             memcpy(data_rx2_m,data_rx2,len_rx2_m);
-            DB_PR("rcv_zhiwen_uart2-Received %u bytes:", len_rx2_m);
+            DB_PR("2rcv_zhiwen_uart2-Received %u bytes:", len_rx2_m);
             for (int i = 0; i < len_rx2_m; i++) {
                 DB_PR("0x%.2X ", (uint8_t)data_rx2_m[i]);
             }
@@ -6097,7 +6102,7 @@ static void echo_task()
 
         if (len_rx > 0) {
 
-            DB_PR("uart1-Received %u bytes:", len_rx);
+            DB_PR("1rcv_lcd_uart1-Received %u bytes:", len_rx);
             for (int i = 0; i < len_rx; i++) {
                 DB_PR("0x%.2X ", (uint8_t)data_rx[i]);
                 // if(spear_uart_process_data(data_rx[i]))
@@ -7244,6 +7249,7 @@ void uart_init_all(void)
     //Set UART pins (using UART0 default pins ie no changes.)
     uart_param_config(UART_NUM_0, &uart_config0);
     uart_set_pin(UART_NUM_0, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    // uart_set_pin(UART_NUM_0, ECHO_TEST3_TXD, ECHO_TEST3_RXD, ECHO_TEST3_RTS, ECHO_TEST3_CTS);
     //Install UART driver, and get the queue.
     uart_driver_install(UART_NUM_0, BUF_SIZE * 2, 0, 0, NULL, 0);
 
@@ -7706,6 +7712,41 @@ void zhiwen_init(void )
 
 }
 
+
+static xQueueHandle gpio_evt_queue = NULL;
+
+static void IRAM_ATTR gpio_isr_handler(void* arg)
+{
+    uint32_t gpio_num = (uint32_t) arg;
+    xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
+}
+
+static void gpio_task_example(void* arg)
+{
+    uint32_t io_num;
+    for(;;) {
+        if(xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) {
+            DB_PR("GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));
+
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            gpio_set_level(LED_BLUE, 0);
+            gpio_set_level(LED_GRREN, 0);
+            gpio_set_level(LED_RED, 0);
+
+
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            gpio_set_level(LED_BLUE, 1);
+            gpio_set_level(LED_GRREN, 1);
+            gpio_set_level(LED_RED, 1);
+
+        }
+
+
+    }
+}
+
+
+
 void app_main(void)
 {
     u16 buff_temp1[300]={0};
@@ -7777,8 +7818,82 @@ void app_main(void)
     /* Set the GPIO as a push/pull output */
     gpio_set_direction(RE_485_GPIO, GPIO_MODE_OUTPUT);
     
-    RS485_RX_EN();
+    
+    gpio_pad_select_gpio(ECHO_TEST3_TXD);
+    /* Set the GPIO as a push/pull output */
+    gpio_set_direction(ECHO_TEST3_TXD, GPIO_MODE_DISABLE);
 
+    gpio_pad_select_gpio(ECHO_TEST3_RXD);
+    /* Set the GPIO as a push/pull output */
+    gpio_set_direction(ECHO_TEST3_RXD, GPIO_MODE_DISABLE);
+
+
+
+
+    RS485_RX_EN();
+    //RS485_TX_EN();
+
+    gpio_pad_select_gpio(LED_BLUE);
+    /* Set the GPIO as a push/pull output */
+    gpio_set_direction(LED_BLUE, GPIO_MODE_OUTPUT);
+    gpio_set_level(LED_BLUE, 1);
+
+
+    gpio_pad_select_gpio(LED_GRREN);
+    /* Set the GPIO as a push/pull output */
+    gpio_set_direction(LED_GRREN, GPIO_MODE_OUTPUT);
+    gpio_set_level(LED_GRREN, 1);
+
+
+    gpio_pad_select_gpio(LED_RED);
+    /* Set the GPIO as a push/pull output */
+    gpio_set_direction(LED_RED, GPIO_MODE_OUTPUT);
+    gpio_set_level(LED_RED, 1);
+
+
+    gpio_config_t io_conf;
+    // //disable interrupt
+    // io_conf.intr_type = GPIO_PIN_INTR_DISABLE;
+    // //set as output mode
+    // io_conf.mode = GPIO_MODE_OUTPUT;
+    // //bit mask of the pins that you want to set,e.g.GPIO18/19
+    // io_conf.pin_bit_mask = GPIO_OUTPUT_PIN_SEL;
+    // //disable pull-down mode
+    // io_conf.pull_down_en = 0;
+    // //disable pull-up mode
+    // io_conf.pull_up_en = 0;
+    // //configure GPIO with the given settings
+    // gpio_config(&io_conf);
+
+    //interrupt of rising edge
+    io_conf.intr_type = GPIO_PIN_INTR_POSEDGE;
+    //bit mask of the pins, use GPIO39/5 here
+    io_conf.pin_bit_mask = GPIO_INPUT_PIN_SEL;
+    //set as input mode    
+    io_conf.mode = GPIO_MODE_INPUT;
+    //enable pull-up mode
+    io_conf.pull_up_en = 1;
+    gpio_config(&io_conf);
+
+    //change gpio intrrupt type for one pin
+    gpio_set_intr_type(GPIO_INPUT_IO_0, GPIO_INTR_ANYEDGE);
+
+    //create a queue to handle gpio event from isr
+    gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
+    //start gpio task
+    xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
+
+    //install gpio isr service
+    gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
+    //hook isr handler for specific gpio pin
+    gpio_isr_handler_add(GPIO_INPUT_IO_0, gpio_isr_handler, (void*) GPIO_INPUT_IO_0);
+    // //hook isr handler for specific gpio pin
+    // gpio_isr_handler_add(GPIO_INPUT_IO_1, gpio_isr_handler, (void*) GPIO_INPUT_IO_1);
+
+    //remove isr handler for gpio number.
+    gpio_isr_handler_remove(GPIO_INPUT_IO_0);
+    //hook isr handler for specific gpio pin again
+    gpio_isr_handler_add(GPIO_INPUT_IO_0, gpio_isr_handler, (void*) GPIO_INPUT_IO_0);
 
 
 
@@ -7931,10 +8046,22 @@ void app_main(void)
 
 
 
-    // for(uint16_t i=1;i<=10;i++)
+    // for(uint16_t i=1;i<=3;i++)
     // {
-    //     vTaskDelay(1000 / portTICK_PERIOD_MS);
+    //     //vTaskDelay(1000 / portTICK_PERIOD_MS);
     //     DB_PR("i=%d----\n",i);
+
+    //     vTaskDelay(1000 / portTICK_PERIOD_MS);
+    //     gpio_set_level(LED_BLUE, 0);
+    //     gpio_set_level(LED_GRREN, 0);
+    //     gpio_set_level(LED_RED, 0);
+
+
+    //     vTaskDelay(1000 / portTICK_PERIOD_MS);
+    //     gpio_set_level(LED_BLUE, 1);
+    //     gpio_set_level(LED_GRREN, 1);
+    //     gpio_set_level(LED_RED, 1);
+
     // }
     audio_init();
 
