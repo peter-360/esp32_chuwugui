@@ -6269,12 +6269,13 @@ void ShowErrMessage(u8 ensure)
 //录指纹
 void Add_FR()
 {
-	u8 i=0,ensure ,processnum=0;
+	u8 i=0,ensure=0 ,processnum=0;
+    // u8 ensure_2=0,ensure_3=0;
     SearchResult p_rsp;
 	//u16 ID;
 	while(1)
 	{
-        vTaskDelay(1 / portTICK_PERIOD_MS);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
 		switch (processnum)
 		{
 			case 0:
@@ -6286,14 +6287,15 @@ void Add_FR()
 				if(ensure==0x00) 
 				{
 					//BEEP=1;------------------------
-                    delay_ms(100);//这里需要延时一下，模块内部处理图像需要时间
+                    delay_ms(200);//这里需要延时一下，模块内部处理图像需要时间
 					ensure=PS_GenChar(CharBuffer1);//生成特征
 					//BEEP=0;
 					if(ensure==0x00)
 					{
                         delay_ms(20);
-                        DB_PR("--0-ok--指纹正常");
+                        DB_PR("--0-ok1--指纹正常");
                         ensure = PS_Search(CharBuffer1, 0x0000, 0x00AA, &p_rsp);//0x02
+                        DB_PR("-------p_rsp->pageID=%02x----\r\n",p_rsp.pageID);
                         if(ensure==0x00)
                         {
                             //LCD_Fill(0,120,lcddev.width,160,WHITE);
@@ -6307,12 +6309,12 @@ void Add_FR()
                         else 
                         {
                             
-                            DB_PR("--0-ok-对比成功,新的指纹");
+                            DB_PR("--0-ok2-对比成功,新的指纹");
                             i=0;
                             processnum=1;//跳到第二步	
 
                         }
-                        delay_ms(1200);
+                        delay_ms(200);
 				
 					}
                     else 
@@ -6338,13 +6340,13 @@ void Add_FR()
 				if(ensure==0x00) 
 				{
 					//BEEP=1;
-                    delay_ms(100);//这里需要延时一下，模块内部处理图像需要时间
+                    delay_ms(200);//这里需要延时一下，模块内部处理图像需要时间
 					ensure=PS_GenChar(CharBuffer2);//生成特征
 					//BEEP=0;
 					if(ensure==0x00)
 					{
                         delay_ms(20);
-                        DB_PR("--1-ok--指纹正常 ");
+                        DB_PR("--1-ok1--指纹正常 ");
                         ensure = PS_Search(CharBuffer2, 0x0000, 0x00AA, &p_rsp);//0x02
                         if(ensure==0x00)
                         {
@@ -6359,12 +6361,12 @@ void Add_FR()
                         }
                         else 
                         {
-                            DB_PR("--1-ok-对比成功,新的指纹");
+                            DB_PR("--1-ok2-对比成功,新的指纹");
                             i=0;
                             processnum=2;//跳到第三步			
 
                         }
-                        delay_ms(1200);
+                        delay_ms(200);
 
 					}
                     else 
@@ -6387,8 +6389,8 @@ void Add_FR()
 				if(ensure==0x00) 
 				{
 					//BEEP=1;
+                    delay_ms(200);//这里需要延时一下，模块内部处理图像需要时间
 					ensure=PS_GenChar(CharBuffer3);//生成特征
-                    delay_ms(100);//这里需要延时一下，模块内部处理图像需要时间
 					//BEEP=0;
 					if(ensure==0x00)
 					{
@@ -6413,7 +6415,7 @@ void Add_FR()
                             processnum=3;//跳到第三步			
 
                         }
-                        delay_ms(1200);
+                        delay_ms(200);
 
 					}
                     else 
@@ -6439,7 +6441,7 @@ void Add_FR()
 					DB_PR("--3-ok生成指纹模板成功 ");
 					processnum=4;//跳到第五步
 				}else {processnum=0;ShowErrMessage(ensure);}
-				delay_ms(1200);
+				delay_ms(200);
 				break;
 				
 			case 4:	
@@ -6909,7 +6911,7 @@ done_zwc_fail:
 		delay_ms(400);
 		if(i==5)//超过5次没有按手指则退出
 		{
-            DB_PR("---->5 超过5次没有按手指则退出 ");
+            DB_PR("---->5a---- 超过5次没有按手指则退出 ");
 			//LCD_Fill(0,100,lcddev.width,160,WHITE);
 			break;	
 		}				
@@ -6929,38 +6931,64 @@ void press_FR(void)
         SearchResult seach;
         u8 ensure;
         //char *str;
+        delay_ms(500);
         ensure=PS_GetImage();
+        delay_ms(200);
+        DB_PR("-----11111111------\r\n");
         if(ensure==0x00)//获取图像成功 
         {	
             //BEEP=1;//打开蜂鸣器	---------------
+            delay_ms(500);
             ensure=PS_GenChar(CharBuffer1);
+            delay_ms(200);
+            DB_PR("-----2222-----\r\n");
             if(ensure==0x00) //生成特征成功
             {		
                 //BEEP=0;//关闭蜂鸣器	-------------
                 //ensure=PS_HighSpeedSearch(CharBuffer1,0,AS608Para.PS_max,&seach);
-                ensure=PS_Search(CharBuffer1,0,AS608Para.PS_max,&seach);
-                
+                DB_PR("-----333--tezheng------\r\n");
+                delay_ms(200);
+                DB_PR("-----AS608Para.PS_max=%d\r\n",AS608Para.PS_max);
+                ensure=PS_Search(CharBuffer1,0,0xAA,&seach);//AS608Para.PS_max
+                delay_ms(200);
                 if(ensure==0x00)//搜索成功
                 {				
                     //LCD_Fill(0,100,lcddev.width,160,WHITE);
-                    DB_PR("刷指纹成功 ");				
+                    DB_PR("-----4444-----刷指纹成功 ");				
 
-                    DB_PR("确有此人,ID:%d  匹配得分:%d ",seach.pageID,seach.mathscore);
+                    DB_PR("---------确有此人,ID:%d  匹配得分:%d ",seach.pageID,seach.mathscore);
                     
                     Del_FR(seach.pageID);
                     break;
                     //myfree(SRAMIN,str);
                 }
                 else 
-                    ShowErrMessage(ensure);					
+                {
+                    DB_PR("-----4444----f----- ");				
+                    ShowErrMessage(ensure);			
+                    break;
+                }
+                    		
             }
             else
-                ShowErrMessage(ensure);
+            {
+                DB_PR("-----333--tezheng  f------");
+                ShowErrMessage(ensure);			
+                break;     
+            }
             //BEEP=0;//关闭蜂鸣器-----------
             delay_ms(600);
             //LCD_Fill(0,100,lcddev.width,160,WHITE);
         }
+        else
+        {
+            DB_PR("-----2222   f-----");
+            break;//add
+        }
+        
     }
+    vTaskDelay(1);
+    vTaskDelete(NULL);
 		
 }
 
@@ -6970,9 +6998,12 @@ void Del_FR(u16 num)
 	u8  ensure;
 	//u16 num;
 	//LCD_Fill(0,100,lcddev.width,160,WHITE);
-	DB_PR("删除指纹 ");
-	DB_PR("请输入指纹ID按Enter发送 ");
-	DB_PR("0=< ID <=299 ");
+	DB_PR("删除指纹 \r\n");
+	DB_PR("请输入指纹ID按Enter发送 \r\n");
+	DB_PR("0=< ID <=299 \r\n");
+
+    DB_PR("num=%x \r\n",num);
+    num =0x0019;
 	delay_ms(50);
 	//AS608_load_keyboard(0,170,(u8**)kbd_delFR);
 	//num=GET_NUM();//获取返回的数值
@@ -7004,12 +7035,13 @@ void Del_FR(u16 num)
 
 
 
-    DB_PR("AS608Para.PS_max=%d, ValidN =%d ",AS608Para.PS_max, ValidN);
-    DB_PR("库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
+    DB_PR("AS608Para.PS_max=%d, ValidN =%d \r\n",AS608Para.PS_max, ValidN);
+    DB_PR("库容量:%d     对比等级: %d\r\n",AS608Para.PS_max-ValidN,AS608Para.PS_level);
 
 
 
     if(database_ad.zhiwen_page_id_adm[num] ==1)
+    //if(1)
     {
 
         database_cw.dIndx = find_pid_lock_idx(num);

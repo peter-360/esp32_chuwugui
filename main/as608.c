@@ -138,15 +138,15 @@ static u8 *JudgeStr(u16 waittime)
 	str[3]=AS608Addr>>16;str[4]=AS608Addr>>8;
 	str[5]=AS608Addr;str[6]=0x07;str[7]='\0';
 	//USART2_RX_STA=0;
+	//flag_rx2 =0;
 	//delay_ms(50);//---------------------
 	while(--waittime)//--------------
 	{
-		//delay_ms(1);
+		delay_ms(1);
 		//if(USART2_RX_STA&0X8000)//接收到一次数据
-		DB_PR("as-waittime = %d\r\n",waittime);
-		// DB_PR("as-waittime = %d\r\n",waittime);
-		DB_PR("as-flag_rx2 = %d\r\n",flag_rx2);
-		DB_PR("as-len_rx2_m = %d\r\n",len_rx2_m);
+		//DB_PR("as-waittime = %d\r\n",waittime);
+		//DB_PR("as-flag_rx2 = %d\r\n",flag_rx2);
+		//DB_PR("as-len_rx2_m = %d\r\n",len_rx2_m);
 		// debug_uart1_write_bytes((const char*)data_rx2_m, len_rx2_m);
 		if(flag_rx2 ==1)
 		{
@@ -161,7 +161,8 @@ static u8 *JudgeStr(u16 waittime)
 		}
 		else
 		{
-			DB_PR("--------JudgeStr err--------!!!\r\n");
+			//DB_PR("--------JudgeStr err--------!!!\r\n");
+			;
 		}
 		
 		
@@ -266,10 +267,15 @@ u8 PS_Search(u8 BufferID,u16 StartPage,u16 PageNum,SearchResult *p)
 	{
 		ensure = data[9];
 		p->pageID   =(data[10]<<8)+data[11];
+		//DB_PR("-------p->pageID=%02x----\r\n",p->pageID);
 		p->mathscore=(data[12]<<8)+data[13];	
 	}
 	else
 		ensure = 0xff;
+	delay_ms(20);
+	//DB_PR("-------data[10]=%02x,data[11]=%02x----\r\n",data[10],data[11]);
+	// DB_PR("-------11111-------pageid= %d \r\n",(data[10]<<8)+data[11]);
+	// DB_PR("-------p->pageID=%02x----\r\n",p->pageID);
 	return ensure;	
 }
 //合并特征（生成模板）PS_RegModel
