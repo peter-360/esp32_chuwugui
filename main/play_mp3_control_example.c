@@ -6074,7 +6074,7 @@ static void echo_task()
 
 
         if ((len_rx2 > 0) ) {
-            flag_rx2 =1;
+            
             len_rx2_m = len_rx2;
             memcpy(data_rx2_m,data_rx2,len_rx2_m);
             DB_PR("rcv_zhiwen_uart2-Received %u bytes:", len_rx2_m);
@@ -6082,6 +6082,10 @@ static void echo_task()
                 DB_PR("0x%.2X ", (uint8_t)data_rx2_m[i]);
             }
             DB_PR("] \n");
+            
+            flag_rx2 =1;
+            DB_PR("-----2----flag_rx2=%u\r\n", flag_rx2);
+            
 
             xTaskCreate(echo_task3, "uart_echo_task2",2* 1024, NULL, 2, NULL);//uart2
             //uart_write_bytes(UART_NUM_2, (const char *) data_rx2, len_rx2);
@@ -6287,30 +6291,32 @@ void Add_FR()
 				if(ensure==0x00) 
 				{
 					//BEEP=1;------------------------
-                    delay_ms(200);//这里需要延时一下，模块内部处理图像需要时间
+                    //delay_ms(200);//这里需要延时一下，模块内部处理图像需要时间  up
 					ensure=PS_GenChar(CharBuffer1);//生成特征
 					//BEEP=0;
 					if(ensure==0x00)
 					{
-                        delay_ms(20);
-                        DB_PR("--0-ok1--指纹正常");
+                        //delay_ms(20);
+                        DB_PR("--0-ok1--指纹正常\r\n");
                         ensure = PS_Search(CharBuffer1, 0x0000, 0x00AA, &p_rsp);//0x02
-                        DB_PR("-------p_rsp->pageID=%02x----\r\n",p_rsp.pageID);
+                        //delay_ms(50);
+                        DB_PR("--0--ensure=%d\r\n",ensure);
                         if(ensure==0x00)
                         {
+                            DB_PR("-------p_rsp->pageID=%02x----\r\n",p_rsp.pageID);
                             //LCD_Fill(0,120,lcddev.width,160,WHITE);
-                            DB_PR("--0-no-对比完成,指纹已存在 ");
+                            DB_PR("--0-no-对比完成,指纹已存在 \r\n");
                             send_cmd_to_lcd_pic(0x0005);
                             i=0;
 	                        processnum=0;//跳回第一步	
-                            DB_PR("--0-no-3-ensure=%d",ensure);
+                            DB_PR("--0-no-3-ensure=%d\r\n",ensure);
                             ShowErrMessage(ensure);	
                         }
                         else 
                         {
                             
-                            DB_PR("--0-ok2-对比成功,新的指纹");
-                            i=0;
+                            DB_PR("--0-ok2-对比成功,新的指纹\r\n");
+                            i=0;//del?
                             processnum=1;//跳到第二步	
 
                         }
@@ -6319,14 +6325,14 @@ void Add_FR()
 					}
                     else 
                     {
-                        DB_PR("-0-no-2-ensure=%d",ensure);
+                        DB_PR("-0-no-2-ensure=%d\r\n",ensure);
                         ShowErrMessage(ensure);			
                     }
                         	
 				}
                 else 
                 {
-                    DB_PR("-0-no-1-ensure=%d",ensure);
+                    DB_PR("-0-no-1-ensure=%d\r\n",ensure);
                     ShowErrMessage(ensure);	
                 }
                     					
@@ -6335,7 +6341,7 @@ void Add_FR()
 			case 1:
 				i++;
 				////LCD_Fill(0,100,lcddev.width,160,WHITE);
-				DB_PR("---1-zaian--请按再按一次指纹");
+				DB_PR("---1-zaian--请按再按一次指纹\r\n");
 				ensure=PS_GetImage();
 				if(ensure==0x00) 
 				{
@@ -6346,13 +6352,13 @@ void Add_FR()
 					if(ensure==0x00)
 					{
                         delay_ms(20);
-                        DB_PR("--1-ok1--指纹正常 ");
+                        DB_PR("--1-ok1--指纹正常 \r\n");
                         ensure = PS_Search(CharBuffer2, 0x0000, 0x00AA, &p_rsp);//0x02
                         if(ensure==0x00)
                         {
                             ////LCD_Fill(0,120,lcddev.width,160,WHITE);
                             
-                            DB_PR("--1-no-对比完成,指纹已存在 ");
+                            DB_PR("--1-no-对比完成,指纹已存在 \r\n");
                             send_cmd_to_lcd_pic(0x0005);
                             ShowErrMessage(ensure);	
                             i=0;
@@ -6361,7 +6367,7 @@ void Add_FR()
                         }
                         else 
                         {
-                            DB_PR("--1-ok2-对比成功,新的指纹");
+                            DB_PR("--1-ok2-对比成功,新的指纹\r\n");
                             i=0;
                             processnum=2;//跳到第三步			
 
@@ -6384,7 +6390,7 @@ void Add_FR()
             case 2:
 				i++;
 				////LCD_Fill(0,100,lcddev.width,160,WHITE);
-				DB_PR("---2-zaian--请按再按一次指纹");
+				DB_PR("---2-zaian--请按再按一次指纹\r\n");
 				ensure=PS_GetImage();
 				if(ensure==0x00) 
 				{
@@ -6395,13 +6401,13 @@ void Add_FR()
 					if(ensure==0x00)
 					{
                         delay_ms(20);
-                        DB_PR("--2-ok--指纹正常 ");
+                        DB_PR("--2-ok--指纹正常 \r\n");
                         ensure = PS_Search(CharBuffer3, 0x0000, 0x00AA, &p_rsp);//0x02
                         if(ensure==0x00)
                         {
                             ////LCD_Fill(0,120,lcddev.width,160,WHITE);
                             
-                            DB_PR("--2-no-对比完成,指纹已存在 ");
+                            DB_PR("--2-no-对比完成,指纹已存在 \r\n");
                             send_cmd_to_lcd_pic(0x0005);
                             ShowErrMessage(ensure);	
                             i=0;
@@ -6410,7 +6416,7 @@ void Add_FR()
                         }
                         else 
                         {
-                            DB_PR("--2-ok-对比成功,新的指纹");
+                            DB_PR("--2-ok-对比成功,新的指纹\r\n");
                             i=0;
                             processnum=3;//跳到第三步			
 
@@ -6433,12 +6439,12 @@ void Add_FR()
 
 			case 3:
 				//LCD_Fill(0,100,lcddev.width,160,WHITE);
-				DB_PR("----3 shengcheng-----生成指纹模板 ");
+				DB_PR("----3 shengcheng-----生成指纹模板 \r\n");
 				ensure=PS_RegModel();
 				if(ensure==0x00) 
 				{
 					//LCD_Fill(0,120,lcddev.width,160,WHITE);
-					DB_PR("--3-ok生成指纹模板成功 ");
+					DB_PR("--3-ok生成指纹模板成功 \r\n");
 					processnum=4;//跳到第五步
 				}else {processnum=0;ShowErrMessage(ensure);}
 				delay_ms(200);
@@ -6446,8 +6452,8 @@ void Add_FR()
 				
 			case 4:	
 				//LCD_Fill(0,100,lcddev.width,160,WHITE);
-				DB_PR("----4 input id-----请输入储存ID,按Enter保存 ");
-				DB_PR("0=< ID <=299 ");// 0 - 100---------------------
+				DB_PR("----4 input id-----请输入储存ID,按Enter保存 \r\n");
+				DB_PR("0=< ID <=299 \r\n");// 0 - 100---------------------
 
                 uint16_t page_id_temp1[ZHIWEN_PAGE_ID_MAX]={0};
                 uint16_t page_id_temp2[ZHIWEN_PAGE_ID_MAX]={0};
@@ -6457,8 +6463,8 @@ void Add_FR()
                 if(ensure==0x00)
                 {
                     //DB_PR("AS608Para.PS_max=%d, ValidN =%d ",AS608Para.PS_max, ValidN);
-                    DB_PR("AS608Para.PS_max=%d, ValidN =%d ",AS608Para.PS_max, ValidN);
-                    DB_PR("库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
+                    DB_PR("AS608Para.PS_max=%d, ValidN =%d \r\n",AS608Para.PS_max, ValidN);
+                    DB_PR("库容量:%d     对比等级: %d\r\n",AS608Para.PS_max-ValidN,AS608Para.PS_level);
                 }
                 else
                 {
@@ -6475,15 +6481,15 @@ void Add_FR()
                 {
                     if(database_ad.zhiwen_page_id_adm[i] ==0)//weiyong
                     {
-                        DB_PR("1-i=%d\r\n",i);
+                        //DB_PR("1-i=%d, ",i);
                         page_id_temp1[j++] = i;
                     }
                     else//yi yong
                     {
-                        DB_PR("2-i=%d\r\n",i);
+                        //DB_PR("2-i=%d, ",i);
                         page_id_temp2[k++] = i;
                     }
-                    DB_PR("---i=%d\r\n",i);
+                    //DB_PR("---i=%d, ",i);
                 }
                 DB_PR("---pageid--shengyu j=%d, onuse k=%d\r\n",j,k);
                 DB_PR("--ok--no use  zhiwen idx\r\n");
@@ -7922,6 +7928,14 @@ void app_main(void)
         send_cmd_to_lcd_pic(KAIJI_PIC);
     }
 
+
+
+
+    // for(uint16_t i=1;i<=10;i++)
+    // {
+    //     vTaskDelay(1000 / portTICK_PERIOD_MS);
+    //     DB_PR("i=%d----\n",i);
+    // }
     audio_init();
 
 

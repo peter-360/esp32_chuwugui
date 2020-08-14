@@ -138,8 +138,9 @@ static u8 *JudgeStr(u16 waittime)
 	str[3]=AS608Addr>>16;str[4]=AS608Addr>>8;
 	str[5]=AS608Addr;str[6]=0x07;str[7]='\0';
 	//USART2_RX_STA=0;
-	//flag_rx2 =0;
-	//delay_ms(50);//---------------------
+	flag_rx2 =0;
+	DB_PR("-----1----flag_rx2=%u\r\n", flag_rx2);
+	delay_ms(30);//---------50 is ok------------
 	while(--waittime)//--------------
 	{
 		delay_ms(1);
@@ -159,11 +160,11 @@ static u8 *JudgeStr(u16 waittime)
 			if(data)
 				return (u8*)data;	
 		}
-		else
-		{
-			//DB_PR("--------JudgeStr err--------!!!\r\n");
-			;
-		}
+		// else
+		// {
+		// 	//DB_PR("--------JudgeStr err--------!!!\r\n");
+		// 	//;
+		// }
 		
 		
 	}
@@ -184,8 +185,8 @@ u8 PS_GetImage(void)
 	Sendcmd(0x01);
   temp =  0x01+0x03+0x01;
 	SendCheck(temp);
-	//delay_ms(100);//---------------------
-	data=JudgeStr(2000);
+	delay_ms(150);//-----------add----------
+	data=JudgeStr(2000);//20000
 	if(data)
 		ensure=data[9];
 	else
@@ -209,8 +210,8 @@ u8 PS_GenChar(u8 BufferID)
 	MYUSART_SendData(BufferID);
 	temp = 0x01+0x04+0x02+BufferID;
 	SendCheck(temp);
-	//delay_ms(100);//---------------------
-	data=JudgeStr(2000);
+	delay_ms(100);//----------add-----------
+	data=JudgeStr(2000);//2000
 	if(data)
 		ensure=data[9];
 	else
@@ -262,17 +263,58 @@ u8 PS_Search(u8 BufferID,u16 StartPage,u16 PageNum,SearchResult *p)
 	+(StartPage>>8)+(u8)StartPage
 	+(PageNum>>8)+(u8)PageNum;
 	SendCheck(temp);
-	data=JudgeStr(2000);
+	//delay_ms(320);//add--------------
+
+	data=JudgeStr(15000);//2000   >13000
+	DB_PR("\r\ndata=%x", (unsigned int)data);//(int *) 
+
+
+	// Uart1SendString("data[9]=");
+	// DEBUG_MYUSART1_SendData((char)(data_rx2[9]));
+
+	// DEBUG_MYUSART1_SendData((char)(data));
+
+
+	// Uart1SendString("data[10]=");
+	// DEBUG_MYUSART1_SendData(data[10]);
+
+	// Uart1SendString("data[11]=");
+	// DEBUG_MYUSART1_SendData(data[11]);
+
+
+
+
+	//u8 data1 = 0x35;
+	// Uart1SendString("data=");
+	// uart_write_bytes(UART_NUM_ZHIWEN, (const char *) &data, 1);//------UART_NUM_2------	
+	// Uart1SendString("\r\n");
+
+
+
 	if(data)
 	{
 		ensure = data[9];
 		p->pageID   =(data[10]<<8)+data[11];
 		//DB_PR("-------p->pageID=%02x----\r\n",p->pageID);
 		p->mathscore=(data[12]<<8)+data[13];	
+
+		DB_PR("\r\n-----pageid debug------");
 	}
 	else
 		ensure = 0xff;
+
 	delay_ms(20);
+	if(ensure==0x00)
+	{
+		DB_PR("\r\npageid=%x",p->pageID);
+	}
+	else 
+	{
+		DB_PR("\r\n-----pageid debug2------");
+		DB_PR("\r\n%s",EnsureMessage(ensure));
+	}
+		
+	//delay_ms(20);
 	//DB_PR("-------data[10]=%02x,data[11]=%02x----\r\n",data[10],data[11]);
 	// DB_PR("-------11111-------pageid= %d \r\n",(data[10]<<8)+data[11]);
 	// DB_PR("-------p->pageID=%02x----\r\n",p->pageID);
@@ -293,7 +335,7 @@ u8 PS_RegModel(void)
 	Sendcmd(0x05);
 	temp = 0x01+0x03+0x05;
 	SendCheck(temp);
-	delay_ms(100);//---------------------
+	//delay_ms(100);//---------------------
 	data=JudgeStr(2000);
 	if(data)
 		ensure=data[9];
@@ -322,7 +364,7 @@ u8 PS_StoreChar(u8 BufferID,u16 PageID)
 	temp = 0x01+0x06+0x06+BufferID
 	+(PageID>>8)+(u8)PageID;
 	SendCheck(temp);
-	delay_ms(100);//---------------------
+	delay_ms(100);//---------add------------
 	data=JudgeStr(2000);
 	if(data)
 		ensure=data[9];
@@ -427,7 +469,8 @@ u8 PS_ReadSysPara(SysPara *p)
 	Sendcmd(0x0F);
 	temp = 0x01+0x03+0x0F;
 	SendCheck(temp);
-	data=JudgeStr(1000);
+	//delay_ms(50);
+	data=JudgeStr(2000);//1000
 	if(data)
 	{
 		ensure = data[9];
