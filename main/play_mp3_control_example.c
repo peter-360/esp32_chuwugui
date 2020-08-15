@@ -190,8 +190,8 @@ const char *TAG = "uart_events";
 
 
 
-#define ECHO_TEST_TXD  GPIO_NUM_33//32(GPIO_NUM_33)//GPIO_NUM_4
-#define ECHO_TEST_RXD  GPIO_NUM_32//33(GPIO_NUM_32)//GPIO_NUM_5
+#define ECHO_TEST_TXD  GPIO_NUM_32//32(GPIO_NUM_33)//GPIO_NUM_4
+#define ECHO_TEST_RXD  GPIO_NUM_33//33(GPIO_NUM_32)//GPIO_NUM_5
 #define ECHO_TEST_RTS  (UART_PIN_NO_CHANGE)
 #define ECHO_TEST_CTS  (UART_PIN_NO_CHANGE)
 
@@ -6296,12 +6296,12 @@ void Add_FR()
 				if(ensure==0x00) 
 				{
 					//BEEP=1;------------------------
-                    //delay_ms(200);//这里需要延时一下，模块内部处理图像需要时间  up
+                    delay_ms(200);//这里需要延时一下，模块内部处理图像需要时间  up
 					ensure=PS_GenChar(CharBuffer1);//生成特征
 					//BEEP=0;
 					if(ensure==0x00)
 					{
-                        //delay_ms(20);
+                        delay_ms(120);
                         DB_PR("--0-ok1--指纹正常\r\n");
                         ensure = PS_Search(CharBuffer1, 0x0000, 0x00AA, &p_rsp);//0x02
                         //delay_ms(50);
@@ -6356,7 +6356,7 @@ void Add_FR()
 					//BEEP=0;
 					if(ensure==0x00)
 					{
-                        delay_ms(20);
+                        delay_ms(120);
                         DB_PR("--1-ok1--指纹正常 \r\n");
                         ensure = PS_Search(CharBuffer2, 0x0000, 0x00AA, &p_rsp);//0x02
                         if(ensure==0x00)
@@ -6405,7 +6405,7 @@ void Add_FR()
 					//BEEP=0;
 					if(ensure==0x00)
 					{
-                        delay_ms(20);
+                        delay_ms(120);
                         DB_PR("--2-ok--指纹正常 \r\n");
                         ensure = PS_Search(CharBuffer3, 0x0000, 0x00AA, &p_rsp);//0x02
                         if(ensure==0x00)
@@ -6464,18 +6464,10 @@ void Add_FR()
                 uint16_t page_id_temp2[ZHIWEN_PAGE_ID_MAX]={0};
                 int16_t guimen_gk_temp =0;
 
-                ensure = PS_ReadSysPara(&AS608Para);  //读参数 
-                if(ensure==0x00)
-                {
-                    //DB_PR("AS608Para.PS_max=%d, ValidN =%d ",AS608Para.PS_max, ValidN);
-                    DB_PR("AS608Para.PS_max=%d, ValidN =%d \r\n",AS608Para.PS_max, ValidN);
-                    DB_PR("库容量:%d     对比等级: %d\r\n",AS608Para.PS_max-ValidN,AS608Para.PS_level);
-                }
-                else
-                {
-                    DB_PR("4-1-ensure = %d\r\n",ensure);
-                    ShowErrMessage(ensure);	
-                }
+
+                DB_PR("AS608Para.PS_max=%d, ValidN =%d \r\n",AS608Para.PS_max, ValidN);
+                DB_PR("库容量:%d     对比等级: %d\r\n",AS608Para.PS_max-ValidN,AS608Para.PS_level);
+
 
 
 
@@ -6512,7 +6504,8 @@ void Add_FR()
                     
 
                     // database_gz[database_cw.dIndx].state_gz =database_cw.state;
-                    DB_PR("-------add---database_cw.zhiwen_page_id=%d\r\n",database_cw.zhiwen_page_id);
+                    //DB_PR("-------add---database_cw.zhiwen_page_id=%d\r\n",database_cw.zhiwen_page_id);
+                    DB_PR("******add******database_cw.zhiwen_page_id=%d\r\n",database_cw.zhiwen_page_id);
 
                     // do
                     // 	ID=GET_NUM();
@@ -6799,7 +6792,7 @@ void Add_FR()
                             // nvs_wr_dzx_mode_gz(1);
 
 
-
+                            DB_PR("******add******database_cw.zhiwen_page_id=%d\r\n",database_cw.zhiwen_page_id);
                             database_ad.zhiwen_page_id_adm[database_cw.zhiwen_page_id] =1;
                             nvs_wr_adm_zwpageid_flag(1,database_cw.zhiwen_page_id);
                             database_gz[database_cw.dIndx].zhiwen_page_id_gz = database_cw.zhiwen_page_id;
@@ -7013,8 +7006,8 @@ void Del_FR(u16 num)
 	DB_PR("请输入指纹ID按Enter发送 \r\n");
 	DB_PR("0=< ID <=299 \r\n");
 
-    DB_PR("num=%x \r\n",num);
-    num =0x0019;
+    DB_PR("1*********pageid hex**********num=%x \r\n",num);
+    DB_PR("2*********pageid dec**********num=%d \r\n",num);
 	delay_ms(50);
 	//AS608_load_keyboard(0,170,(u8**)kbd_delFR);
 	//num=GET_NUM();//获取返回的数值
@@ -7672,17 +7665,17 @@ void zhiwen_init(void )
 	while(PS_HandShake(&AS608Addr))//与AS608模块握手
 	{
 		delay_ms(400);
-        DB_PR("未检测到模块!!!\r\n");
+        DB_PR("--1--PS_HandShake no-----未检测到模块!!!\r\n");
         delay_ms(800);
-        DB_PR("尝试连接模块...\r\n");	
+        DB_PR("---1---尝试连接模块...\r\n");	
 
         // u8 data = 0x35;
         // uart_write_bytes(UART_NUM_0, (const char *) &data, 1);//------UART_NUM_2------	  
         // uart_write_bytes(UART_NUM_1, (const char *) &data, 1);//------UART_NUM_2------	  
 	}
-
-    DB_PR("通讯成功!!!\r\n");
-    DB_PR("波特率:%d   地址:%x\r\n",usart2_baund,AS608Addr);
+    delay_ms(100);
+    DB_PR("2y-通讯成功!!!\r\n");
+    DB_PR("2-波特率:%d   地址:%x\r\n",usart2_baund,AS608Addr);
 
 
 	ensure=PS_ValidTempleteNum(&ValidN);//读库指纹个数
@@ -7694,14 +7687,15 @@ void zhiwen_init(void )
 		
     delay_ms(100);
 
+    DB_PR("------------3y start-----------\r\n");
 	ensure=PS_ReadSysPara(&AS608Para);  //读参数 
 	if(ensure==0x00)
 	{
 			// mymemset(str,0,50);
 			// sprintf(str,"库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
 			// Show_Str(0,80,240,16,(u8*)str,16,0);
-        DB_PR("AS608Para.PS_max=%d, ValidN =%d ",AS608Para.PS_max, ValidN);
-        DB_PR("库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
+        DB_PR("3-AS608Para.PS_max=%d, ValidN =%d ",AS608Para.PS_max, ValidN);
+        DB_PR("3-库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
 	}
 	else
     {
@@ -7728,21 +7722,29 @@ static void gpio_task_example(void* arg)
         if(xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) {
             DB_PR("GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));
 
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
-            gpio_set_level(LED_BLUE, 0);
-            gpio_set_level(LED_GRREN, 0);
-            gpio_set_level(LED_RED, 0);
+            if((io_num==39)
+                &&(gpio_get_level(io_num)==0))
+            {
+                send_cmd_to_lcd_pic(0x0011);
+                vTaskDelay(1000 / portTICK_PERIOD_MS);
+                gpio_set_level(LED_BLUE, 0);
+                gpio_set_level(LED_GRREN, 0);
+                gpio_set_level(LED_RED, 0);
 
 
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
-            gpio_set_level(LED_BLUE, 1);
-            gpio_set_level(LED_GRREN, 1);
-            gpio_set_level(LED_RED, 1);
+                vTaskDelay(1000 / portTICK_PERIOD_MS);
+                gpio_set_level(LED_BLUE, 1);
+                gpio_set_level(LED_GRREN, 1);
+                gpio_set_level(LED_RED, 1);
+
+            }
+
 
         }
 
 
     }
+    vTaskDelete(NULL);
 }
 
 

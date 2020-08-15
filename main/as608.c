@@ -138,9 +138,9 @@ static u8 *JudgeStr(u16 waittime)
 	str[3]=AS608Addr>>16;str[4]=AS608Addr>>8;
 	str[5]=AS608Addr;str[6]=0x07;str[7]='\0';
 	//USART2_RX_STA=0;
-	flag_rx2 =0;
-	DB_PR("-----1----flag_rx2=%u\r\n", flag_rx2);
-	delay_ms(30);//---------50 is ok------------
+	// flag_rx2 =0;
+	// DB_PR("-----1----flag_rx2=%u\r\n", flag_rx2);
+	//delay_ms(30);//---------50 is ok------------
 	while(--waittime)//--------------
 	{
 		delay_ms(1);
@@ -185,8 +185,10 @@ u8 PS_GetImage(void)
 	Sendcmd(0x01);
   temp =  0x01+0x03+0x01;
 	SendCheck(temp);
-	delay_ms(150);//-----------add----------
-	data=JudgeStr(2000);//20000
+	flag_rx2 =0;
+	DB_PR("-----0----flag_rx2=%u\r\n", flag_rx2);
+	delay_ms(150);//---------------------
+	data=JudgeStr(3000);//20000
 	if(data)
 		ensure=data[9];
 	else
@@ -210,8 +212,10 @@ u8 PS_GenChar(u8 BufferID)
 	MYUSART_SendData(BufferID);
 	temp = 0x01+0x04+0x02+BufferID;
 	SendCheck(temp);
-	delay_ms(100);//----------add-----------
-	data=JudgeStr(2000);//2000
+	flag_rx2 =0;
+	DB_PR("-----0----flag_rx2=%u\r\n", flag_rx2);
+	delay_ms(100);//---------------------
+	data=JudgeStr(4000);//2000
 	if(data)
 		ensure=data[9];
 	else
@@ -264,30 +268,11 @@ u8 PS_Search(u8 BufferID,u16 StartPage,u16 PageNum,SearchResult *p)
 	+(PageNum>>8)+(u8)PageNum;
 	SendCheck(temp);
 	//delay_ms(320);//add--------------
-
-	data=JudgeStr(15000);//2000   >13000
+	flag_rx2 =0;
+	DB_PR("-----0----flag_rx2=%u\r\n", flag_rx2);
+	delay_ms(150);//---------------------
+	data=JudgeStr(5000);//2000   >13000
 	DB_PR("\r\ndata=%x", (unsigned int)data);//(int *) 
-
-
-	// Uart1SendString("data[9]=");
-	// DEBUG_MYUSART1_SendData((char)(data_rx2[9]));
-
-	// DEBUG_MYUSART1_SendData((char)(data));
-
-
-	// Uart1SendString("data[10]=");
-	// DEBUG_MYUSART1_SendData(data[10]);
-
-	// Uart1SendString("data[11]=");
-	// DEBUG_MYUSART1_SendData(data[11]);
-
-
-
-
-	//u8 data1 = 0x35;
-	// Uart1SendString("data=");
-	// uart_write_bytes(UART_NUM_ZHIWEN, (const char *) &data, 1);//------UART_NUM_2------	
-	// Uart1SendString("\r\n");
 
 
 
@@ -303,7 +288,7 @@ u8 PS_Search(u8 BufferID,u16 StartPage,u16 PageNum,SearchResult *p)
 	else
 		ensure = 0xff;
 
-	delay_ms(20);
+	//delay_ms(20);
 	if(ensure==0x00)
 	{
 		DB_PR("\r\npageid=%x",p->pageID);
@@ -311,7 +296,7 @@ u8 PS_Search(u8 BufferID,u16 StartPage,u16 PageNum,SearchResult *p)
 	else 
 	{
 		DB_PR("\r\n-----pageid debug2------");
-		DB_PR("\r\n%s",EnsureMessage(ensure));
+		DB_PR("\r\n--serch is a xinzw= %s\r\n",EnsureMessage(ensure));
 	}
 		
 	//delay_ms(20);
@@ -335,7 +320,9 @@ u8 PS_RegModel(void)
 	Sendcmd(0x05);
 	temp = 0x01+0x03+0x05;
 	SendCheck(temp);
-	//delay_ms(100);//---------------------
+	flag_rx2 =0;
+	DB_PR("-----0----flag_rx2=%u\r\n", flag_rx2);
+	delay_ms(50);//---------------------
 	data=JudgeStr(2000);
 	if(data)
 		ensure=data[9];
@@ -364,8 +351,10 @@ u8 PS_StoreChar(u8 BufferID,u16 PageID)
 	temp = 0x01+0x06+0x06+BufferID
 	+(PageID>>8)+(u8)PageID;
 	SendCheck(temp);
-	delay_ms(100);//---------add------------
-	data=JudgeStr(2000);
+	flag_rx2 =0;
+	DB_PR("-----0----flag_rx2=%u\r\n", flag_rx2);
+	delay_ms(150);//---------------------
+	data=JudgeStr(4000);//2000
 	if(data)
 		ensure=data[9];
 	else
@@ -394,6 +383,10 @@ u8 PS_DeletChar(u16 PageID,u16 N)
 	+(PageID>>8)+(u8)PageID
 	+(N>>8)+(u8)N;
 	SendCheck(temp);
+	flag_rx2 =0;
+	DB_PR("-----0----flag_rx2=%u\r\n", flag_rx2);
+	delay_ms(50);//---------------------
+
 	data=JudgeStr(2000);
 	if(data)
 		ensure=data[9];
@@ -417,6 +410,10 @@ u8 PS_Empty(void)
 	Sendcmd(0x0D);
 	temp = 0x01+0x03+0x0D;
 	SendCheck(temp);
+
+	flag_rx2 =0;
+	DB_PR("-----0----flag_rx2=%u\r\n", flag_rx2);
+	delay_ms(50);//---------------------
 	data=JudgeStr(2000);
 	if(data)
 		ensure=data[9];
@@ -469,8 +466,10 @@ u8 PS_ReadSysPara(SysPara *p)
 	Sendcmd(0x0F);
 	temp = 0x01+0x03+0x0F;
 	SendCheck(temp);
-	//delay_ms(50);
-	data=JudgeStr(2000);//1000
+	flag_rx2 =0;
+	DB_PR("-----0----flag_rx2=%u\r\n", flag_rx2);
+	delay_ms(100);//---------------------
+	data=JudgeStr(3000);//1000
 	if(data)
 	{
 		ensure = data[9];
@@ -640,8 +639,11 @@ u8 PS_ValidTempleteNum(u16 *ValidN)
 	Sendcmd(0x1d);
 	temp = 0x01+0x03+0x1d;
 	SendCheck(temp);
-	//delay_ms(200);//---------------------
-  data=JudgeStr(2000);
+
+	flag_rx2 =0;
+	DB_PR("-----0----flag_rx2=%u\r\n", flag_rx2);
+	delay_ms(50);//---------------------
+  	data=JudgeStr(4000);//2000
 
 	// DB_PR("\r\n-----data--指纹个数=%d",(u32)data);
 
@@ -707,8 +709,9 @@ u8 PS_HandShake(u32 *PS_Addr)
 
 	MYUSART_SendData(0X00);	//sum	
 	MYUSART_SendData(0X39);
-
-	delay_ms(200);
+	flag_rx2 = 0;
+	DB_PR("-----0----flag_rx2=%u\r\n", flag_rx2);
+	delay_ms(50);
 	//if(USART2_RX_STA&0X8000)//接收到数据
 	if(flag_rx2 == 1)
 	{		
@@ -717,13 +720,13 @@ u8 PS_HandShake(u32 *PS_Addr)
 				&&data_rx2[1]==0X01
 				&&data_rx2[6]==0X07
 			)
-			{
-				*PS_Addr=(data_rx2[2]<<24) + (data_rx2[3]<<16)
-								+(data_rx2[4]<<8) + (data_rx2[5]);
-				//USART2_RX_STA=0;
-				flag_rx2 =0 ;		
-				return 0;
-			}
+		{
+			*PS_Addr=(data_rx2[2]<<24) + (data_rx2[3]<<16)
+							+(data_rx2[4]<<8) + (data_rx2[5]);
+			//USART2_RX_STA=0;
+			flag_rx2 =0 ;		
+			return 0;
+		}
 		//USART2_RX_STA=0;		
 		flag_rx2 =0 ;			
 	}
