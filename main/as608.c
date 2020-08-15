@@ -270,7 +270,7 @@ u8 PS_Search(u8 BufferID,u16 StartPage,u16 PageNum,SearchResult *p)
 	//delay_ms(320);//add--------------
 	flag_rx2 =0;
 	DB_PR("-----0----flag_rx2=%u\r\n", flag_rx2);
-	delay_ms(150);//---------------------
+	delay_ms(250);//---------------------
 	data=JudgeStr(5000);//2000   >13000
 	DB_PR("\r\ndata=%x", (unsigned int)data);//(int *) 
 
@@ -291,7 +291,7 @@ u8 PS_Search(u8 BufferID,u16 StartPage,u16 PageNum,SearchResult *p)
 	//delay_ms(20);
 	if(ensure==0x00)
 	{
-		DB_PR("\r\npageid=%x",p->pageID);
+		DB_PR("\r\npageid=%x\r\n",p->pageID);
 	}
 	else 
 	{

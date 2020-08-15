@@ -814,8 +814,8 @@ esp_err_t read_u64_value(const char* name,char* key, uint64_t* out_value)
 
 
 
-
-
+void Add_FR_CQ();
+void del_zw_database(u16 num);
 #define usart2_baund  57600//串口2波特率，根据指纹模块波特率更改
 
 SysPara AS608Para;//指纹模块AS608参数
@@ -1677,12 +1677,6 @@ void nvs_wr_adm_zwpageid_flag(uint8_t mode,uint16_t zhiwen_page_id_temp)//->all
 
 void default_factory_set(void)
 {
-    for(uint16_t i=0;i<AS608Para.PS_max;i++)
-    {
-        database_ad.zhiwen_page_id_adm[i] =0;
-        nvs_wr_adm_zwpageid_flag(0,i);
-    }
-
 
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
     {
@@ -1716,11 +1710,15 @@ void default_factory_set(void)
         nvs_wr_state_gz(1);
 
         database_gz[database_cw.dIndx].zhiwen_page_id_gz =0;
-        nvs_wr_zw_pageid_gz(0);
+        nvs_wr_zw_pageid_gz(1);
 
     }
 
-
+    for(uint16_t i=0;i<AS608Para.PS_max;i++)
+    {
+        database_ad.zhiwen_page_id_adm[i] =0;
+        nvs_wr_adm_zwpageid_flag(1,i);
+    }
 
     database_ad.mima_number_adm =666888;
     //adm
@@ -3143,6 +3141,7 @@ gekou_fail_x:
                                     if(database_gz[database_cw.dIndx].cunwu_mode_gz ==1)
                                     {
                                         Del_FR(database_gz[database_cw.dIndx].zhiwen_page_id_gz);
+                                        //del_zw_database(database_gz[database_cw.dIndx].zhiwen_page_id_gz);
                                         
                                     }
                                     
@@ -3275,16 +3274,40 @@ gekou_fail_x:
                                         // char key_name[15];//15
                                         // esp_err_t err;
 
+
+         
+
+
+                                        if(database_gz[database_cw.dIndx].cunwu_mode_gz ==1)
+                                        {
+                                            Del_FR(database_gz[database_cw.dIndx].zhiwen_page_id_gz);
+                                            //del_zw_database(database_gz[database_cw.dIndx].zhiwen_page_id_gz);
+
+                                            database_ad.zhiwen_page_id_adm[database_cw.zhiwen_page_id] =0;
+                                            nvs_wr_adm_zwpageid_flag(1,database_cw.zhiwen_page_id);
+                                            database_gz[database_cw.dIndx].zhiwen_page_id_gz = 0;
+                                            nvs_wr_zw_pageid_gz(1);
+                                            
+                                        }
+                                        else  if(database_gz[database_cw.dIndx].cunwu_mode_gz ==2)
+                                        {
+                                            database_gz[database_cw.dIndx].phone_number_nvs_gz = 0;
+                                            database_gz[database_cw.dIndx].mima_number_nvs_gz = 0;
+                                            nvs_wr_phone_number_nvs_gz(1);
+                                            nvs_wr_mima_number_nvs_gz(1);
+                                        }
+
                                         database_gz[database_cw.dIndx].cunwu_mode_gz = 0;
                                         //database_gz[database_cw.dIndx].dzx_mode_gz = 0;
-                                        database_gz[database_cw.dIndx].phone_number_nvs_gz = 0;
-                                        database_gz[database_cw.dIndx].mima_number_nvs_gz = 0;
+                                        // database_gz[database_cw.dIndx].phone_number_nvs_gz = 0;
+                                        // database_gz[database_cw.dIndx].mima_number_nvs_gz = 0;
                                         database_gz[database_cw.dIndx].state_gz =0;
                                         database_gz[database_cw.dIndx].changqi =0;
-                                        nvs_wr_cunwu_mode_gz(1);
+                                       
                                         //nvs_wr_dzx_mode_gz(1);
-                                        nvs_wr_phone_number_nvs_gz(1);
-                                        nvs_wr_mima_number_nvs_gz(1);
+
+
+                                        nvs_wr_cunwu_mode_gz(1);
                                         nvs_wr_state_gz(1);
                                         nvs_wr_glongtime_gz(1);
 
@@ -3834,7 +3857,7 @@ wuci_xmh_xinz:
                                     //baocun 1
                                     database_cw_adm.cunwu_mode = 1;
 									send_cmd_to_lcd_pic(0x001b);
-                                    xTaskCreate(Add_FR, "add_zhiwen_task", 6* 1024, NULL, 2, NULL);//1024 10
+                                    xTaskCreate(Add_FR_CQ, "add_zhiwen_task", 6* 1024, NULL, 2, NULL);//1024 10
                                 }
                                 else if(02== data_rx_t[8])//mi ma
                                 {
@@ -3845,10 +3868,6 @@ wuci_xmh_xinz:
                                 }
 
 
-                        
-
-                                //database_cw.zhiwen_page_id = data_rx_t[7];
-                                //Add_FR();		//录指纹	
                                 break;
 
 
@@ -4249,6 +4268,28 @@ done_longtime_2:
                                         // char key_name[15];//15
                                         // esp_err_t err;
 
+
+                                        // //if(0 == database_gz[database_cw.dIndx].state_gz)
+
+                                        if(database_gz[database_cw.dIndx].cunwu_mode_gz ==1)
+                                        {
+                                            Del_FR(database_gz[database_cw.dIndx].zhiwen_page_id_gz);
+                                            //del_zw_database(database_gz[database_cw.dIndx].zhiwen_page_id_gz);
+
+                                            database_ad.zhiwen_page_id_adm[database_cw.zhiwen_page_id] =0;
+                                            nvs_wr_adm_zwpageid_flag(1,database_cw.zhiwen_page_id);
+                                            database_gz[database_cw.dIndx].zhiwen_page_id_gz = 0;
+                                            nvs_wr_zw_pageid_gz(1);
+                                            
+                                        }
+                                        else  if(database_gz[database_cw.dIndx].cunwu_mode_gz ==2)
+                                        {
+                                            database_gz[database_cw.dIndx].phone_number_nvs_gz = 0;
+                                            database_gz[database_cw.dIndx].mima_number_nvs_gz = 0;
+                                            nvs_wr_phone_number_nvs_gz(1);
+                                            nvs_wr_mima_number_nvs_gz(1);
+                                        }
+
                                         database_gz[database_cw.dIndx].cunwu_mode_gz = 0;
                                         //database_gz[database_cw.dIndx].dzx_mode_gz = 0;
   
@@ -4262,22 +4303,6 @@ done_longtime_2:
                                         //nvs_wr_state_gz(1);
                                         nvs_wr_glongtime_gz(1);
                                         //nvs_wr_glock_gz(1);
-
-                                        // //if(0 == database_gz[database_cw.dIndx].state_gz)
-
-                                        if(database_gz[database_cw.dIndx].cunwu_mode_gz ==1)
-                                        {
-                                            Del_FR(database_gz[database_cw.dIndx].zhiwen_page_id_gz);
-                                            
-                                        }
-                                        else  if(database_gz[database_cw.dIndx].cunwu_mode_gz ==2)
-                                        {
-                                            database_gz[database_cw.dIndx].phone_number_nvs_gz = 0;
-                                            database_gz[database_cw.dIndx].mima_number_nvs_gz = 0;
-                                            nvs_wr_phone_number_nvs_gz(1);
-                                            nvs_wr_mima_number_nvs_gz(1);
-                                        }
-                                        
                                         
                                         //if(database_gz[database_cw.dIndx].changqi == 1)
                                         {
@@ -4571,8 +4596,6 @@ done_mima_nosame:
 
                                 }
 
-                                //database_cw.zhiwen_page_id = data_rx_t[7];
-                                //Add_FR();		//录指纹	
                                 break;
 
                             case 0x1250://mima? zanwukongxiang close
@@ -5198,47 +5221,6 @@ done_2:
 
 
 
-                            // case 0x3050:
-                            //     DB_PR("----------------lock1 ts---------------.\r\n");
-                            //     memcpy(tx_Buffer2,"star",4);
-                            //     tx_Buffer2[4]= 0x8A;//m_data.opcode;
-                            //     tx_Buffer2[5]= 0x01;//m_data.board_addr;
-                            //     tx_Buffer2[6]= 0x02;//m_data.lock_addr;
-                            //     tx_Buffer2[7]= 0x11;//guding
-                            //     bcc_temp = ComputXor(tx_Buffer2+4,4);
-                            //     tx_Buffer2[8]= bcc_temp;
-                            //     memcpy(tx_Buffer2+9,"endo",4);
-                                
-                            //     tx_Buffer2[13]='\0';
-                            //     uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
-                            //     break;
-                            // case 0x3060:
-                            //     DB_PR("----------------lock2 ts---------------.\r\n");
-
-                            //     memcpy(tx_Buffer2,"star",4);
-                            //     tx_Buffer2[4]= 0x8A;//m_data.opcode;
-                            //     tx_Buffer2[5]= 0x01;//m_data.board_addr;
-                            //     tx_Buffer2[6]= 0x01;//m_data.lock_addr;
-                            //     tx_Buffer2[7]= 0x11;//guding
-                            //     bcc_temp = ComputXor(tx_Buffer2+4,4);
-                            //     tx_Buffer2[8]= bcc_temp;
-                            //     memcpy(tx_Buffer2+9,"endo",4);
-                                
-                            //     tx_Buffer2[13]='\0';
-                            //     uart_write_bytes(UART_NUM_2, (const char *) tx_Buffer2, 13);
-                            //     break;
-
-
-
-                            // //zhiwen todo
-                            // case 0x2090:
-                            //     DB_PR("----------------zhiwen uart2test uart3 todo---------------.\r\n");
-                                
-                            //     xTaskCreate(Add_FR, "add_zhiwen_task", 6* 1024, NULL, 2, NULL);//1024 10
-                            //     //database_cw.zhiwen_page_id = data_rx_t[7];
-                                
-                            //     //Del_FR(0);		//删指纹
-                            //     break;
 
 
 
@@ -5388,18 +5370,6 @@ done_2:
                                         }
                                         DB_PR("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
 
-
-
-                                        // uint16_t j=0,k=0;
-
-                                        // k = guimen_gk_temp/24;
-                                        // j = guimen_gk_temp%24;
-
-                                        // if(guimen_gk_temp%24 ==0)
-                                        // {
-                                        //     k = guimen_gk_temp/24 -1;
-                                        //     j = 24;
-                                        // }
                                     
                 
 
@@ -5463,15 +5433,24 @@ done_2:
 
                                             if(database_gz[database_cw.dIndx].changqi == 0)
                                             {
+
+    
+                                                {
+                                                    database_gz[database_cw.dIndx].phone_number_nvs_gz = 0;
+                                                    database_gz[database_cw.dIndx].mima_number_nvs_gz = 0;
+                                                    nvs_wr_phone_number_nvs_gz(1);
+                                                    nvs_wr_mima_number_nvs_gz(1);
+                                                }
+
+
+
+
                                                 database_gz[database_cw.dIndx].cunwu_mode_gz = 0;
                                                 //database_gz[database_cw.dIndx].dzx_mode_gz = 0;
                                                 nvs_wr_cunwu_mode_gz(1);
                                                 //nvs_wr_dzx_mode_gz(1);
 
-                                                database_gz[database_cw.dIndx].phone_number_nvs_gz = 0;
-                                                database_gz[database_cw.dIndx].mima_number_nvs_gz = 0;
-                                                nvs_wr_phone_number_nvs_gz(1);
-                                                nvs_wr_mima_number_nvs_gz(1);
+                            
                                                 database_gz[database_cw.dIndx].state_gz =0;
                                                 nvs_wr_state_gz(1);
                                             }
@@ -5955,6 +5934,15 @@ static void lock_all_clear_task()
                 // if((0 == database_gz[database_cw.dIndx].state_gz)
                 //     ||(0 == database_gz[database_cw.dIndx].changqi))
                 {
+                    if(database_gz[database_cw.dIndx].cunwu_mode_gz ==1)
+                    {
+                        Del_FR(database_gz[database_cw.dIndx].zhiwen_page_id_gz);
+                        //del_zw_database(database_gz[database_cw.dIndx].zhiwen_page_id_gz);
+                        //if(database_ad.zhiwen_page_id_adm[database_gz[database_cw.dIndx].zhiwen_page_id_gz]==1)//AS608Para.PS_max   
+                        {
+                            nvs_wr_adm_zwpageid_flag(1,database_gz[database_cw.dIndx].zhiwen_page_id_gz);
+                        }
+                    }
 
                     if(1== database_gz[database_cw.dIndx].dzx_mode_gz)
                     {
@@ -5986,11 +5974,7 @@ static void lock_all_clear_task()
                     nvs_wr_zw_pageid_gz(1);
                     
                 }
-                if(database_gz[database_cw.dIndx].cunwu_mode_gz ==1)
-                {
-                    Del_FR(database_gz[database_cw.dIndx].zhiwen_page_id_gz);
-                    
-                }
+
 
             }
 
@@ -6010,11 +5994,6 @@ static void lock_all_clear_task()
     }
 
 
-    for(uint16_t i=0;i<AS608Para.PS_max;i++)
-    {
-        database_ad.zhiwen_page_id_adm[i] =0;
-        nvs_wr_adm_zwpageid_flag(0,i);
-    }
 
 
     tongbu_changqi();
@@ -6524,7 +6503,7 @@ void Add_FR()
                         PS_ValidTempleteNum(&ValidN);//读库指纹个数
                         DB_PR("AS608Para.PS_max=%d, ValidN =%d ",AS608Para.PS_max, ValidN);
                         DB_PR("zhiwen shengyu number=%d ",AS608Para.PS_max-ValidN);
-                        delay_ms(1500);
+                        delay_ms(150);//1500
 
 
 
@@ -6873,18 +6852,6 @@ void Add_FR()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
                         //send_cmd_to_lcd_pic(0x0008);
                         //LCD_Fill(0,100,240,160,WHITE);
                         //return ;
@@ -6926,10 +6893,467 @@ done_zwc_fail:
 
 }
 
+
+//录指纹
+void Add_FR_CQ()
+{
+	u8 i=0,ensure=0 ,processnum=0;
+    // u8 ensure_2=0,ensure_3=0;
+    SearchResult p_rsp;
+	//u16 ID;
+	while(1)
+	{
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+		switch (processnum)
+		{
+			case 0:
+				i++;
+				//LCD_Fill(0,100,lcddev.width,160,WHITE);
+				//DB_PR("请按指纹");
+                DB_PR("---0--an-请按指纹");
+				ensure=PS_GetImage();
+				if(ensure==0x00) 
+				{
+					//BEEP=1;------------------------
+                    delay_ms(200);//这里需要延时一下，模块内部处理图像需要时间  up
+					ensure=PS_GenChar(CharBuffer1);//生成特征
+					//BEEP=0;
+					if(ensure==0x00)
+					{
+                        delay_ms(120);
+                        DB_PR("--0-ok1--指纹正常\r\n");
+                        ensure = PS_Search(CharBuffer1, 0x0000, 0x00AA, &p_rsp);//0x02
+                        //delay_ms(50);
+                        DB_PR("--0--ensure=%d\r\n",ensure);
+                        if(ensure==0x00)
+                        {
+                            DB_PR("-------p_rsp->pageID=%02x----\r\n",p_rsp.pageID);
+                            //LCD_Fill(0,120,lcddev.width,160,WHITE);
+                            DB_PR("--0-no-对比完成,指纹已存在 \r\n");
+                            send_cmd_to_lcd_pic(0x0005);
+                            i=0;
+	                        processnum=0;//跳回第一步	
+                            DB_PR("--0-no-3-ensure=%d\r\n",ensure);
+                            ShowErrMessage(ensure);	
+                        }
+                        else 
+                        {
+                            
+                            DB_PR("--0-ok2-对比成功,新的指纹\r\n");
+                            i=0;//del?
+                            processnum=1;//跳到第二步	
+
+                        }
+                        delay_ms(200);
+				
+					}
+                    else 
+                    {
+                        DB_PR("-0-no-2-ensure=%d\r\n",ensure);
+                        ShowErrMessage(ensure);			
+                    }
+                        	
+				}
+                else 
+                {
+                    DB_PR("-0-no-1-ensure=%d\r\n",ensure);
+                    ShowErrMessage(ensure);	
+                }
+                    					
+				break;
+			
+			case 1:
+				i++;
+				////LCD_Fill(0,100,lcddev.width,160,WHITE);
+				DB_PR("---1-zaian--请按再按一次指纹\r\n");
+				ensure=PS_GetImage();
+				if(ensure==0x00) 
+				{
+					//BEEP=1;
+                    delay_ms(200);//这里需要延时一下，模块内部处理图像需要时间
+					ensure=PS_GenChar(CharBuffer2);//生成特征
+					//BEEP=0;
+					if(ensure==0x00)
+					{
+                        delay_ms(120);
+                        DB_PR("--1-ok1--指纹正常 \r\n");
+                        ensure = PS_Search(CharBuffer2, 0x0000, 0x00AA, &p_rsp);//0x02
+                        if(ensure==0x00)
+                        {
+                            ////LCD_Fill(0,120,lcddev.width,160,WHITE);
+                            
+                            DB_PR("--1-no-对比完成,指纹已存在 \r\n");
+                            send_cmd_to_lcd_pic(0x0005);
+                            ShowErrMessage(ensure);	
+                            i=0;
+                            processnum=0;//跳回第一步	
+                            	
+                        }
+                        else 
+                        {
+                            DB_PR("--1-ok2-对比成功,新的指纹\r\n");
+                            i=0;
+                            processnum=2;//跳到第三步			
+
+                        }
+                        delay_ms(200);
+
+					}
+                    else 
+                    {
+                        ShowErrMessage(ensure);	
+                    }   
+				}
+                else 
+                {
+                    ShowErrMessage(ensure);		
+                }
+                    
+				break;
+
+            case 2:
+				i++;
+				////LCD_Fill(0,100,lcddev.width,160,WHITE);
+				DB_PR("---2-zaian--请按再按一次指纹\r\n");
+				ensure=PS_GetImage();
+				if(ensure==0x00) 
+				{
+					//BEEP=1;
+                    delay_ms(200);//这里需要延时一下，模块内部处理图像需要时间
+					ensure=PS_GenChar(CharBuffer3);//生成特征
+					//BEEP=0;
+					if(ensure==0x00)
+					{
+                        delay_ms(120);
+                        DB_PR("--2-ok--指纹正常 \r\n");
+                        ensure = PS_Search(CharBuffer3, 0x0000, 0x00AA, &p_rsp);//0x02
+                        if(ensure==0x00)
+                        {
+                            ////LCD_Fill(0,120,lcddev.width,160,WHITE);
+                            
+                            DB_PR("--2-no-对比完成,指纹已存在 \r\n");
+                            send_cmd_to_lcd_pic(0x0005);
+                            ShowErrMessage(ensure);	
+                            i=0;
+                            processnum=0;//跳回第一步	
+                            	
+                        }
+                        else 
+                        {
+                            DB_PR("--2-ok-对比成功,新的指纹\r\n");
+                            i=0;
+                            processnum=3;//跳到第三步			
+
+                        }
+                        delay_ms(200);
+
+					}
+                    else 
+                    {
+                        ShowErrMessage(ensure);	
+                    }   
+				}
+                else 
+                {
+                    ShowErrMessage(ensure);		
+                }
+                    
+				break;
+
+
+			case 3:
+				//LCD_Fill(0,100,lcddev.width,160,WHITE);
+				DB_PR("----3 shengcheng-----生成指纹模板 \r\n");
+				ensure=PS_RegModel();
+				if(ensure==0x00) 
+				{
+					//LCD_Fill(0,120,lcddev.width,160,WHITE);
+					DB_PR("--3-ok生成指纹模板成功 \r\n");
+					processnum=4;//跳到第五步
+				}else {processnum=0;ShowErrMessage(ensure);}
+				delay_ms(200);
+				break;
+				
+			case 4:	
+				//LCD_Fill(0,100,lcddev.width,160,WHITE);
+				DB_PR("----4 input id-----请输入储存ID,按Enter保存 \r\n");
+				DB_PR("0=< ID <=299 \r\n");// 0 - 100---------------------
+
+                uint16_t page_id_temp1[ZHIWEN_PAGE_ID_MAX]={0};
+                uint16_t page_id_temp2[ZHIWEN_PAGE_ID_MAX]={0};
+                int16_t guimen_gk_temp =0;
+
+
+                DB_PR("AS608Para.PS_max=%d, ValidN =%d \r\n",AS608Para.PS_max, ValidN);
+                DB_PR("库容量:%d     对比等级: %d\r\n",AS608Para.PS_max-ValidN,AS608Para.PS_level);
+
+
+
+
+                //AS608Para.PS_max-ValidN
+                uint16_t j =0, k=0;
+                int rand_temp=0;
+                for(uint16_t i=0;i<AS608Para.PS_max;i++)//
+                {
+                    if(database_ad.zhiwen_page_id_adm[i] ==0)//weiyong
+                    {
+                        //DB_PR("1-i=%d, ",i);
+                        page_id_temp1[j++] = i;
+                    }
+                    else//yi yong
+                    {
+                        //DB_PR("2-i=%d, ",i);
+                        page_id_temp2[k++] = i;
+                    }
+                    //DB_PR("---i=%d, ",i);
+                }
+                DB_PR("---pageid--shengyu j=%d, onuse k=%d\r\n",j,k);
+                DB_PR("--ok--no use  zhiwen idx\r\n");
+                uart0_debug_data_dec(page_id_temp1,j);
+                DB_PR("--fail--has use zhiwen idx\r\n");
+                uart0_debug_data_dec(page_id_temp2,k);
+                
+                
+                if(j>0)
+                {
+                    srand((unsigned int) time(NULL));
+                    rand_temp = rand();
+                    DB_PR("rand_temp=%d\r\n",rand_temp);
+                    database_cw_adm.zhiwen_page_id = page_id_temp1[rand_temp%j];//随机获取哪个门没用
+                    
+
+                    // database_gz[database_cw.dIndx].state_gz =database_cw.state;
+                    //DB_PR("-------add---database_cw.zhiwen_page_id=%d\r\n",database_cw.zhiwen_page_id);
+                    DB_PR("******add******database_cw.zhiwen_page_id=%d\r\n",database_cw_adm.zhiwen_page_id);
+
+                    // do
+                    // 	ID=GET_NUM();
+                    //while(!(database_cw.zhiwen_page_id<AS608Para.PS_max));//输入ID必须小于最大存储数值
+
+
+                    //database_cw.zhiwen_page_id = 0x0c;//todo
+                    //ensure=PS_StoreChar(CharBuffer3,database_cw.zhiwen_page_id);//储存模板
+                    ensure=PS_StoreChar(CharBuffer1,database_cw_adm.zhiwen_page_id);//储存模板
+                    DB_PR("----4------ensure=%d",ensure);
+                    if(ensure==0x00) 
+                    {			
+                        //LCD_Fill(0,100,lcddev.width,160,WHITE);					
+                        DB_PR("--4-ok录入指纹成功 ");
+                        // PS_ReadSysPara(&AS608Para);  //读参数 
+                        PS_ValidTempleteNum(&ValidN);//读库指纹个数
+                        DB_PR("AS608Para.PS_max=%d, ValidN =%d ",AS608Para.PS_max, ValidN);
+                        DB_PR("zhiwen shengyu number=%d ",AS608Para.PS_max-ValidN);
+                        delay_ms(150);
+
+
+
+                        uint16_t j=0,k=0;
+
+                        DB_PR("-----debug------database_cw.dzx_mode=%d\r\n",database_cw_adm.dzx_mode);//j=0  
+// start ----------------------------------------
+                        
+
+
+
+
+                        database_cw.dIndx = database_cw_adm.dIndx;//3703 nvs use
+
+                        // database_cw.state=1;
+                        // database_gz[database_cw.dIndx].state_gz =database_cw.state;
+                        DB_PR("---add---database_cw.dIndx=%u\r\n",database_cw.dIndx);
+                        DB_PR("-------------add--xmh=%u\r\n",database_gz[database_cw_adm.dIndx].dIndx_gz);
+
+                        //database_cw.dIndx = 43;//-------14--------
+
+
+                        guimen_gk_temp = database_cw.dIndx ;
+
+                        j=0,k=0;
+
+                        k = guimen_gk_temp/24;
+                        j = guimen_gk_temp%24;
+
+                        if(guimen_gk_temp%24 ==0)
+                        {
+                            k = guimen_gk_temp/24 -1;
+                            j = 24;
+                        }
+                        DB_PR("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
+
+
+
+                        DB_PR("-da-lock:%d ok--.\r\n",j);
+                        send_cmd_to_lock(k+1,j);
+                        
+
+                        send_cmd_to_lcd_bl(0x10e0,database_gz[database_cw_adm.dIndx].dIndx_gz);
+                        send_cmd_to_lcd_pic(XIN_CHANGQI_OK_PIC);
+
+
+
+                        
+
+
+
+                        DB_PR("-----2-----[ * ] Starting audio pipeline");
+
+
+                        DB_PR( "database_gz[database_cw_adm.dIndx].state_gz = %d", database_gz[database_cw_adm.dIndx].state_gz);
+                        if(0 == database_gz[database_cw_adm.dIndx].state_gz)
+                        {
+                            switch (database_gz[database_cw_adm.dIndx].dzx_mode_gz)
+                            {
+                            case 1:
+                                //d
+                                shengyu_da --;
+                                tongbu_gekou_shuliang_d(shengyu_da); 
+                                break;
+                            case 2:
+                                //z
+                                shengyu_zhong --;
+                                tongbu_gekou_shuliang_z(shengyu_zhong); 
+                                break;
+                            case 3:
+                                //x
+                                shengyu_xiao --;
+                                tongbu_gekou_shuliang_x(shengyu_xiao); 
+                                break;
+
+                            default:
+                                break;
+                            }
+
+                            DB_PR("----test--.\r\n");  
+                            
+
+                            shengyu_all -- ;
+                            tongbu_gekou_shuliang_all(shengyu_all);
+
+
+                            nvs_wr_shengyu_da(1);
+                            nvs_wr_shengyu_zhong(1);
+                            nvs_wr_shengyu_xiao(1);
+
+                        }
+
+
+                        //if(0 != database_gz[database_cw_adm.dIndx].state_gz)
+                        {
+
+                            // char key_name[15];//15
+                            // esp_err_t err;
+
+                            database_gz[database_cw_adm.dIndx].cunwu_mode_gz = database_cw_adm.cunwu_mode;
+                            //database_gz[database_cw_adm.dIndx].dzx_mode_gz = 0;
+
+                            //database_gz[database_cw_adm.dIndx].state_gz =0;
+
+                            database_gz[database_cw_adm.dIndx].changqi =1;
+                            //database_gz[database_cw_adm.dIndx].lock =0;
+                            nvs_wr_cunwu_mode_gz(1);
+                            //nvs_wr_dzx_mode_gz(1);
+
+                            //nvs_wr_state_gz(1);
+                            nvs_wr_glongtime_gz(1);
+                            //nvs_wr_glock_gz(1);
+
+                            //if(0 == database_gz[database_cw_adm.dIndx].state_gz)
+                            {
+                                DB_PR("******add******database_cw.zhiwen_page_id=%d\r\n",database_cw_adm.zhiwen_page_id);
+                                database_gz[database_cw_adm.dIndx].zhiwen_page_id_gz = database_cw_adm.zhiwen_page_id;
+                                nvs_wr_zw_pageid_gz(1);
+
+                                database_ad.zhiwen_page_id_adm[database_cw_adm.zhiwen_page_id] =1;
+                                nvs_wr_adm_zwpageid_flag(1,database_cw_adm.zhiwen_page_id);
+                                //nvs_wr_adm_zwpageid_flag(1,database_gz[database_cw.dIndx].zhiwen_page_id_gz);
+                            }
+
+                        }
+
+
+                        //if(database_gz[database_cw_adm.dIndx].changqi == 0)
+                        {
+                            //update xianshi todo
+                            tongbu_changqi();
+                        }  
+                            //custumer   mingming kongjian   todo
+                            // esp_err_t err = save_u16_value(STORAGE_NAMESPACE,"dw_dIndx",database_cw.dIndx);
+                            // if (err != ESP_OK) DB_PR("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+
+                            // err = read_u16_value(STORAGE_NAMESPACE,"dw_dIndx", (uint16_t*)(&database_cw.dIndx));
+                            // if (err != ESP_OK) DB_PR("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+                            //unique number
+
+
+                        DB_PR("----test3-done--.\r\n");  
+
+                        // send_cmd_to_lcd_bl_len(0x1100,(uint8_t*)buff_t,30+5);//phone
+                        // send_cmd_to_lcd_bl_len(0x1110,(uint8_t*)buff_t,30+5);//key
+                        // // send_cmd_to_lcd_bl(0x1100,0);//phone
+                        // // send_cmd_to_lcd_bl(0x1110,0);//key
+                        
+                        // database_cw.cunwu_mode =0;
+                        // database_cw.dzx_mode = 0 ;
+
+
+
+
+
+
+                        //send_cmd_to_lcd_pic(0x0008);
+                        //LCD_Fill(0,100,240,160,WHITE);
+                        //return ;
+                        vTaskDelete(NULL);
+
+                        
+                    }
+                    else 
+                    {
+                        DB_PR("---done_zwc_fail_cq1----\r\n");
+                        goto done_zwc_fail_cq;
+
+                    }		
+
+                }
+                else
+                {
+done_zwc_fail_cq:
+                    processnum=0;
+                    DB_PR("---done_zwc_fail_cq2----\r\n");
+                    database_cw_adm.cunwu_mode =0;
+                    database_cw_adm.dzx_mode = 0 ;
+                    database_cw_adm.state=0;
+                    send_cmd_to_lcd_pic(0x0001);
+                    return_cause_zanwu_kx =9;
+                    ShowErrMessage(ensure);
+                }
+                			
+				break;	
+
+            default:
+                DB_PR("--default-zhiwen add ");
+                break;		
+		}
+		delay_ms(400);
+		if(i==5)//超过5次没有按手指则退出
+		{
+            DB_PR("---->5a---- 超过5次没有按手指则退出 ");
+			//LCD_Fill(0,100,lcddev.width,160,WHITE);
+			break;	
+		}				
+	}
+    vTaskDelay(1);
+    //vTaskDelay(10 / portTICK_PERIOD_MS);
+    vTaskDelete(NULL);
+
+}
+
+
 //刷指纹
 void press_FR(void)
 {
-	while(1)
+	for(u8 i=0;i<3;i++)
 	{
 		vTaskDelay(1);
         SearchResult seach;
@@ -6958,16 +7382,19 @@ void press_FR(void)
                 if(ensure==0x00)//搜索成功
                 {				
                     //LCD_Fill(0,100,lcddev.width,160,WHITE);
-                    DB_PR("-----4444-----刷指纹成功 ");				
+                    DB_PR("-----4444 ok-----刷指纹成功 ");				
 
                     DB_PR("---------确有此人,ID:%d  匹配得分:%d ",seach.pageID,seach.mathscore);
                     
                     Del_FR(seach.pageID);
+                    
+                    del_zw_database(seach.pageID);
                     break;
                     //myfree(SRAMIN,str);
                 }
                 else 
                 {
+                    send_cmd_to_lcd_pic(0x000d);
                     DB_PR("-----4444----f----- ");				
                     ShowErrMessage(ensure);			
                     break;
@@ -7022,7 +7449,7 @@ void Del_FR(u16 num)
 	if(ensure==0)
 	{
 		//LCD_Fill(0,120,lcddev.width,160,WHITE);
-		DB_PR("删除指纹成功 ");		
+		DB_PR("---del ok -----删除指纹成功 ");		
 	}
   else
 		ShowErrMessage(ensure);	
@@ -7035,15 +7462,14 @@ void Del_FR(u16 num)
 	delay_ms(50);
 	//AS608_load_keyboard(0,170,(u8**)kbd_menu);
 
-
-
-
-
     DB_PR("AS608Para.PS_max=%d, ValidN =%d \r\n",AS608Para.PS_max, ValidN);
     DB_PR("库容量:%d     对比等级: %d\r\n",AS608Para.PS_max-ValidN,AS608Para.PS_level);
 
+}
 
-
+void del_zw_database(u16 num)
+{
+    DB_PR("-------database_ad.zhiwen_page_id_adm[num]=%d\r\n",database_ad.zhiwen_page_id_adm[num]);
     if(database_ad.zhiwen_page_id_adm[num] ==1)
     //if(1)
     {
@@ -7053,7 +7479,6 @@ void Del_FR(u16 num)
         if(database_cw.dIndx == 0)
         {
             DB_PR("---no find zhiwen\r\n");
-            send_cmd_to_lcd_pic(0x000d); //
             goto del_zw_fail;
         }
         else
@@ -7189,6 +7614,7 @@ void Del_FR(u16 num)
     else
     {
 del_zw_fail:
+        send_cmd_to_lcd_pic(0x000d); //
         DB_PR("---del_zw_fail--1--\r\n");
     }
     
