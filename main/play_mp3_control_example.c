@@ -38,19 +38,27 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+
+
+#include <stdio.h>
+
 #include "esp_log.h"
+
 #include "audio_element.h"
 #include "audio_pipeline.h"
 #include "audio_event_iface.h"
-#include "audio_mem.h"
-#include "audio_common.h"
+#include "audio_error.h"
+#include "tone_stream.h"
 #include "i2s_stream.h"
 #include "mp3_decoder.h"
-#include "esp_peripherals.h"
-#include "periph_touch.h"
-#include "periph_adc_button.h"
-#include "periph_button.h"
+
 #include "board.h"
+
+#if __has_include("audio_tone_uri.h")
+    #include "audio_tone_uri.h"
+#else
+    #error "please refer the README, and then make the tone file"
+#endif
 
 
 
@@ -73,81 +81,85 @@ esp_timer_handle_t oneshot_timer;
 */
 // low rate mp3 audio
 
+
+int test_i;
+// audio_pipeline_handle_t pipeline;
+audio_element_handle_t tone_stream_reader, i2s_stream_writer, mp3_decoder;
 audio_pipeline_handle_t pipeline;
-extern const uint8_t lr_mp3_start[] asm("_binary_16b_2c_8000hz_mp3_start");
-extern const uint8_t lr_mp3_end[]   asm("_binary_16b_2c_8000hz_mp3_end");
+// extern const uint8_t lr_mp3_start[] asm("_binary_16b_2c_8000hz_mp3_start");
+// extern const uint8_t lr_mp3_end[]   asm("_binary_16b_2c_8000hz_mp3_end");
 
-// medium rate mp3 audio
-extern const uint8_t mr_mp3_start[] asm("_binary_16b_2c_22050hz_mp3_start");
-extern const uint8_t mr_mp3_end[]   asm("_binary_16b_2c_22050hz_mp3_end");
+// // medium rate mp3 audio
+// extern const uint8_t mr_mp3_start[] asm("_binary_16b_2c_22050hz_mp3_start");
+// extern const uint8_t mr_mp3_end[]   asm("_binary_16b_2c_22050hz_mp3_end");
 
-// high rate mp3 audio
-extern const uint8_t hr_mp3_start[] asm("_binary_16b_2c_44100hz_mp3_start");
-extern const uint8_t hr_mp3_end[]   asm("_binary_16b_2c_44100hz_mp3_end");
+// // high rate mp3 audio
+// extern const uint8_t hr_mp3_start[] asm("_binary_16b_2c_44100hz_mp3_start");
+// extern const uint8_t hr_mp3_end[]   asm("_binary_16b_2c_44100hz_mp3_end");
 
 
 
-extern const uint8_t adf_music_mp3_start[] asm("_binary_adf_music_mp3_start");
-extern const uint8_t adf_music_mp3_end[]   asm("_binary_adf_music_mp3_end");
+// extern const uint8_t adf_music_mp3_start[] asm("_binary_adf_music_mp3_start");
+// extern const uint8_t adf_music_mp3_end[]   asm("_binary_adf_music_mp3_end");
 // static int adf_music_mp3_pos;
 
 
-const uint8_t * m_mp3_start ;
-const uint8_t * m_mp3_end;
-static int m_mp3_pos;
+// const uint8_t * m_mp3_start ;
+// const uint8_t * m_mp3_end;
+// static int m_mp3_pos;
 
 
 
 
-// static void set_next_file_marker(int midx)
-static void set_next_file_marker(void)
-{
-    static int midx = 0;
+// // static void set_next_file_marker(int midx)
+// static void set_next_file_marker(void)
+// {
+//     static int midx = 0;
 
-    switch (midx) {
-        case 0:
-            m_mp3_start = lr_mp3_start;
-            m_mp3_end   = lr_mp3_end;
-            break;
-        case 1:
-            m_mp3_start = mr_mp3_start;
-            m_mp3_end   = mr_mp3_end;
-            break;
-        case 2:
-            m_mp3_start = hr_mp3_start;
-            m_mp3_end   = hr_mp3_end;
-            break;
-        case 3:
-            m_mp3_start = adf_music_mp3_start;
-            m_mp3_end   = adf_music_mp3_end;
-            break;
-        default:
-            m_mp3_start = adf_music_mp3_start;
-            m_mp3_end   = adf_music_mp3_end;
-            DB_PR( "[ * ] Not supported index = %d", midx);
-    }
-    // if (++idx > 2) {
-    //     idx = 0;
-    // }
-    m_mp3_pos = 0;
+//     switch (midx) {
+//         case 0:
+//             m_mp3_start = lr_mp3_start;
+//             m_mp3_end   = lr_mp3_end;
+//             break;
+//         case 1:
+//             m_mp3_start = mr_mp3_start;
+//             m_mp3_end   = mr_mp3_end;
+//             break;
+//         case 2:
+//             m_mp3_start = hr_mp3_start;
+//             m_mp3_end   = hr_mp3_end;
+//             break;
+//         case 3:
+//             m_mp3_start = adf_music_mp3_start;
+//             m_mp3_end   = adf_music_mp3_end;
+//             break;
+//         default:
+//             m_mp3_start = adf_music_mp3_start;
+//             m_mp3_end   = adf_music_mp3_end;
+//             DB_PR( "[ * ] Not supported index = %d", midx);
+//     }
+//     // if (++idx > 2) {
+//     //     idx = 0;
+//     // }
+//     m_mp3_pos = 0;
 
-    return;
-}
+//     return;
+// }
 
 
 
-int mp3_music_read_cb(audio_element_handle_t el, char *buf, int len, TickType_t wait_time, void *ctx)
-{
-    int read_size = m_mp3_end - m_mp3_start - m_mp3_pos;
-    if (read_size == 0) {
-        return AEL_IO_DONE;
-    } else if (len < read_size) {
-        read_size = len;
-    }
-    memcpy(buf, m_mp3_start + m_mp3_pos, read_size);
-    m_mp3_pos += read_size;
-    return read_size;
-}
+// int mp3_music_read_cb(audio_element_handle_t el, char *buf, int len, TickType_t wait_time, void *ctx)
+// {
+//     int read_size = m_mp3_end - m_mp3_start - m_mp3_pos;
+//     if (read_size == 0) {
+//         return AEL_IO_DONE;
+//     } else if (len < read_size) {
+//         read_size = len;
+//     }
+//     memcpy(buf, m_mp3_start + m_mp3_pos, read_size);
+//     m_mp3_pos += read_size;
+//     return read_size;
+// }
 
 
 
@@ -3179,45 +3191,45 @@ gekou_fail_x:
 
 
                                     DB_PR("-----2-----[ * ] Starting audio pipeline");
-                                    audio_pipeline_stop(pipeline);
-                                    audio_pipeline_wait_for_stop(pipeline);
-                                    audio_pipeline_terminate(pipeline);
-                                    audio_pipeline_reset_ringbuffer(pipeline);
-                                    audio_pipeline_reset_elements(pipeline);
+                                    // audio_pipeline_stop(pipeline);
+                                    // audio_pipeline_wait_for_stop(pipeline);
+                                    // audio_pipeline_terminate(pipeline);
+                                    // audio_pipeline_reset_ringbuffer(pipeline);
+                                    // audio_pipeline_reset_elements(pipeline);
 
-                                    // set_next_file_marker((int)(database_cw.dIndx));
-                                    //set_next_file_marker();
-                                    //static int idx = 0;
+                                    // // set_next_file_marker((int)(database_cw.dIndx));
+                                    // //set_next_file_marker();
+                                    // //static int idx = 0;
 
-                                    //static int midx = 0;
-                                    DB_PR( "--sound-- index = %d", database_cw.dIndx);
-                                    switch (1) {
-                                       case 0:
-                                            m_mp3_start = lr_mp3_start;
-                                            m_mp3_end   = lr_mp3_end;
-                                            break;
+                                    // //static int midx = 0;
+                                    // DB_PR( "--sound-- index = %d", database_cw.dIndx);
+                                    // switch (1) {
+                                    //    case 0:
+                                    //         m_mp3_start = lr_mp3_start;
+                                    //         m_mp3_end   = lr_mp3_end;
+                                    //         break;
 
-                                        case 1:
-                                            m_mp3_start = adf_music_mp3_start;
-                                            m_mp3_end   = adf_music_mp3_end;
-                                            break;
+                                    //     case 1:
+                                    //         m_mp3_start = adf_music_mp3_start;
+                                    //         m_mp3_end   = adf_music_mp3_end;
+                                    //         break;
 
   
-                                        case 2:
-                                            m_mp3_start = mr_mp3_start;
-                                            m_mp3_end   = mr_mp3_end;
-                                            break;
-                                        case 3:
-                                            m_mp3_start = hr_mp3_start;
-                                            m_mp3_end   = hr_mp3_end;
-                                            break;
+                                    //     case 2:
+                                    //         m_mp3_start = mr_mp3_start;
+                                    //         m_mp3_end   = mr_mp3_end;
+                                    //         break;
+                                    //     case 3:
+                                    //         m_mp3_start = hr_mp3_start;
+                                    //         m_mp3_end   = hr_mp3_end;
+                                    //         break;
   
-                                        default:
-                                            m_mp3_start = adf_music_mp3_start;
-                                            m_mp3_end   = adf_music_mp3_end;
-                                            DB_PR( "[ * ] Not supported index = %d", database_cw.dIndx);
-                                    }
-                                    audio_pipeline_run(pipeline);
+                                    //     default:
+                                    //         m_mp3_start = adf_music_mp3_start;
+                                    //         m_mp3_end   = adf_music_mp3_end;
+                                    //         DB_PR( "[ * ] Not supported index = %d", database_cw.dIndx);
+                                    // }
+                                    // audio_pipeline_run(pipeline);
 
 
 
@@ -5645,47 +5657,29 @@ done_kai_admin:
 
 
                                     DB_PR("-----2-----[ * ] Starting audio pipeline");
+
                                     audio_pipeline_stop(pipeline);
                                     audio_pipeline_wait_for_stop(pipeline);
                                     audio_pipeline_terminate(pipeline);
                                     audio_pipeline_reset_ringbuffer(pipeline);
                                     audio_pipeline_reset_elements(pipeline);
 
-                                    // set_next_file_marker((int)(database_cw.dIndx));
                                     //set_next_file_marker();
-                                    //static int idx = 0;
-
-                                    //static int midx = 0;
-                                    DB_PR( "--sound-- index = %d", database_cw.dIndx);
-                                    switch (1) {
-                                       case 0:
-                                            m_mp3_start = lr_mp3_start;
-                                            m_mp3_end   = lr_mp3_end;
-                                            break;
-
-                                        case 1:
-                                            m_mp3_start = adf_music_mp3_start;
-                                            m_mp3_end   = adf_music_mp3_end;
-                                            break;
-
-  
-                                        case 2:
-                                            m_mp3_start = mr_mp3_start;
-                                            m_mp3_end   = mr_mp3_end;
-                                            break;
-                                        case 3:
-                                            m_mp3_start = hr_mp3_start;
-                                            m_mp3_end   = hr_mp3_end;
-                                            break;
-  
-                                        default:
-                                            m_mp3_start = adf_music_mp3_start;
-                                            m_mp3_end   = adf_music_mp3_end;
-                                            DB_PR( "[ * ] Not supported index = %d", database_cw.dIndx);
-                                    }
+                                    DB_PR("[2.6-b] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)");
+                                    audio_element_set_uri(tone_stream_reader, tone_uri[database_gz[database_cw.dIndx].dIndx_gz]);
                                     audio_pipeline_run(pipeline);
 
+                                    delay_ms(5000);
+                                    audio_pipeline_stop(pipeline);
+                                    audio_pipeline_wait_for_stop(pipeline);
+                                    audio_pipeline_terminate(pipeline);
+                                    audio_pipeline_reset_ringbuffer(pipeline);
+                                    audio_pipeline_reset_elements(pipeline);
 
+                                    //set_next_file_marker();
+                                    DB_PR("[2.6-b] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)");
+                                    audio_element_set_uri(tone_stream_reader, tone_uri[1]);
+                                    audio_pipeline_run(pipeline);
 
                                 }
                                 else
@@ -7474,7 +7468,7 @@ void Del_FR(u16 num)
 		//LCD_Fill(0,120,lcddev.width,160,WHITE);
 		DB_PR("---del ok -----删除指纹成功 \r\n");		
 	}
-  else
+    else
 		ShowErrMessage(ensure);	
 	delay_ms(1200);
 	PS_ValidTempleteNum(&ValidN);//读库指纹个数
@@ -7728,169 +7722,129 @@ void uart_init_all(void)
 
 void audio_init(void)
 {
-    //---------------audio------------------------
-    {
-        // audio_pipeline_handle_t pipeline;
-        audio_element_handle_t i2s_stream_writer, mp3_decoder;
-
-        esp_log_level_set("*", ESP_LOG_WARN);
-        esp_log_level_set(TAG, ESP_LOG_INFO);
-
-        // DB_PR("[ 1 ] Start audio codec chip");
-        // audio_board_handle_t board_handle = audio_board_init();
-        // audio_hal_ctrl_codec(board_handle->audio_hal, AUDIO_HAL_CODEC_MODE_BOTH, AUDIO_HAL_CTRL_START);//i2c
-
-        // int player_volume;
-        // // player_volume =0;//add
-        // // audio_hal_set_volume(board_handle->audio_hal, player_volume);//add
-        // audio_hal_get_volume(board_handle->audio_hal, &player_volume);
-        // DB_PR("[ * ] 1-1 Volume set to %d %%", player_volume);
 
 
-        DB_PR("[ 2 ] Create audio pipeline, add all elements to pipeline, and subscribe pipeline event");
-        audio_pipeline_cfg_t pipeline_cfg = DEFAULT_AUDIO_PIPELINE_CONFIG();
-        pipeline = audio_pipeline_init(&pipeline_cfg);
-        mem_assert(pipeline);
+    esp_log_level_set("*", ESP_LOG_WARN);
+    esp_log_level_set(TAG, ESP_LOG_INFO);
 
-        DB_PR("[2.1] Create mp3 decoder to decode mp3 file and set custom read callback");
-        mp3_decoder_cfg_t mp3_cfg = DEFAULT_MP3_DECODER_CONFIG();
-        mp3_decoder = mp3_decoder_init(&mp3_cfg);
-        audio_element_set_read_cb(mp3_decoder, mp3_music_read_cb, NULL);
+    DB_PR("[ 1 ] Start codec chip");
+    audio_board_handle_t board_handle = audio_board_init();
+    audio_hal_ctrl_codec(board_handle->audio_hal, AUDIO_HAL_CODEC_MODE_DECODE, AUDIO_HAL_CTRL_START);
 
-        DB_PR("[2.2] Create i2s stream to write data to codec chip");
-        i2s_stream_cfg_t i2s_cfg = I2S_STREAM_CFG_DEFAULT();
-        i2s_cfg.type = AUDIO_STREAM_WRITER;
-        i2s_stream_writer = i2s_stream_init(&i2s_cfg);
+    DB_PR("[2.0] Create audio pipeline for playback");
+    audio_pipeline_cfg_t pipeline_cfg = DEFAULT_AUDIO_PIPELINE_CONFIG();
+    pipeline = audio_pipeline_init(&pipeline_cfg);
+    AUDIO_NULL_CHECK(TAG, pipeline, return);
 
-        DB_PR("[2.3] Register all elements to audio pipeline");
-        audio_pipeline_register(pipeline, mp3_decoder, "mp3");
-        audio_pipeline_register(pipeline, i2s_stream_writer, "i2s");
+    DB_PR("[2.1] Create tone stream to read data from flash");
+    tone_stream_cfg_t tone_cfg = TONE_STREAM_CFG_DEFAULT();
+    tone_cfg.type = AUDIO_STREAM_READER;
+    tone_stream_reader = tone_stream_init(&tone_cfg);
 
-        DB_PR("[2.4] Link it together [mp3_music_read_cb]-->mp3_decoder-->i2s_stream-->[codec_chip]");
-        const char *link_tag[2] = {"mp3", "i2s"};
-        audio_pipeline_link(pipeline, &link_tag[0], 2);
+    DB_PR("[2.2] Create i2s stream to write data to codec chip");
+    i2s_stream_cfg_t i2s_cfg = I2S_STREAM_CFG_DEFAULT();
+    i2s_cfg.type = AUDIO_STREAM_WRITER;
+    i2s_stream_writer = i2s_stream_init(&i2s_cfg);
 
-        // DB_PR("[ 3 ] Initialize peripherals");
-        // esp_periph_config_t periph_cfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
-        // esp_periph_set_handle_t set = esp_periph_set_init(&periph_cfg);
+    DB_PR("[2.3] Create mp3 decoder to decode mp3 file");
+    mp3_decoder_cfg_t mp3_cfg = DEFAULT_MP3_DECODER_CONFIG();
+    mp3_decoder = mp3_decoder_init(&mp3_cfg);
 
-        // DB_PR("[3.1] Initialize keys on board");
-        // audio_board_key_init(set);
+    DB_PR("[2.4] Register all elements to audio pipeline");
+    audio_pipeline_register(pipeline, tone_stream_reader, "tone");
+    audio_pipeline_register(pipeline, mp3_decoder, "mp3");
+    audio_pipeline_register(pipeline, i2s_stream_writer, "i2s");
 
-        DB_PR("[ 4 ] Set up  event listener");
-        audio_event_iface_cfg_t evt_cfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
-        audio_event_iface_handle_t evt = audio_event_iface_init(&evt_cfg);
+    DB_PR("[2.5] Link it together [flash]-->tone_stream-->mp3_decoder-->i2s_stream-->[codec_chip]");
+    const char *link_tag[3] = {"tone", "mp3", "i2s"};
+    audio_pipeline_link(pipeline, &link_tag[0], 3);
 
-        DB_PR("[4.1] Listening event from all elements of pipeline");
-        audio_pipeline_set_listener(pipeline, evt);
+    DB_PR("[2.6] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)");
+    audio_element_set_uri(tone_stream_reader, tone_uri[TONE_TYPE_HELLO]);
 
-        // DB_PR("[4.2] Listening event from peripherals");
-        // audio_event_iface_set_listener(esp_periph_set_get_event_iface(set), evt);
+    DB_PR("[ 3 ] Set up event listener");
+    audio_event_iface_cfg_t evt_cfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
+    audio_event_iface_handle_t evt = audio_event_iface_init(&evt_cfg);
 
-        ESP_LOGW(TAG, "[ 5 ] Tap touch buttons to control music player:");
-        ESP_LOGW(TAG, "      [Play] to start, pause and resume, [Set] to stop.");
-        ESP_LOGW(TAG, "      [Vol-] or [Vol+] to adjust volume.");
+    DB_PR("[3.1] Listening event from all elements of pipeline");
+    audio_pipeline_set_listener(pipeline, evt);
 
-        while (1) {
-            audio_event_iface_msg_t msg;
-            esp_err_t ret = audio_event_iface_listen(evt, &msg, portMAX_DELAY);
-            if (ret != ESP_OK) {
-                DB_PR( "[ * ] Event interface error : %d", ret);
-                continue;
-            }
+    DB_PR("[ 4 ] Start audio_pipeline");
+    audio_pipeline_run(pipeline);
 
-            if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT && msg.source == (void *) mp3_decoder
-                && msg.cmd == AEL_MSG_CMD_REPORT_MUSIC_INFO) {
-                audio_element_info_t music_info = {0};
-                audio_element_getinfo(mp3_decoder, &music_info);
-
-                DB_PR("[ * ] Receive music info from mp3 decoder, sample_rates=%d, bits=%d, ch=%d",
-                        music_info.sample_rates, music_info.bits, music_info.channels);
-
-                audio_element_setinfo(i2s_stream_writer, &music_info);
-                i2s_stream_set_clk(i2s_stream_writer, music_info.sample_rates, music_info.bits, music_info.channels);
-                continue;
-            }
-
-            // if ((msg.source_type == PERIPH_ID_TOUCH || msg.source_type == PERIPH_ID_BUTTON || msg.source_type == PERIPH_ID_ADC_BTN)
-            //     && (msg.cmd == PERIPH_TOUCH_TAP || msg.cmd == PERIPH_BUTTON_PRESSED || msg.cmd == PERIPH_ADC_BUTTON_PRESSED)) {
-
-            //     if ((int) msg.data == get_input_play_id()) {
-            //         DB_PR("[ * ] [Play] touch tap event");
-            //         audio_element_state_t el_state = audio_element_get_state(i2s_stream_writer);
-            //         switch (el_state) {
-            //             case AEL_STATE_INIT :
-            //                 DB_PR("[ * ] Starting audio pipeline");
-            //                 audio_pipeline_run(pipeline);
-            //                 break;
-            //             case AEL_STATE_RUNNING :
-            //                 DB_PR("[ * ] Pausing audio pipeline");
-            //                 audio_pipeline_pause(pipeline);
-            //                 break;
-            //             case AEL_STATE_PAUSED :
-            //                 DB_PR("[ * ] Resuming audio pipeline");
-            //                 audio_pipeline_resume(pipeline);
-            //                 break;
-            //             case AEL_STATE_FINISHED :
-            //                 DB_PR("[ * ] Rewinding audio pipeline");
-            //                 audio_pipeline_stop(pipeline);
-            //                 audio_pipeline_wait_for_stop(pipeline);
-            //                 m_mp3_pos = 0;
-            //                 audio_pipeline_resume(pipeline);
-            //                 break;
-            //             default :
-            //                 DB_PR("[ * ] Not supported state %d", el_state);
-            //         }
-            //     } else if ((int) msg.data == get_input_set_id()) {
-            //         DB_PR("[ * ] [Set] touch tap event");
-            //         DB_PR("[ * ] Stopping audio pipeline");
-            //         break;
-            //     } 
-            //     // else if ((int) msg.data == get_input_volup_id()) {
-            //     //     DB_PR("[ * ] [Vol+] touch tap event");
-            //     //     player_volume += 10;
-            //     //     if (player_volume > 100) {
-            //     //         player_volume = 100;
-            //     //     }
-            //     //     audio_hal_set_volume(board_handle->audio_hal, player_volume);
-            //     //     DB_PR("[ * ] Volume set to %d %%", player_volume);
-            //     // } else if ((int) msg.data == get_input_voldown_id()) {
-            //     //     DB_PR("[ * ] [Vol-] touch tap event");
-            //     //     player_volume -= 10;
-            //     //     if (player_volume < 0) {
-            //     //         player_volume = 0;
-            //     //     }
-            //     //     audio_hal_set_volume(board_handle->audio_hal, player_volume);
-            //     //     DB_PR("[ * ] Volume set to %d %%", player_volume);
-            //     // }
-            // }
+    DB_PR("[ 4 ] Listen for all pipeline events");
+    while (1) {
+        audio_event_iface_msg_t msg = { 0 };
+        esp_err_t ret = audio_event_iface_listen(evt, &msg, portMAX_DELAY);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "[ * ] Event interface error : %d", ret);
+            continue;
         }
 
-        DB_PR("[ 6 ] Stop audio_pipeline");
-        audio_pipeline_stop(pipeline);
-        audio_pipeline_wait_for_stop(pipeline);
-        audio_pipeline_terminate(pipeline);
+        if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT && msg.source == (void *) mp3_decoder
+            && msg.cmd == AEL_MSG_CMD_REPORT_MUSIC_INFO) {
+            audio_element_info_t music_info = {0};
+            audio_element_getinfo(mp3_decoder, &music_info);
 
-        audio_pipeline_unregister(pipeline, mp3_decoder);
-        audio_pipeline_unregister(pipeline, i2s_stream_writer);
+            DB_PR("[ * ] Receive music info from mp3 decoder, sample_rates=%d, bits=%d, ch=%d",
+                     music_info.sample_rates, music_info.bits, music_info.channels);
 
-        /* Terminate the pipeline before removing the listener */
-        audio_pipeline_remove_listener(pipeline);
+            audio_element_setinfo(i2s_stream_writer, &music_info);
+            i2s_stream_set_clk(i2s_stream_writer, music_info.sample_rates, music_info.bits, music_info.channels);
+            continue;
+        }
 
-        /* Make sure audio_pipeline_remove_listener is called before destroying event_iface */
-        audio_event_iface_destroy(evt);
+        /* Stop when the last pipeline element (i2s_stream_writer in this case) receives stop event */
+        if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT && msg.source == (void *) i2s_stream_writer
+            && msg.cmd == AEL_MSG_CMD_REPORT_STATUS
+            && (((int)msg.data == AEL_STATUS_STATE_STOPPED) || ((int)msg.data == AEL_STATUS_STATE_FINISHED))) {
+            ESP_LOGW(TAG, "[ * ] Stop event received");
 
-        /* Release all resources */
-        audio_pipeline_deinit(pipeline);
-        audio_element_deinit(i2s_stream_writer);
-        audio_element_deinit(mp3_decoder);
+
+            // audio_pipeline_stop(pipeline);
+            // audio_pipeline_wait_for_stop(pipeline);
+            // audio_pipeline_terminate(pipeline);
+            // audio_pipeline_reset_ringbuffer(pipeline);
+            // audio_pipeline_reset_elements(pipeline);
+
+            // //set_next_file_marker();
+            // DB_PR("[2.6-b] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)");
+            // audio_element_set_uri(tone_stream_reader, tone_uri[test_i]);
+            // audio_pipeline_run(pipeline);
+
+            // test_i++;
+            // if(test_i == 22)
+            // {
+            //     test_i=0;
+            // }
+            
+
+            // break;
+        }
     }
 
+    DB_PR("[ 5 ] Stop audio_pipeline");
+    audio_pipeline_stop(pipeline);
+    audio_pipeline_wait_for_stop(pipeline);
+    audio_pipeline_terminate(pipeline);
 
+    audio_pipeline_unregister(pipeline, tone_stream_reader);
+    audio_pipeline_unregister(pipeline, i2s_stream_writer);
+    audio_pipeline_unregister(pipeline, mp3_decoder);
 
+    /* Terminal the pipeline before removing the listener */
+    audio_pipeline_remove_listener(pipeline);
 
+    /* Make sure audio_pipeline_remove_listener & audio_event_iface_remove_listener are called before destroying event_iface */
+    audio_event_iface_destroy(evt);
 
+    /* Release all resources */
+    audio_pipeline_deinit(pipeline);
+    audio_element_deinit(tone_stream_reader);
+    audio_element_deinit(i2s_stream_writer);
+    audio_element_deinit(mp3_decoder);
 }
+
 
 
 
