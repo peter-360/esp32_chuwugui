@@ -3343,8 +3343,14 @@ wuci_xmh_q:
                                 //if -> huise tupian?
                                 if(return_cause_has_be_lock == 1)
                                 {
-                                    DB_PR("--2 lock--.\r\n");  
+                                    DB_PR("--lock lock--.\r\n");  
                                     send_cmd_to_lcd_pic(0x0028);
+                                }
+                                else if(return_cause_has_be_lock == 2)
+                                {
+                                    DB_PR("--changqi lock 111 --.\r\n");  
+                                    //baocun 1
+                                    send_cmd_to_lcd_pic(0x0017);
                                 }
                                 else
                                 {
@@ -3763,9 +3769,16 @@ wuci_xmh_unlk:
                                         break;
                                     }
                                     
+                                    if(database_gz[database_cw_adm.dIndx].lock == 1)
+                                    {
+                                        DB_PR("--break, have been be lock--.\r\n");   
+                                        send_cmd_to_lcd_pic(0x004a);
+                                        return_cause_has_be_lock = 2;
+                                        break;
+                                        //goto wuci_xmh_lk;
+                                    }
 
                                     if((database_gz[database_cw_adm.dIndx].state_fenpei_gz == 0)
-                                        ||(database_gz[database_cw_adm.dIndx].lock == 1)
                                         ||(database_cw_adm.dIndx ==0))
                                     {
                                         goto wuci_xmh_xinz;
@@ -7382,11 +7395,21 @@ void press_FR(void)
                 if(ensure==0x00)//搜索成功
                 {				
                     //LCD_Fill(0,100,lcddev.width,160,WHITE);
-                    DB_PR("-----4444 ok-----刷指纹成功 ");				
+                    DB_PR("-----4444 ok-----刷指纹成功 \r\n");				
 
-                    DB_PR("---------确有此人,ID:%d  匹配得分:%d ",seach.pageID,seach.mathscore);
-                    
-                    Del_FR(seach.pageID);
+                    DB_PR("---------确有此人,ID:%d  匹配得分:%d \r\n",seach.pageID,seach.mathscore);
+                    database_cw.dIndx = find_pid_lock_idx(seach.pageID);
+                    DB_PR("---add---database_cw.dIndx=%u\r\n",database_cw.dIndx);
+                    //DB_PR("---add---database_gz[database_cw.dIndx].changqi=%u\r\n",database_gz[database_cw.dIndx].changqi);
+                    if(database_gz[database_cw.dIndx].changqi == 0)
+                    {
+                        Del_FR(seach.pageID);
+                        DB_PR("-----changqi cunwu \r\n");	
+                    }
+                    else
+                    {
+                        DB_PR("-----normal cunwu \r\n");			
+                    }
                     
                     del_zw_database(seach.pageID);
                     break;
@@ -7395,7 +7418,7 @@ void press_FR(void)
                 else 
                 {
                     send_cmd_to_lcd_pic(0x000d);
-                    DB_PR("-----4444----f----- ");				
+                    DB_PR("-----4444----f----- \r\n");				
                     ShowErrMessage(ensure);			
                     break;
                 }
@@ -7403,7 +7426,7 @@ void press_FR(void)
             }
             else
             {
-                DB_PR("-----333--tezheng  f------");
+                DB_PR("-----333--tezheng  f------\r\n");
                 ShowErrMessage(ensure);			
                 break;     
             }
@@ -7413,7 +7436,7 @@ void press_FR(void)
         }
         else
         {
-            DB_PR("-----2222   f-----");
+            DB_PR("-----2222   f-----\r\n");
             break;//add
         }
         
@@ -7449,14 +7472,14 @@ void Del_FR(u16 num)
 	if(ensure==0)
 	{
 		//LCD_Fill(0,120,lcddev.width,160,WHITE);
-		DB_PR("---del ok -----删除指纹成功 ");		
+		DB_PR("---del ok -----删除指纹成功 \r\n");		
 	}
   else
 		ShowErrMessage(ensure);	
 	delay_ms(1200);
 	PS_ValidTempleteNum(&ValidN);//读库指纹个数
 	//LCD_ShowNum(56,80,AS608Para.PS_max-ValidN,3,16);
-    DB_PR("zhiwen number =%d ",AS608Para.PS_max-ValidN);
+    DB_PR("zhiwen number =%d \r\n",AS608Para.PS_max-ValidN);
 //MENU:	
 	//LCD_Fill(0,100,lcddev.width,160,WHITE);
 	delay_ms(50);
@@ -7474,7 +7497,7 @@ void del_zw_database(u16 num)
     //if(1)
     {
 
-        database_cw.dIndx = find_pid_lock_idx(num);
+        // database_cw.dIndx = find_pid_lock_idx(num);
 
         if(database_cw.dIndx == 0)
         {
