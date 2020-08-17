@@ -202,8 +202,8 @@ const char *TAG = "uart_events";
 
 
 
-#define ECHO_TEST_TXD  GPIO_NUM_32//32(GPIO_NUM_33)//GPIO_NUM_4
-#define ECHO_TEST_RXD  GPIO_NUM_33//33(GPIO_NUM_32)//GPIO_NUM_5
+#define ECHO_TEST_TXD  GPIO_NUM_33//32(GPIO_NUM_33)//GPIO_NUM_4
+#define ECHO_TEST_RXD  GPIO_NUM_32//33(GPIO_NUM_32)//GPIO_NUM_5
 #define ECHO_TEST_RTS  (UART_PIN_NO_CHANGE)
 #define ECHO_TEST_CTS  (UART_PIN_NO_CHANGE)
 
@@ -317,7 +317,7 @@ uint8_t flag_rx2;
 
 
 
-#define SHENYU_GEZI_MAX 150//310//all kong
+#define SHENYU_GEZI_MAX 300//310//all kong
 
 #define ZHIWEN_PAGE_ID_MAX 300//all kong
 
@@ -1789,6 +1789,111 @@ void default_factory_set(void)
 
     
 }
+
+
+void default_factory_set_first(void)
+{
+
+    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
+    {
+        database_cw.dIndx = i;
+
+
+        // database_gz[database_cw.dIndx].dIndx_gz =0;
+        database_gz[database_cw.dIndx].state_fenpei_gz =0;
+
+        // nvs_wr_index_gz(1);
+        nvs_wr_fenpei_gz(1);
+
+
+        // database_gz[database_cw.dIndx].changqi = 0;
+        database_gz[database_cw.dIndx].lock = 0;
+        nvs_wr_glock_gz(1);
+        // nvs_wr_glongtime_gz(1);
+
+
+        database_gz[database_cw.dIndx].cunwu_mode_gz = 0;
+        database_gz[database_cw.dIndx].dzx_mode_gz = 3;
+        nvs_wr_cunwu_mode_gz(1);
+        nvs_wr_dzx_mode_gz(1);
+
+        // database_gz[database_cw.dIndx].phone_number_nvs_gz = 0;
+        // database_gz[database_cw.dIndx].mima_number_nvs_gz = 0;
+        // nvs_wr_phone_number_nvs_gz(1);
+        // nvs_wr_mima_number_nvs_gz(1);
+
+        // database_gz[database_cw.dIndx].state_gz =0;
+        // nvs_wr_state_gz(1);
+
+        // database_gz[database_cw.dIndx].zhiwen_page_id_gz =0;
+        // nvs_wr_zw_pageid_gz(1);
+
+    }
+
+    for(uint16_t i=0;i<AS608Para.PS_max;i++)
+    {
+        database_ad.zhiwen_page_id_adm[i] =0;
+        nvs_wr_adm_zwpageid_flag(1,i);
+    }
+
+    database_ad.mima_number_adm =666888;
+    //adm
+    nvs_wr_mima_number_adm(1);
+
+    DB_PR("---database_ad.mima_number_adm=%d----\n",database_ad.mima_number_adm);
+
+    shengyu_da =0;
+    shengyu_zhong =0;
+    shengyu_xiao =0;
+    nvs_wr_shengyu_da(1);
+    nvs_wr_shengyu_zhong(1);
+    nvs_wr_shengyu_xiao(1);
+
+
+    shengyu_all = shengyu_da + shengyu_zhong + shengyu_xiao;
+
+
+    tongbu_gekou_shuliang_all(shengyu_all);
+    //vTaskDelay(10 / portTICK_PERIOD_MS);
+    tongbu_gekou_shuliang_d(shengyu_da);
+    //vTaskDelay(10 / portTICK_PERIOD_MS);
+    tongbu_gekou_shuliang_z(shengyu_zhong);
+    //vTaskDelay(10 / portTICK_PERIOD_MS);
+    tongbu_gekou_shuliang_x(shengyu_xiao);
+    //vTaskDelay(10 / portTICK_PERIOD_MS);
+
+
+
+
+
+    // DB_PR("---shengyu_all=%d----\n",shengyu_all);
+    // DB_PR("---shengyu_da=%d----\n",shengyu_da);
+    // DB_PR("---shengyu_zhong=%d----\n",shengyu_zhong);
+    // DB_PR("---shengyu_xiao=%d----\n",shengyu_xiao);
+
+    shengyu_da_max =0;
+    shengyu_zhong_max =0;
+    shengyu_xiao_max =0;
+    shengyu_all_max = 0;
+
+
+    nvs_wr_shengyu_all_max(1);//duoyu
+    nvs_wr_shengyu_da_max(1);
+    nvs_wr_shengyu_zhong_max(1);
+    nvs_wr_shengyu_xiao_max(1);
+
+
+
+
+    // //shengyu_all_max = shengyu_da_max + shengyu_zhong_max + shengyu_xiao_max;
+    DB_PR("-2-shengyu_all_max=%d----\n",shengyu_all_max);
+    // DB_PR("---shengyu_da_max=%d----\n",shengyu_da_max);
+    // DB_PR("---shengyu_zhong_max=%d----\n",shengyu_zhong_max);
+    // DB_PR("---shengyu_xiao_max=%d----\n",shengyu_xiao_max);
+
+    
+}
+
 
 
 
@@ -5669,17 +5774,17 @@ done_kai_admin:
                                     audio_element_set_uri(tone_stream_reader, tone_uri[database_gz[database_cw.dIndx].dIndx_gz]);
                                     audio_pipeline_run(pipeline);
 
-                                    delay_ms(5000);
-                                    audio_pipeline_stop(pipeline);
-                                    audio_pipeline_wait_for_stop(pipeline);
-                                    audio_pipeline_terminate(pipeline);
-                                    audio_pipeline_reset_ringbuffer(pipeline);
-                                    audio_pipeline_reset_elements(pipeline);
+                                    // delay_ms(5000);
+                                    // audio_pipeline_stop(pipeline);
+                                    // audio_pipeline_wait_for_stop(pipeline);
+                                    // audio_pipeline_terminate(pipeline);
+                                    // audio_pipeline_reset_ringbuffer(pipeline);
+                                    // audio_pipeline_reset_elements(pipeline);
 
-                                    //set_next_file_marker();
-                                    DB_PR("[2.6-b] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)");
-                                    audio_element_set_uri(tone_stream_reader, tone_uri[1]);
-                                    audio_pipeline_run(pipeline);
+                                    // //set_next_file_marker();
+                                    // DB_PR("[2.6-b] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)");
+                                    // audio_element_set_uri(tone_stream_reader, tone_uri[1]);
+                                    // audio_pipeline_run(pipeline);
 
                                 }
                                 else
@@ -7798,7 +7903,7 @@ void audio_init(void)
         if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT && msg.source == (void *) i2s_stream_writer
             && msg.cmd == AEL_MSG_CMD_REPORT_STATUS
             && (((int)msg.data == AEL_STATUS_STATE_STOPPED) || ((int)msg.data == AEL_STATUS_STATE_FINISHED))) {
-            ESP_LOGW(TAG, "[ * ] Stop event received");
+            ESP_LOGW(TAG, "[ * ] Stop event received\r\n");
 
 
             // audio_pipeline_stop(pipeline);
@@ -8208,7 +8313,7 @@ void app_main(void)
     DB_PR("-1-shengyu_all_max=%d----\n",shengyu_all_max);
     if(shengyu_all_max == 0)
     {
-        default_factory_set();
+        default_factory_set_first();
         //send_cmd_to_lcd_pic(BOOT_PIC);
     }
     else
