@@ -54,11 +54,13 @@
 
 #include "board.h"
 
-#if __has_include("audio_tone_uri.h")
-    #include "audio_tone_uri.h"
-#else
-    #error "please refer the README, and then make the tone file"
-#endif
+
+#include "audio_tone_uri.h"
+// #if __has_include("audio_tone_uri.h")
+//     #include "audio_tone_uri.h"
+// #else
+//     #error "please refer the README, and then make the tone file"
+// #endif
 
 
 
@@ -70,6 +72,9 @@
 
 static void lock_all_open_task();
 static void lock_all_clear_task();
+void tongbu_da(void);
+void tongbu_zh(void);
+void tongbu_changqi(void);
 
 
 esp_timer_handle_t oneshot_timer;
@@ -263,6 +268,10 @@ const char *TAG = "uart_events";
 // #define GPIO_INPUT_IO_1     5
 #define GPIO_INPUT_PIN_SEL  ((1ULL<<GPIO_INPUT_IO_0))// | (1ULL<<GPIO_INPUT_IO_1)
 #define ESP_INTR_FLAG_DEFAULT 0
+
+
+
+bool HandShakeFlag = 0;
 
 
 #define BUF_SIZE (1024)
@@ -1786,7 +1795,12 @@ void default_factory_set(void)
     // DB_PR("---shengyu_da_max=%d----\n",shengyu_da_max);
     // DB_PR("---shengyu_zhong_max=%d----\n",shengyu_zhong_max);
     // DB_PR("---shengyu_xiao_max=%d----\n",shengyu_xiao_max);
-
+    tongbu_da();
+    //vTaskDelay(1530 / portTICK_PERIOD_MS);
+    tongbu_zh();
+    //vTaskDelay(1530 / portTICK_PERIOD_MS);
+    tongbu_changqi();
+    //vTaskDelay(1530 / portTICK_PERIOD_MS);
     
 }
 
@@ -2069,7 +2083,7 @@ uint8_t mima_number_a[6]={0};
 
 uint8_t mima_number_a1[6]={0};  
 uint8_t mima_number_a2[6]={0};  
-uint8_t buff_t[100]={0};
+
 
 uint8_t return_cause;//xiangmen fail
 
@@ -2078,6 +2092,7 @@ uint8_t return_cause_has_be_lock;
 
 static void echo_task2()//lcd
 {
+    uint8_t buff_t[256]={0};
     uint16_t bl_addr=0;//bianliang lcd
     uint16_t crc16_temp=0;
     
@@ -2194,7 +2209,7 @@ static void echo_task2()//lcd
 
                                 if(data_rx_t[2] == 0x6A)//0x9c
                                 {
-                                    send_cmd_to_lcd_bl_len(0x11A0,(uint8_t*)buff_t,30*4+5);//
+                                    
                                     // send_cmd_to_lcd_bl(0x11A0,0);
                                     char show[156][10];
                                     char *p = NULL;
@@ -2521,12 +2536,13 @@ static void echo_task2()//lcd
                                         DB_PR("--input shuliang =0--.\r\n");   
                                     }
                                     
-
+                                    send_cmd_to_lcd_bl_len(0x11A0,(uint8_t*)buff_t,30*4+5);//
                                 }
                                 else
                                 {
                                     DB_PR("--hangshu cuowu--.\r\n");   
                                 }
+                                
                                 
                                 //todo 每次设置不是all
 
@@ -2553,7 +2569,6 @@ static void echo_task2()//lcd
                                 hang_shu_max =0;
                                 if(data_rx_t[2] == 0xCE)//0xFC)//0xCE)//0x9c)
                                 {
-                                    send_cmd_to_lcd_bl_len(BL_GK_SZ_D,(uint8_t*)buff_t,BL_GK_BH_MAX_LEN);//
                                     char show[156][10];
                                     char *p = NULL;
                                     char *q = NULL;
@@ -2718,12 +2733,12 @@ static void echo_task2()//lcd
                                     //save
 
                                     memset(tx_Buffer2,0,200);
-                                    send_cmd_to_lcd_bl_len(BL_GK_SZ_D,tx_Buffer2,data_rx_t[2]-1);//clear
+                                    //send_cmd_to_lcd_bl_len(BL_GK_SZ_D,tx_Buffer2,data_rx_t[2]-1);//clear
 
 
                                     send_cmd_to_lcd_pic(GEKOU_Z_PIC);
 
-                                    
+                                    send_cmd_to_lcd_bl_len(BL_GK_SZ_D,(uint8_t*)buff_t,BL_GK_BH_MAX_LEN);//
                                 }
                                 else
                                 {
@@ -2758,7 +2773,7 @@ gekou_fail:
 
                                 if(data_rx_t[2] == 0xCE)//0x9c)
                                 {
-                                    send_cmd_to_lcd_bl_len(BL_GK_SZ_Z,(uint8_t*)buff_t,BL_GK_BH_MAX_LEN);//
+                                    
                                     char show[156][10];
                                     char *p = NULL;
                                     char *q = NULL;
@@ -2925,12 +2940,12 @@ gekou_fail:
                                     //save
 
                                     memset(tx_Buffer2,0,200);
-                                    send_cmd_to_lcd_bl_len(BL_GK_SZ_Z,tx_Buffer2,data_rx_t[2]-1);//clear
+                                    //send_cmd_to_lcd_bl_len(BL_GK_SZ_Z,tx_Buffer2,data_rx_t[2]-1);//clear
 
 
                                     send_cmd_to_lcd_pic(GEKOU_X_PIC);
 
-                                    
+                                    send_cmd_to_lcd_bl_len(BL_GK_SZ_Z,(uint8_t*)buff_t,BL_GK_BH_MAX_LEN);//
                                 }
                                 else
                                 {
@@ -2962,7 +2977,7 @@ gekou_fail_z:
 
                                 if(data_rx_t[2] == 0xCE)//0x9c)
                                 {
-                                    send_cmd_to_lcd_bl_len(BL_GK_SZ_X,(uint8_t*)buff_t,BL_GK_BH_MAX_LEN);//
+                                    
                                     char show[156][10];
                                     char *p = NULL;
                                     char *q = NULL;
@@ -3113,12 +3128,12 @@ gekou_fail_z:
                                     //save
 
                                     memset(tx_Buffer2,0,200);
-                                    send_cmd_to_lcd_bl_len(BL_GK_SZ_X,tx_Buffer2,data_rx_t[2]-1);//clear
+                                    //send_cmd_to_lcd_bl_len(BL_GK_SZ_X,tx_Buffer2,data_rx_t[2]-1);//clear
 
 
                                     send_cmd_to_lcd_pic(GEKOU_OK_PIC);
 
-                                    
+                                    send_cmd_to_lcd_bl_len(BL_GK_SZ_X,(uint8_t*)buff_t,BL_GK_BH_MAX_LEN);//
                                 }
                                 else
                                 {
@@ -6369,6 +6384,12 @@ void ShowErrMessage(u8 ensure)
 //录指纹
 void Add_FR()
 {
+    if(HandShakeFlag ==1)
+    {
+        send_cmd_to_lcd_pic(0x0005);
+        DB_PR("---zhiwen connect fail\r\n");
+        return;
+    }
 	u8 i=0,ensure=0 ,processnum=0;
     // u8 ensure_2=0,ensure_3=0;
     SearchResult p_rsp;
@@ -7009,6 +7030,12 @@ done_zwc_fail:
 //录指纹
 void Add_FR_CQ()
 {
+    if(HandShakeFlag ==1)
+    {
+        send_cmd_to_lcd_pic(0x0005);
+        DB_PR("---zhiwen connect fail\r\n");
+        return;
+    }
 	u8 i=0,ensure=0 ,processnum=0;
     // u8 ensure_2=0,ensure_3=0;
     SearchResult p_rsp;
@@ -7465,6 +7492,12 @@ done_zwc_fail_cq:
 //刷指纹
 void press_FR(void)
 {
+    if(HandShakeFlag ==1)
+    {
+        send_cmd_to_lcd_pic(0x0005);
+        DB_PR("---zhiwen connect fail\r\n");
+        return;
+    }
 	for(u8 i=0;i<3;i++)
 	{
 		vTaskDelay(1);
@@ -7548,6 +7581,12 @@ void press_FR(void)
 //删除指纹
 void Del_FR(u16 num)
 {
+    if(HandShakeFlag ==1)
+    {
+        send_cmd_to_lcd_pic(0x0005);
+        DB_PR("---zhiwen connect fail\r\n");
+        return;
+    }
 	u8  ensure;
 	//u16 num;
 	//LCD_Fill(0,100,lcddev.width,160,WHITE);
@@ -7591,6 +7630,12 @@ void Del_FR(u16 num)
 
 void del_zw_database(u16 num)
 {
+    if(HandShakeFlag ==1)
+    {
+        send_cmd_to_lcd_pic(0x0005);
+        DB_PR("---zhiwen connect fail\r\n");
+        return;
+    }
     DB_PR("-------database_ad.zhiwen_page_id_adm[num]=%d\r\n",database_ad.zhiwen_page_id_adm[num]);
     if(database_ad.zhiwen_page_id_adm[num] ==1)
     //if(1)
@@ -8170,12 +8215,28 @@ void zhiwen_init(void )
 {
     u8 ensure;
     DB_PR("与AS608模块握手....\r\n");
-	while(PS_HandShake(&AS608Addr))//与AS608模块握手
+	//while(PS_HandShake(&AS608Addr))//与AS608模块握手
+    for(uint16_t i=0;i<3;i++)
 	{
-		delay_ms(400);
-        DB_PR("--1--PS_HandShake no-----未检测到模块!!!\r\n");
-        delay_ms(800);
-        DB_PR("---1---尝试连接模块...\r\n");	
+        if(PS_HandShake(&AS608Addr))
+        {
+            delay_ms(400);
+            DB_PR("--1--PS_HandShake no-----未检测到模块!!!\r\n");
+            delay_ms(800);
+            DB_PR("---1---尝试连接模块...\r\n");	
+
+            if(i==2)
+            {
+                DB_PR("---1---zhiwen HandShake fail...\r\n");	
+                HandShakeFlag =1;
+                break;
+            }
+        }
+        else
+        {
+            break;
+        }
+        
 
         // u8 data = 0x35;
         // uart_write_bytes(UART_NUM_0, (const char *) &data, 1);//------UART_NUM_2------	  
@@ -8271,11 +8332,13 @@ void app_main(void)
     uart_init_all();
     //vTaskDelay(500 / portTICK_PERIOD_MS);
 
+    send_cmd_to_lcd_pic(0x0000);
+
     //xTaskCreate(echo_task, "uart_echo_task", 1024, NULL, 10, NULL);
     xTaskCreate(echo_task, "uart_echo_task", 2* 1024, NULL, 1, NULL);//1024 10
 
 	
-    vTaskDelay(500 / portTICK_PERIOD_MS);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
 
 
 
