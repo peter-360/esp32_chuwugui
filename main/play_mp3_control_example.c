@@ -263,16 +263,21 @@ const char *TAG = "uart_events";
 
 #define LED_BLUE     (GPIO_NUM_2)
 #define LED_GRREN     (GPIO_NUM_22)
-#define LED_RED     (GPIO_NUM_27)
+#define LED_RED         (GPIO_NUM_27)
 
-#define GPIO_INPUT_IO_0     39//4
-// #define GPIO_INPUT_IO_1     5
-#define GPIO_INPUT_PIN_SEL  ((1ULL<<GPIO_INPUT_IO_0))// | (1ULL<<GPIO_INPUT_IO_1)
+
+#define GPIO_INPUT_IO_ZW_2     (4)//5
+
+#define GPIO_INPUT_IO_ADMIN     39//4
+#define GPIO_INPUT_IO_ZW_JC     35//5
+#define GPIO_INPUT_PIN_SEL  ((1ULL<<GPIO_INPUT_IO_ADMIN) | (1ULL<<GPIO_INPUT_IO_ZW_JC))
 #define ESP_INTR_FLAG_DEFAULT 0
 
 
 
 bool HandShakeFlag = 0;
+bool io_shouzhi_down_flag = 0;
+
 
 
 #define BUF_SIZE (1024)
@@ -4886,6 +4891,10 @@ done_mima_nosame:
                                     send_cmd_to_lcd_pic(0x0003);
                                 }
 
+                                vTaskDelete(taskhandle1);
+                                printf("vTask: delete vTask1.\r\n");
+
+
                                 break;
 
 
@@ -6473,6 +6482,9 @@ void ShowErrMessage(u8 ensure)
 // }
 
 
+//第三次
+bool processnum_first_ok=0;
+//录指纹
 void Add_FR_First()
 {
     if(HandShakeFlag ==1)
@@ -6586,7 +6598,7 @@ void Add_FR_First()
                             send_cmd_to_lcd_pic(0x004E);
                             delay_ms(200);
                             //vTaskDelete(NULL);
-                            xTaskCreate(Add_FR, "add_zhiwen_task", 6* 1024, NULL, 2, NULL);//1024 10
+                            xTaskCreate(Add_FR, "add_zhiwen_task2", 6* 1024, NULL, 2, NULL);//1024 10
                             vTaskDelete(taskhandle1);
                         }
                         delay_ms(200);
@@ -6624,20 +6636,55 @@ void Add_FR_First()
     vTaskDelete(NULL);
 
 }
+
+
+
 //录指纹
 void Add_FR()
 {
+    u8 zw_likai_flag=0;
+    for(uint16_t i=0;i<20;i++)//
+	{
+        DB_PR("---------gpio_get_level(GPIO_INPUT_IO_ZW_JC)=%d---------\r\n",gpio_get_level(GPIO_INPUT_IO_ZW_2));
+        if((gpio_get_level(GPIO_INPUT_IO_ZW_2)==0) )//&&(i==8)
+        {
+            //io_shouzhi_down_flag =0;
+            zw_likai_flag =1;
+            break;
+        }
+        delay_ms(1000);
+        DB_PR("------------wait for finger move----------\r\n");
 
+    }
+    if(zw_likai_flag == 0)
+    {
+        vTaskDelay(1);
+        DB_PR("----a----shouzhi move timeout--------\r\n");
+        vTaskDelete(NULL);
+    }
+    else
+    {
+        DB_PR("-----b------shouzhi move ok, continue-----------\r\n");
+        /* code */
+    }
+    
+    
+    // if(processnum_first_ok ==1)
+    // {
+    //     send_cmd_to_lcd_pic(0x0005);
+    //     DB_PR("---zhiwen connect fail\r\n");
+    //     return;
+    // }
 	u8 i=0,ensure=0 ,processnum=2;
     // u8 ensure_2=0,ensure_3=0;
     SearchResult p_rsp;
 	//u16 ID;
+    delay_ms(200);
 	while(1)
 	{
         vTaskDelay(10 / portTICK_PERIOD_MS);
 		switch (processnum)
 		{
-
             case 2:
 				i++;
 				////LCD_Fill(0,100,lcddev.width,160,WHITE);
@@ -6683,6 +6730,7 @@ void Add_FR()
                 else 
                 {
                     ShowErrMessage(ensure);		
+                    //send_cmd_to_lcd_pic(0x004C);
                 }
                     
 				break;
@@ -7143,11 +7191,11 @@ done_zwc_fail:
 				break;	
 
             default:
-                DB_PR("--default-zhiwen add ");
+                DB_PR("--default-zhiwen add2 \r\n");
                 break;		
 		}
 		delay_ms(400);
-		if(i==5)//超过5次没有按手指则退出
+		if(i==20)//超过5次没有按手指则退出
 		{
             DB_PR("---->5a---- 超过5次没有按手指则退出 ");
 			//LCD_Fill(0,100,lcddev.width,160,WHITE);
@@ -8058,6 +8106,7 @@ void audio_init(void)
 
     DB_PR("[ 4 ] Listen for all pipeline events");
     while (1) {
+        //vTaskDelay(10 / portTICK_PERIOD_MS);
         audio_event_iface_msg_t msg = { 0 };
         esp_err_t ret = audio_event_iface_listen(evt, &msg, portMAX_DELAY);
         if (ret != ESP_OK) {
@@ -8425,9 +8474,10 @@ static void gpio_task_example(void* arg)
         if(xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) {
             DB_PR("GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));
 
-            if((io_num==39)
+            if((io_num==GPIO_INPUT_IO_ADMIN)
                 &&(gpio_get_level(io_num)==0))
             {
+                DB_PR("------------admin mode-----------\r\n");
                 send_cmd_to_lcd_pic(0x0011);
                 vTaskDelay(1000 / portTICK_PERIOD_MS);
                 gpio_set_level(LED_BLUE, 0);
@@ -8441,7 +8491,26 @@ static void gpio_task_example(void* arg)
                 gpio_set_level(LED_RED, 1);
 
             }
+            if((io_num==GPIO_INPUT_IO_ZW_JC)
+                &&(gpio_get_level(io_num)==0))
+            {
+                io_shouzhi_down_flag=1;
+                 DB_PR("------------zw chong an-----------\r\n");
+                //send_cmd_to_lcd_pic(0x0011);
 
+
+                // vTaskDelay(1000 / portTICK_PERIOD_MS);
+                // gpio_set_level(LED_BLUE, 0);
+                // gpio_set_level(LED_GRREN, 0);
+                // gpio_set_level(LED_RED, 0);
+
+
+                // vTaskDelay(1000 / portTICK_PERIOD_MS);
+                // gpio_set_level(LED_BLUE, 1);
+                // gpio_set_level(LED_GRREN, 1);
+                // gpio_set_level(LED_RED, 1);
+
+            }
 
         }
 
@@ -8557,6 +8626,17 @@ void app_main(void)
     gpio_set_direction(LED_RED, GPIO_MODE_OUTPUT);
     gpio_set_level(LED_RED, 1);
 
+    // gpio_pad_select_gpio(emac->int_gpio_num);
+    // gpio_set_direction(emac->int_gpio_num, GPIO_MODE_INPUT);
+    // gpio_set_pull_mode(emac->int_gpio_num, GPIO_PULLDOWN_ONLY);
+    // gpio_set_intr_type(emac->int_gpio_num, GPIO_INTR_POSEDGE);
+
+    gpio_pad_select_gpio(GPIO_INPUT_IO_ZW_2);
+    /* Set the GPIO as a push/pull output */
+    gpio_set_direction(GPIO_INPUT_IO_ZW_2, GPIO_MODE_INPUT);
+    //gpio_pullup_en(GPIO_INPUT_IO_ZW_2);
+    //gpio_pullup_dis(GPIO_INPUT_IO_ZW_2);
+    gpio_set_pull_mode(GPIO_INPUT_IO_ZW_2,GPIO_PULLUP_ONLY);
 
     gpio_config_t io_conf;
     // //disable interrupt
@@ -8573,17 +8653,17 @@ void app_main(void)
     // gpio_config(&io_conf);
 
     //interrupt of rising edge
-    io_conf.intr_type = GPIO_PIN_INTR_POSEDGE;
-    //bit mask of the pins, use GPIO39/5 here
+    io_conf.intr_type = GPIO_PIN_INTR_NEGEDGE;//GPIO_PIN_INTR_NEGEDGE;//GPIO_PIN_INTR_POSEDGE;
+    //bit mask of the pins, use GPIO39/35 here
     io_conf.pin_bit_mask = GPIO_INPUT_PIN_SEL;
     //set as input mode    
     io_conf.mode = GPIO_MODE_INPUT;
     //enable pull-up mode
-    io_conf.pull_up_en = 1;
+    io_conf.pull_up_en = 1;//1;//wai jie?
     gpio_config(&io_conf);
 
     //change gpio intrrupt type for one pin
-    gpio_set_intr_type(GPIO_INPUT_IO_0, GPIO_INTR_ANYEDGE);
+    gpio_set_intr_type(GPIO_INPUT_IO_ADMIN, GPIO_PIN_INTR_NEGEDGE );//GPIO_INTR_ANYEDGE
 
     //create a queue to handle gpio event from isr
     gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
@@ -8593,14 +8673,14 @@ void app_main(void)
     //install gpio isr service
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     //hook isr handler for specific gpio pin
-    gpio_isr_handler_add(GPIO_INPUT_IO_0, gpio_isr_handler, (void*) GPIO_INPUT_IO_0);
-    // //hook isr handler for specific gpio pin
-    // gpio_isr_handler_add(GPIO_INPUT_IO_1, gpio_isr_handler, (void*) GPIO_INPUT_IO_1);
+    gpio_isr_handler_add(GPIO_INPUT_IO_ADMIN, gpio_isr_handler, (void*) GPIO_INPUT_IO_ADMIN);
+    //hook isr handler for specific gpio pin
+    gpio_isr_handler_add(GPIO_INPUT_IO_ZW_JC, gpio_isr_handler, (void*) GPIO_INPUT_IO_ZW_JC);
 
     //remove isr handler for gpio number.
-    gpio_isr_handler_remove(GPIO_INPUT_IO_0);
+    gpio_isr_handler_remove(GPIO_INPUT_IO_ADMIN);
     //hook isr handler for specific gpio pin again
-    gpio_isr_handler_add(GPIO_INPUT_IO_0, gpio_isr_handler, (void*) GPIO_INPUT_IO_0);
+    gpio_isr_handler_add(GPIO_INPUT_IO_ADMIN, gpio_isr_handler, (void*) GPIO_INPUT_IO_ADMIN);
 
 
 
