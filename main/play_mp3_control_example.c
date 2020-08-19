@@ -266,7 +266,7 @@ const char *TAG = "uart_events";
 #define LED_RED         (GPIO_NUM_27)
 
 
-#define GPIO_INPUT_IO_ZW_2     (4)//5
+#define GPIO_INPUT_IO_ZW_2     (4)
 
 #define GPIO_INPUT_IO_ADMIN     39//4
 #define GPIO_INPUT_IO_ZW_JC     35//5
@@ -484,9 +484,9 @@ typedef struct
 
 
     //状态 在用是否
-	bool state;
+	uint8_t state;
 
-
+    uint8_t changqi_tmp;
 
 
     //lock编号 箱门-nolock
@@ -2096,6 +2096,8 @@ uint8_t return_cause;//xiangmen fail
 
 uint8_t return_cause_zanwu_kx;
 uint8_t return_cause_has_be_lock;
+
+uint8_t return_cause_zw;
 
 static void echo_task2()//lcd
 {
@@ -3879,6 +3881,8 @@ wuci_xmh_unlk:
                                 // }
                                 // DB_PR("\r\n");
 
+                                database_cw_adm.changqi_tmp =1;
+
 
                                 
                                 //uint8_t temp_xiangmen[4]={0}; 
@@ -4000,7 +4004,7 @@ wuci_xmh_xinz:
 
 
 
-                            case 0x2050://zhiwen  or   mima
+                            case 0x2050://zhiwen  or   mima changqi
                                 DB_PR("--a-zhiwen or mima---.\r\n");   
                                 //if -> huise tupian?
                                 if(01== data_rx_t[8])//zhiwen cun
@@ -4008,8 +4012,8 @@ wuci_xmh_xinz:
                                     DB_PR("--zhiwen--.\r\n");  
                                     //baocun 1
                                     database_cw_adm.cunwu_mode = 1;
-									send_cmd_to_lcd_pic(0x001b);
-                                    xTaskCreate(Add_FR_CQ, "add_zhiwen_task", 6* 1024, NULL, 2, NULL);//1024 10
+									send_cmd_to_lcd_pic(0x0004);//0x001b
+                                    xTaskCreate(Add_FR_First, "add_zhiwen_task", 6* 1024, NULL, 2, NULL);//1024 10
                                 }
                                 else if(02== data_rx_t[8])//mi ma
                                 {
@@ -4683,7 +4687,10 @@ done_mima_nosame:
                                 // }
                                 // return_cause_zanwu_kx =0;
                                 send_cmd_to_lcd_pic(0x0002);
-
+                                DB_PR("2-vTask: delete vTask1.\r\n");
+                                return_cause_zw =1;
+                                vTaskDelete(taskhandle1);
+                                
                                 break;
 
 
@@ -4714,7 +4721,9 @@ done_mima_nosame:
                                 // }
                                 // return_cause_zanwu_kx =0;
                                 send_cmd_to_lcd_pic(0x0002);
-
+                                DB_PR("3-vTask: delete vTask1.\r\n");
+                                return_cause_zw =1;
+                                vTaskDelete(taskhandle1);
                                 break;
 
                             case 0x12b0://zw luru fail
@@ -4783,6 +4792,7 @@ done_mima_nosame:
                                     DB_PR("--zhiwen--.\r\n");  
                                     //baocun 1
                                     database_cw.cunwu_mode = 1;
+                                    database_cw_adm.changqi_tmp = 0;
                                 }
                                 else if(02== data_rx_t[8])//mi ma
                                 {
@@ -4873,26 +4883,49 @@ done_mima_nosame:
                                 break;
 
                             case 0x1260://zhiwen  close
-                                DB_PR("---zhiwen close---.\r\n");   
+                                DB_PR("---zhiwen close---database_cw_adm.changqi_tmp=%d.\r\n",database_cw_adm.changqi_tmp);   
                                 //if -> huise tupian?
-
-                                if(((shengyu_xiao==0) && (shengyu_zhong==0))
-                                    ||((shengyu_da==0) && (shengyu_xiao==0))
-                                    ||((shengyu_da==0) && (shengyu_zhong==0)))
+                                if(database_cw_adm.changqi_tmp == 1)
                                 {
-                                    DB_PR("--2 cunwu--.\r\n");  
-                                    //baocun 1
-                                    send_cmd_to_lcd_pic(0x0002);
-                
+                                    send_cmd_to_lcd_pic(CHANQI_CW_MODE_PIC);
+                                    DB_PR("--2 changqi--.\r\n");  
                                 }
                                 else
                                 {
-                                    DB_PR("--2 gekou--.\r\n");  
-                                    send_cmd_to_lcd_pic(0x0003);
+    
+                                    if(((shengyu_xiao==0) && (shengyu_zhong==0))
+                                        ||((shengyu_da==0) && (shengyu_xiao==0))
+                                        ||((shengyu_da==0) && (shengyu_zhong==0)))
+                                    {
+                                        DB_PR("--2 cunwu--.\r\n");  
+                                        //baocun 1
+                                        send_cmd_to_lcd_pic(0x0002);
+                    
+                                    }
+                                    else
+                                    {
+                                        DB_PR("--2 gekou--.\r\n");  
+                                        send_cmd_to_lcd_pic(0x0003);
+                                    }
                                 }
+                                
+                                
+                                
+                                return_cause_zw =1;
 
-                                vTaskDelete(taskhandle1);
-                                printf("vTask: delete vTask1.\r\n");
+                                
+                                if( taskhandle1 != NULL )
+                                {
+                                    //DB_PR("1-vTask: delete vTask1. taskhandle1=%d\r\n"(int)*taskhandle1);
+                                    vTaskDelete(taskhandle1);
+                                }
+                                else
+                                {
+                                    DB_PR("taskhandle1 is NULL.\r\n");
+                                }
+                                
+              
+
 
 
                                 break;
@@ -4900,7 +4933,7 @@ done_mima_nosame:
 
 
                             case 0x2020://da zhong xiao    ke sheng
-                                DB_PR("----------------daxiao---------------.\r\n");   
+                                DB_PR("----------------dazhxiao---------------.\r\n");   
 
                                 bool flag_temp=1;
                                 //todo
@@ -6487,6 +6520,8 @@ bool processnum_first_ok=0;
 //录指纹
 void Add_FR_First()
 {
+    return_cause_zw=0;
+    DB_PR("---HandShakeFlag=%d\r\n",HandShakeFlag);
     if(HandShakeFlag ==1)
     {
         send_cmd_to_lcd_pic(0x004D);
@@ -6532,13 +6567,33 @@ void Add_FR_First()
 	                        processnum=0;//跳回第一步	
                             DB_PR("--0-no-3-ensure=%d\r\n",ensure);
                             ShowErrMessage(ensure);	
+
+                            vTaskDelete(NULL);
                         }
                         else 
                         {
                             
                             DB_PR("--0-ok2-对比成功,新的指纹\r\n");
                             i=0;//del?
-                            processnum=1;//跳到第二步	
+                            //processnum=1;//跳到第二步	
+
+                            processnum=0;	
+                            //processnum_first_ok =1;	
+                            send_cmd_to_lcd_pic(0x004E);
+                            delay_ms(200);
+
+                            DB_PR("database_cw_adm.changqi_tmp= %d \r\n",database_cw_adm.changqi_tmp);
+                            if(database_cw_adm.changqi_tmp == 0)
+                            {
+                                xTaskCreate(Add_FR, "add_zhiwen_task2", 6* 1024, NULL, 2, NULL);//1024 10
+                            }
+                            else
+                            {
+                                xTaskCreate(Add_FR_CQ, "add_zhiwen_task2", 6* 1024, NULL, 2, NULL);//1024 10
+                            }
+                            
+                            vTaskDelete(NULL);
+
 
                         }
                         delay_ms(200);
@@ -6560,6 +6615,88 @@ void Add_FR_First()
                     					
 				break;
 			
+
+
+            default:
+                DB_PR("--default-zhiwen add1 \r\n");
+                break;		
+		}
+		delay_ms(400);
+        DB_PR("-1-hearbeat...return_cause_zw=%d \r\n",return_cause_zw);
+        if(return_cause_zw ==1)
+        {
+            DB_PR("--zw task 1 over \r\n");
+            return_cause_zw =0;
+            vTaskDelete(NULL);
+        }
+
+		if(i==40)//超过5次没有按手指则退出
+		{
+            DB_PR("---->5a---- 超过5次没有按手指则退出 ");
+			//LCD_Fill(0,100,lcddev.width,160,WHITE);
+            send_cmd_to_lcd_pic(0x004C);
+            
+			break;	
+		}				
+	}
+    return_cause_zw =0;
+    vTaskDelay(1);
+    //vTaskDelay(10 / portTICK_PERIOD_MS);
+    vTaskDelete(NULL);
+
+}
+
+
+
+//录指纹
+void Add_FR()
+{
+    //return_cause_zw=0;
+//     u8 zw_likai_flag=0;
+//     for(uint16_t i=0;i<50;i++)//
+// 	{
+//         DB_PR("---------gpio_get_level(GPIO_INPUT_IO_ZW_JC)=%d---------\r\n",gpio_get_level(GPIO_INPUT_IO_ZW_2));
+//         if((gpio_get_level(GPIO_INPUT_IO_ZW_2)==0) &&(i==2))//
+//         {
+//             DB_PR("------------finger move ok----------\r\n");
+//             //io_shouzhi_down_flag =0;
+//             zw_likai_flag =1;
+//             break;
+//         }
+//         delay_ms(200);
+//         DB_PR("------------wait for finger move----------\r\n");
+
+//     }
+//     if(zw_likai_flag == 0)
+//     {
+//         vTaskDelay(1);
+//         DB_PR("----a----shouzhi move timeout--------\r\n");
+//         vTaskDelete(NULL);
+//     }
+//     else
+//     {
+//         DB_PR("-----b------shouzhi move ok, continue-----------\r\n");
+//         /* code */
+//     }
+    
+    
+    // if(processnum_first_ok ==1)
+    // {
+    //     send_cmd_to_lcd_pic(0x0005);
+    //     DB_PR("---zhiwen connect fail\r\n");
+    //     return;
+    // }
+	u8 i=0,ensure=0 ,processnum=1;
+    // u8 ensure_2=0,ensure_3=0;
+    SearchResult p_rsp;
+	//u16 ID;
+    //delay_ms(1000);
+	while(1)
+	{
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+		switch (processnum)
+		{
+
 			case 1:
 				i++;
 				////LCD_Fill(0,100,lcddev.width,160,WHITE);
@@ -6584,22 +6721,15 @@ void Add_FR_First()
                             send_cmd_to_lcd_pic(0x0005);
                             ShowErrMessage(ensure);	
                             i=0;
-                            processnum=0;//跳回第一步	
-                            	
+                            processnum=1;//跳回第一步	
+                            vTaskDelete(NULL);
                         }
                         else 
                         {
                             DB_PR("--1-ok2-对比成功,新的指纹\r\n");
                             i=0;
-                            //processnum=2;//跳到第三步	
+                            processnum=2;//跳到第三步	
 
-                            processnum =0;	
-                            //processnum_first_ok =1;	
-                            send_cmd_to_lcd_pic(0x004E);
-                            delay_ms(200);
-                            //vTaskDelete(NULL);
-                            xTaskCreate(Add_FR, "add_zhiwen_task2", 6* 1024, NULL, 2, NULL);//1024 10
-                            vTaskDelete(taskhandle1);
                         }
                         delay_ms(200);
 
@@ -6618,73 +6748,6 @@ void Add_FR_First()
 				break;
 
 
-            default:
-                DB_PR("--default-zhiwen add1 \r\n");
-                break;		
-		}
-		delay_ms(400);
-		if(i==10)//超过5次没有按手指则退出
-		{
-            DB_PR("---->5a---- 超过5次没有按手指则退出 ");
-			//LCD_Fill(0,100,lcddev.width,160,WHITE);
-            send_cmd_to_lcd_pic(0x004C);
-			break;	
-		}				
-	}
-    vTaskDelay(1);
-    //vTaskDelay(10 / portTICK_PERIOD_MS);
-    vTaskDelete(NULL);
-
-}
-
-
-
-//录指纹
-void Add_FR()
-{
-    u8 zw_likai_flag=0;
-    for(uint16_t i=0;i<20;i++)//
-	{
-        DB_PR("---------gpio_get_level(GPIO_INPUT_IO_ZW_JC)=%d---------\r\n",gpio_get_level(GPIO_INPUT_IO_ZW_2));
-        if((gpio_get_level(GPIO_INPUT_IO_ZW_2)==0) )//&&(i==8)
-        {
-            //io_shouzhi_down_flag =0;
-            zw_likai_flag =1;
-            break;
-        }
-        delay_ms(1000);
-        DB_PR("------------wait for finger move----------\r\n");
-
-    }
-    if(zw_likai_flag == 0)
-    {
-        vTaskDelay(1);
-        DB_PR("----a----shouzhi move timeout--------\r\n");
-        vTaskDelete(NULL);
-    }
-    else
-    {
-        DB_PR("-----b------shouzhi move ok, continue-----------\r\n");
-        /* code */
-    }
-    
-    
-    // if(processnum_first_ok ==1)
-    // {
-    //     send_cmd_to_lcd_pic(0x0005);
-    //     DB_PR("---zhiwen connect fail\r\n");
-    //     return;
-    // }
-	u8 i=0,ensure=0 ,processnum=2;
-    // u8 ensure_2=0,ensure_3=0;
-    SearchResult p_rsp;
-	//u16 ID;
-    delay_ms(200);
-	while(1)
-	{
-        vTaskDelay(10 / portTICK_PERIOD_MS);
-		switch (processnum)
-		{
             case 2:
 				i++;
 				////LCD_Fill(0,100,lcddev.width,160,WHITE);
@@ -6709,8 +6772,9 @@ void Add_FR()
                             send_cmd_to_lcd_pic(0x0005);
                             ShowErrMessage(ensure);	
                             i=0;
-                            processnum=0;//跳回第一步	
-                            	
+                            processnum=1;//跳回第一步	
+
+                            vTaskDelete(NULL);
                         }
                         else 
                         {
@@ -6745,7 +6809,13 @@ void Add_FR()
 					//LCD_Fill(0,120,lcddev.width,160,WHITE);
 					DB_PR("--3-ok生成指纹模板成功 \r\n");
 					processnum=4;//跳到第五步
-				}else {processnum=0;ShowErrMessage(ensure);}
+				}
+                else 
+                {
+                    processnum=1;
+                    ShowErrMessage(ensure);
+                    vTaskDelete(NULL);
+                }
 				delay_ms(200);
 				break;
 				
@@ -7177,7 +7247,7 @@ void Add_FR()
                     else 
                     {
 done_zwc_fail:
-                        processnum=0;
+                        processnum=1;
                         DB_PR("---done_zwc_fail----\r\n");
                         database_cw.cunwu_mode =0;
                         database_cw.dzx_mode = 0 ;
@@ -7195,14 +7265,22 @@ done_zwc_fail:
                 break;		
 		}
 		delay_ms(400);
+        DB_PR("-2-hearbeat...return_cause_zw=%d \r\n",return_cause_zw);
+        if(return_cause_zw ==1)
+        {
+            DB_PR("--zw task 2 over \r\n");
+            return_cause_zw =0;
+            vTaskDelete(NULL);
+        }
 		if(i==20)//超过5次没有按手指则退出
 		{
-            DB_PR("---->5a---- 超过5次没有按手指则退出 ");
+            DB_PR("---->5a---- 超过5次没有按手指则退出 \r\n");
 			//LCD_Fill(0,100,lcddev.width,160,WHITE);
 			break;	
 		}				
 	}
     vTaskDelay(1);
+    return_cause_zw =0;
     //vTaskDelay(10 / portTICK_PERIOD_MS);
     vTaskDelete(NULL);
 
@@ -7212,13 +7290,14 @@ done_zwc_fail:
 //录指纹
 void Add_FR_CQ()
 {
-    if(HandShakeFlag ==1)
-    {
-        send_cmd_to_lcd_pic(0x0005);
-        DB_PR("---zhiwen connect fail\r\n");
-        vTaskDelete(NULL);
-    }
-	u8 i=0,ensure=0 ,processnum=0;
+    //return_cause_zw =0;
+    // if(HandShakeFlag ==1)
+    // {
+    //     send_cmd_to_lcd_pic(0x0005);
+    //     DB_PR("---zhiwen connect fail\r\n");
+    //     vTaskDelete(NULL);
+    // }
+	u8 i=0,ensure=0 ,processnum=1;
     // u8 ensure_2=0,ensure_3=0;
     SearchResult p_rsp;
 	//u16 ID;
@@ -7227,62 +7306,7 @@ void Add_FR_CQ()
         vTaskDelay(10 / portTICK_PERIOD_MS);
 		switch (processnum)
 		{
-			case 0:
-				i++;
-				//LCD_Fill(0,100,lcddev.width,160,WHITE);
-				//DB_PR("请按指纹");
-                DB_PR("---0--an-请按指纹");
-				ensure=PS_GetImage();
-				if(ensure==0x00) 
-				{
-					//BEEP=1;------------------------
-                    delay_ms(200);//这里需要延时一下，模块内部处理图像需要时间  up
-					ensure=PS_GenChar(CharBuffer1);//生成特征
-					//BEEP=0;
-					if(ensure==0x00)
-					{
-                        delay_ms(120);
-                        DB_PR("--0-ok1--指纹正常\r\n");
-                        ensure = PS_Search(CharBuffer1, 0x0000, 0x00AA, &p_rsp);//0x02
-                        //delay_ms(50);
-                        DB_PR("--0--ensure=%d\r\n",ensure);
-                        if(ensure==0x00)
-                        {
-                            DB_PR("-------p_rsp->pageID=%02x----\r\n",p_rsp.pageID);
-                            //LCD_Fill(0,120,lcddev.width,160,WHITE);
-                            DB_PR("--0-no-对比完成,指纹已存在 \r\n");
-                            send_cmd_to_lcd_pic(0x0005);
-                            i=0;
-	                        processnum=0;//跳回第一步	
-                            DB_PR("--0-no-3-ensure=%d\r\n",ensure);
-                            ShowErrMessage(ensure);	
-                        }
-                        else 
-                        {
-                            
-                            DB_PR("--0-ok2-对比成功,新的指纹\r\n");
-                            i=0;//del?
-                            processnum=1;//跳到第二步	
 
-                        }
-                        delay_ms(200);
-				
-					}
-                    else 
-                    {
-                        DB_PR("-0-no-2-ensure=%d\r\n",ensure);
-                        ShowErrMessage(ensure);			
-                    }
-                        	
-				}
-                else 
-                {
-                    DB_PR("-0-no-1-ensure=%d\r\n",ensure);
-                    ShowErrMessage(ensure);	
-                }
-                    					
-				break;
-			
 			case 1:
 				i++;
 				////LCD_Fill(0,100,lcddev.width,160,WHITE);
@@ -7307,8 +7331,8 @@ void Add_FR_CQ()
                             send_cmd_to_lcd_pic(0x0005);
                             ShowErrMessage(ensure);	
                             i=0;
-                            processnum=0;//跳回第一步	
-                            	
+                            processnum=1;//跳回第一步	
+                            vTaskDelete(NULL);
                         }
                         else 
                         {
@@ -7356,7 +7380,8 @@ void Add_FR_CQ()
                             send_cmd_to_lcd_pic(0x0005);
                             ShowErrMessage(ensure);	
                             i=0;
-                            processnum=0;//跳回第一步	
+                            processnum=1;//跳回第一步	
+                            vTaskDelete(NULL);
                             	
                         }
                         else 
@@ -7391,7 +7416,12 @@ void Add_FR_CQ()
 					//LCD_Fill(0,120,lcddev.width,160,WHITE);
 					DB_PR("--3-ok生成指纹模板成功 \r\n");
 					processnum=4;//跳到第五步
-				}else {processnum=0;ShowErrMessage(ensure);}
+				}else 
+                {
+                    processnum=1;
+                    ShowErrMessage(ensure);
+                    vTaskDelete(NULL);
+                }
 				delay_ms(200);
 				break;
 				
@@ -7640,7 +7670,7 @@ void Add_FR_CQ()
                 else
                 {
 done_zwc_fail_cq:
-                    processnum=0;
+                    processnum=1;
                     DB_PR("---done_zwc_fail_cq2----\r\n");
                     database_cw_adm.cunwu_mode =0;
                     database_cw_adm.dzx_mode = 0 ;
@@ -7657,7 +7687,15 @@ done_zwc_fail_cq:
                 break;		
 		}
 		delay_ms(400);
-		if(i==5)//超过5次没有按手指则退出
+        DB_PR("-3-hearbeat...return_cause_zw=%d \r\n",return_cause_zw);
+        if(return_cause_zw ==1)
+        {
+            DB_PR("--zw task 2 over \r\n");
+            return_cause_zw =0;
+            vTaskDelete(NULL);
+        }
+
+		if(i==40)//超过5次没有按手指则退出   22s
 		{
             DB_PR("---->5a---- 超过5次没有按手指则退出 ");
 			//LCD_Fill(0,100,lcddev.width,160,WHITE);
@@ -7665,6 +7703,7 @@ done_zwc_fail_cq:
 		}				
 	}
     vTaskDelay(1);
+    return_cause_zw =0;
     //vTaskDelay(10 / portTICK_PERIOD_MS);
     vTaskDelete(NULL);
 
@@ -7680,7 +7719,7 @@ void press_FR(void)
         DB_PR("---zhiwen connect fail\r\n");
         vTaskDelete(NULL);
     }
-	for(u8 i=0;i<3;i++)
+	for(u8 i=0;i<30;i++)
 	{
 		vTaskDelay(1);
         SearchResult seach;
@@ -7751,10 +7790,18 @@ void press_FR(void)
         else
         {
             DB_PR("-----2222   f-----\r\n");
-            break;//add
+            ShowErrMessage(ensure);		
+            //break;//add
         }
-        
+        DB_PR("-4-hearbeat...return_cause_zw=%d \r\n",return_cause_zw);
+        if(return_cause_zw ==1)//todo
+        {
+            DB_PR("--zw task 2 over \r\n");
+            return_cause_zw =0;
+            vTaskDelete(NULL);
+        }
     }
+    return_cause_zw =0;
     vTaskDelay(1);
     vTaskDelete(NULL);
 		
@@ -8106,7 +8153,7 @@ void audio_init(void)
 
     DB_PR("[ 4 ] Listen for all pipeline events");
     while (1) {
-        //vTaskDelay(10 / portTICK_PERIOD_MS);
+        
         audio_event_iface_msg_t msg = { 0 };
         esp_err_t ret = audio_event_iface_listen(evt, &msg, portMAX_DELAY);
         if (ret != ESP_OK) {
@@ -8636,7 +8683,7 @@ void app_main(void)
     gpio_set_direction(GPIO_INPUT_IO_ZW_2, GPIO_MODE_INPUT);
     //gpio_pullup_en(GPIO_INPUT_IO_ZW_2);
     //gpio_pullup_dis(GPIO_INPUT_IO_ZW_2);
-    gpio_set_pull_mode(GPIO_INPUT_IO_ZW_2,GPIO_PULLUP_ONLY);
+    gpio_set_pull_mode(GPIO_INPUT_IO_ZW_2,GPIO_PULLUP_ONLY);//GPIO_PULLUP_ONLY
 
     gpio_config_t io_conf;
     // //disable interrupt
