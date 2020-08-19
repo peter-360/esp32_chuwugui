@@ -1256,7 +1256,7 @@ void send_cmd_to_lcd_pic(uint16_t temp)//图片
         
     tx_Buffer[8] = temp/256;
     tx_Buffer[9] = temp%256;
-    DB_PR("temp-pic:0x%04d\r\n",temp);
+    DB_PR("temp-pic:0x%04x\r\n",temp);
 
     //crc
     crc16_temp = CRC16(tx_Buffer+3, TX1_LEN - 5);
@@ -4757,6 +4757,100 @@ done_mima_nosame:
                                 break;
 
 
+                            case 0x12c0://zw qu
+                                DB_PR("--- 3 zw qu ---.\r\n");    
+
+                                send_cmd_to_lcd_pic(0x0002);
+                                DB_PR("3-vTask: delete shua_zhiwen_task.\r\n");
+                                return_cause_zw =1;
+                                break;
+
+                            case 0x12d0://zw chongfu
+                                DB_PR("--- 3 zw congfu ---.\r\n"); 
+                                DB_PR("---database_cw_adm.changqi_tmp=%d.\r\n",database_cw_adm.changqi_tmp);      
+                                if(database_cw_adm.changqi_tmp == 1)
+                                {
+                                    send_cmd_to_lcd_pic(CHANQI_CW_MODE_PIC);
+                                    DB_PR("--2 changqi--.\r\n");  
+                                }
+                                else
+                                {
+    
+                                    if(((shengyu_xiao==0) && (shengyu_zhong==0))
+                                        ||((shengyu_da==0) && (shengyu_xiao==0))
+                                        ||((shengyu_da==0) && (shengyu_zhong==0)))
+                                    {
+                                        DB_PR("--2 cunwu--.\r\n");  
+                                        //baocun 1
+                                        send_cmd_to_lcd_pic(0x0002);
+                    
+                                    }
+                                    else
+                                    {
+                                        DB_PR("--2 gekou--.\r\n");  
+                                        send_cmd_to_lcd_pic(0x0003);
+                                    }
+                                }
+                                
+                                
+                                
+                                return_cause_zw =1;
+                                //DB_PR("1-vTask: delete vTask1. taskhandle1=%d\r\n"(int)*taskhandle1);
+                                vTaskDelete(taskhandle1);
+
+
+                                break;
+
+
+
+
+                            case 0x1260://zhiwen  close
+                                DB_PR("---zhiwen close---database_cw_adm.changqi_tmp=%d.\r\n",database_cw_adm.changqi_tmp);   
+                                //if -> huise tupian?
+                                if(database_cw_adm.changqi_tmp == 1)
+                                {
+                                    send_cmd_to_lcd_pic(CHANQI_CW_MODE_PIC);
+                                    DB_PR("--2 changqi--.\r\n");  
+                                }
+                                else
+                                {
+    
+                                    if(((shengyu_xiao==0) && (shengyu_zhong==0))
+                                        ||((shengyu_da==0) && (shengyu_xiao==0))
+                                        ||((shengyu_da==0) && (shengyu_zhong==0)))
+                                    {
+                                        DB_PR("--2 cunwu--.\r\n");  
+                                        //baocun 1
+                                        send_cmd_to_lcd_pic(0x0002);
+                    
+                                    }
+                                    else
+                                    {
+                                        DB_PR("--2 gekou--.\r\n");  
+                                        send_cmd_to_lcd_pic(0x0003);
+                                    }
+                                }
+                                
+                                
+                                
+                                return_cause_zw =1;
+
+                                
+                                if( taskhandle1 != NULL )
+                                {
+                                    //DB_PR("1-vTask: delete vTask1. taskhandle1=%d\r\n"(int)*taskhandle1);
+                                    vTaskDelete(taskhandle1);
+                                }
+                                else
+                                {
+                                    DB_PR("taskhandle1 is NULL.\r\n");
+                                }
+                                
+              
+
+
+
+                                break;
 
 
 
@@ -4882,53 +4976,7 @@ done_mima_nosame:
 
                                 break;
 
-                            case 0x1260://zhiwen  close
-                                DB_PR("---zhiwen close---database_cw_adm.changqi_tmp=%d.\r\n",database_cw_adm.changqi_tmp);   
-                                //if -> huise tupian?
-                                if(database_cw_adm.changqi_tmp == 1)
-                                {
-                                    send_cmd_to_lcd_pic(CHANQI_CW_MODE_PIC);
-                                    DB_PR("--2 changqi--.\r\n");  
-                                }
-                                else
-                                {
-    
-                                    if(((shengyu_xiao==0) && (shengyu_zhong==0))
-                                        ||((shengyu_da==0) && (shengyu_xiao==0))
-                                        ||((shengyu_da==0) && (shengyu_zhong==0)))
-                                    {
-                                        DB_PR("--2 cunwu--.\r\n");  
-                                        //baocun 1
-                                        send_cmd_to_lcd_pic(0x0002);
-                    
-                                    }
-                                    else
-                                    {
-                                        DB_PR("--2 gekou--.\r\n");  
-                                        send_cmd_to_lcd_pic(0x0003);
-                                    }
-                                }
-                                
-                                
-                                
-                                return_cause_zw =1;
 
-                                
-                                if( taskhandle1 != NULL )
-                                {
-                                    //DB_PR("1-vTask: delete vTask1. taskhandle1=%d\r\n"(int)*taskhandle1);
-                                    vTaskDelete(taskhandle1);
-                                }
-                                else
-                                {
-                                    DB_PR("taskhandle1 is NULL.\r\n");
-                                }
-                                
-              
-
-
-
-                                break;
 
 
 
@@ -8646,9 +8694,9 @@ void app_main(void)
     /* Set the GPIO as a push/pull output */
     gpio_set_direction(ECHO_TEST3_TXD, GPIO_MODE_DISABLE);
 
-    gpio_pad_select_gpio(ECHO_TEST3_RXD);
-    /* Set the GPIO as a push/pull output */
-    gpio_set_direction(ECHO_TEST3_RXD, GPIO_MODE_DISABLE);
+    // gpio_pad_select_gpio(ECHO_TEST3_RXD);
+    // /* Set the GPIO as a push/pull output */
+    // gpio_set_direction(ECHO_TEST3_RXD, GPIO_MODE_DISABLE);
 
 
 
