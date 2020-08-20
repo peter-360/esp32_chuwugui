@@ -338,7 +338,7 @@ uint8_t flag_rx2;
 
 #define SHENYU_GEZI_MAX 300//310//all kong
 
-#define ZHIWEN_PAGE_ID_MAX 300//all kong
+#define ZHIWEN_PAGE_ID_MAX 120//300//all kong
 
 
 //admin   need save   实时更新
@@ -399,7 +399,7 @@ typedef struct
 {
     uint32_t mima_number_adm;  //
     
-    bool zhiwen_page_id_adm[300];//flag
+    bool zhiwen_page_id_adm[ZHIWEN_PAGE_ID_MAX];//flag
     // uint16_t zhiwen_gz_index[300];//gz
 
     uint8_t shengyu1;
@@ -941,7 +941,7 @@ uint16_t CRC16(uint8_t *puchMsg, uint16_t usDataLen)
 
 void uart0_debug_str(uint8_t* str,uint16_t len)
 {
-    DB_PR("--1---debug_str:");
+    DB_PR("--1str---debug_str:");
     for(uint8_t i=0;i<len;i++)
         DB_PR("%c ",str[i]);
     DB_PR("\r\n");
@@ -2163,30 +2163,32 @@ static void echo_task2()//lcd
                 &&(data_rx_t[data_rx_t[2]+2-1]==(crc16_temp&0xff))
                 &&(data_rx_t[data_rx_t[2]+2-1+1]==((crc16_temp>>8)&0xff)))
                 {
+                    bl_addr = (data_rx_t[4]<<8) + data_rx_t[5];
+                    DB_PR("-----.bl_addr=%04x\r\n",bl_addr);
                     switch (data_rx_t[3])
                     {
-                    case 0x82:
-                        //uart_write_bytes(UART_NUM_2, (const char *) (data_rx_t+4), len_rx_t-4);
+                    // case 0x82:
+                    //     //uart_write_bytes(UART_NUM_2, (const char *) (data_rx_t+4), len_rx_t-4);
                         
-                        bl_addr = (data_rx_t[4]<<8) + data_rx_t[5];
-                        DB_PR("--0x82--.bl_addr=%04x\r\n",bl_addr);
+                    //     bl_addr = (data_rx_t[4]<<8) + data_rx_t[5];
+                    //     DB_PR("--0x82--.bl_addr=%04x\r\n",bl_addr);
 
-                        uint8_t tx_Buffer[50]={0};  
-                        uint8_t bcc_temp=0;
-                        switch (bl_addr)
-                        {
+                    //     uint8_t tx_Buffer[50]={0};  
+                    //     uint8_t bcc_temp=0;
+                    //     switch (bl_addr)
+                    //     {
 
-                        case 0x4F4B:
-                            DB_PR("---lcd---ok-----.\r\n");
-                            //todo
-                            break;
+                    //     case 0x4F4B:
+                    //         DB_PR("---lcd---ok-----.\r\n");
+                    //         //todo
+                    //         break;
 
-                        default:
-                            DB_PR("----------------83 default---------------.\r\n");
-                            break;
-                        }
+                    //     default:
+                    //         DB_PR("----------------83 default---------------.\r\n");
+                    //         break;
+                    //     }
 
-                        break;
+                    //     break;
 
                     case 0x83:
                         if( data_rx_t[6] == (len_rx_t-7 -2)/2)
@@ -2268,34 +2270,16 @@ static void echo_task2()//lcd
 
 
                                     
-                                    //shengyu_all_max =0 ;
-                                    // nvs_wr_mima_number_adm(1);
-                                    // for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
-                                    // {
-                                    //     database_cw.dIndx = i;
-
-                                    //     database_gz[i].dIndx_gz =0;
-                                    //     database_gz[i].state_fenpei_gz =0;
-                                    //     // database_gz[i].dzx_mode_gz =3;
-                                    //     // database_gz[i].state_gz =0;
-                                        
-                                    //     nvs_wr_index_gz(1);
-                                    //     nvs_wr_fenpei_gz(1);
-                                    //     // nvs_wr_dzx_mode_gz(1);
-                                    //     // nvs_wr_state_gz(1);
-
-                                    //     //lock----------------todo---------------------
-                                    //     //changqi
-                                    // }
-                                    
                                     uint16_t shengyu_all_max_temp=0;//shengyu max admin, guding
                                     int16_t guimen_x_gk_max_temp[BOARD_GK_MAX]={0};
 
                                     DB_PR("hang_shu_max+1=%03d\r\n",hang_shu_max+1);//0
-                                    if(hang_shu_max<=BOARD_GK_MAX)
+
+  
+                                    if(hang_shu_max< BOARD_GK_MAX)//300/24 =12.5
                                     {
                                         DB_PR("show2=");
-                                        for(j = 0; j <= hang_shu_max; j++)//i 个柜子
+                                        for(j = 0; j < hang_shu_max+1; j++)//i 个柜子
                                         {
 
                                             guimen_x_gk_max_temp[j] = (int16_t)atoi((const char*)show[j]);
@@ -2318,12 +2302,10 @@ static void echo_task2()//lcd
                                                 }
                                             }
 
-
-                                            
                                             shengyu_all_max_temp = shengyu_all_max_temp +guimen_x_gk_max_temp[j];
                                         }
 
-                                        for(j = hang_shu_max+1; j <= BOARD_GK_MAX; j++)//i 个柜子
+                                        for(j = hang_shu_max+1; j < BOARD_GK_MAX; j++)//i 个柜子 =
                                         {
                                             //guimen_x_gk_max_temp[j] =0;
                                             for(int k=1; k<= 24; k++)//列
@@ -2343,7 +2325,8 @@ static void echo_task2()//lcd
 
 
                                         DB_PR("1-------shengyu_all_max_temp=%03d\r\n",shengyu_all_max_temp);
-                                        if(shengyu_all_max_temp>0)
+                                        if((shengyu_all_max_temp>0)
+                                            &&(shengyu_all_max_temp<=300))
                                         {
                                             DB_PR("2-------shengyu_all_max_temp=%03d\r\n",shengyu_all_max_temp);
                                             shengyu_all_max = shengyu_all_max_temp;
@@ -2353,47 +2336,6 @@ static void echo_task2()//lcd
                                             uart0_debug_data_d(guimen_x_gk_max,BOARD_GK_MAX);
                                             DB_PR("3-hang_shu_max=%03d\r\n",hang_shu_max);
                                             uart0_debug_data_d(guimen_x_gk_max_temp,BOARD_GK_MAX);
-
-
-                                            // nvs_wr_shengyu_all_max(0);//1
-                                            // DB_PR("-1-shengyu_all_max=%d----\n",shengyu_all_max);
-                                            
-                                            // if((shengyu_all_max == 0) )
-                                            // {
-                                            //     //shengyu_all_max
-                                            //     memcpy(guimen_x_gk_max,guimen_x_gk_max_temp,BOARD_GK_MAX);
-                                            //     shengyu_xiao_max =shengyu_all_max;
-                                            //     shengyu_zhong_max=0;
-                                            //     shengyu_da_max =0;
-
-                                            //     shengyu_all = shengyu_all_max;
-                                            //     shengyu_xiao = shengyu_xiao_max;
-                                            //     shengyu_zhong = shengyu_zhong_max;
-                                            //     shengyu_da = shengyu_da_max;
-
-                                            // }
-                                            // else
-                                            // {
-                                            //     /* todo    add del */
-                                            //     for(i = 0; i <= hang_shu_max; i++)//i 个柜子
-                                            //     {
-                                            //         if(guimen_x_gk_max_temp[i]>guimen_x_gk_max[i])
-                                            //         {
-                                            //             guimen_x_gk_max[i]
-
-                                            //             if(1==database_gz[i].dzx_mode_gz)
-                                            //             {
-
-                                            //             }
-                                            //         }
-                                            //         // else if(guimen_x_gk_max_temp[i]<guimen_x_gk_max[i])
-                                            //         // {
-                                            //         //     /* code */
-                                            //         // }
-                                                    
-                                            //     }
-                                            // }
-                                            
 
 
 
@@ -2534,12 +2476,18 @@ static void echo_task2()//lcd
 
                                             tongbu_changqi();
 
+                                            send_cmd_to_lcd_pic(GUIMEN_OK_PIC);
                                         }
+                                        else
+                                        {
+                                            DB_PR("--input shuliang =err--.\r\n");   
+                                        }
+                                        
                                         //save
 
                                         //memset(tx_Buffer2,0,200);
                                         //send_cmd_to_lcd_bl_len(BL_XM_SZ,tx_Buffer2,data_rx_t[2]-1);//clear
-                                        send_cmd_to_lcd_pic(GUIMEN_OK_PIC);
+
                                         //send_cmd_to_lcd_pic(GEKOU_PIC);
 
 
@@ -4072,10 +4020,10 @@ wuci_xmh_xinz:
                             case 0x1110:
                                 
                                 //5A A5 0A 83   10 60   03   31 32 33 34 35 36 
-                                DB_PR("-a-password--.\r\n");
+                                DB_PR("-a-CQ-password--.\r\n");
                                 //DB_PR("---phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
-                                send_cmd_to_lcd_bl_len(0x1100,(uint8_t*)buff_t,12+5);//phone
-                                send_cmd_to_lcd_bl_len(0x1110,(uint8_t*)buff_t,6+5);//key
+                                // send_cmd_to_lcd_bl_len(0x1100,(uint8_t*)buff_t,12+5);//phone
+                                // send_cmd_to_lcd_bl_len(0x1110,(uint8_t*)buff_t,6+5);//key
 
 
                                 //存物的格口编号（123）、格口类型（1：小，2：中，3：大）
@@ -4094,9 +4042,10 @@ wuci_xmh_xinz:
                                     DB_PR("mima_number=");
                                     uart0_debug_str(mima_number_a,6);
 
-                                    if(0==memcmp(mima_number,buff_t,6))
+
+                                    if(0==memcmp(mima_number_a,buff_t,6))
                                     {
-                                        DB_PR("------mima all=0-------.\r\n");
+                                        DB_PR("------mima_number_a all=0-------.\r\n");
                                         goto done_longtime;
                                     }
 
@@ -5090,8 +5039,8 @@ done_mima_nosame:
                                 DB_PR("--password--.\r\n");
                                 //DB_PR("---phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
 
-                                send_cmd_to_lcd_bl_len(0x1050,(uint8_t*)buff_t,12+5);//phone
-                                send_cmd_to_lcd_bl_len(0x1060,(uint8_t*)buff_t,6+5);//key
+                                // send_cmd_to_lcd_bl_len(0x1050,(uint8_t*)buff_t,12+5);//phone
+                                // send_cmd_to_lcd_bl_len(0x1060,(uint8_t*)buff_t,6+5);//key
 
                                 //存物的格口编号（123）、格口类型（1：小，2：中，3：大）
                                 //存物手机号（11位）密码（6位）            或者指纹(----)   
@@ -5209,7 +5158,7 @@ done_mima_nosame:
                                         if(j>0)
                                         {
                                             srand((unsigned int) time(NULL));
-                                            database_cw.dIndx = database_gz_temp[rand()%j];//随机获取哪个门没用
+                                            database_cw.dIndx = database_gz_temp[rand() %j];//随机获取哪个门没用
 
                                             database_cw.state=1;
                                             // database_gz[database_cw.dIndx].state_gz =database_cw.state;
@@ -5287,7 +5236,7 @@ done_mima_nosame:
                                         if(j>0)
                                         {
                                             srand((unsigned int) time(NULL));
-                                            database_cw.dIndx = database_gz_temp[rand()%j];//随机获取哪个门没用
+                                            database_cw.dIndx = database_gz_temp[rand() %j];//随机获取哪个门没用
 
                                             database_cw.state=1;
                                             // database_gz[database_cw.dIndx].state_gz =database_cw.state;
@@ -5363,7 +5312,7 @@ done_mima_nosame:
                                         if(j>0)
                                         {
                                             srand((unsigned int) time(NULL));
-                                            database_cw.dIndx = database_gz_temp[rand()%j];//随机获取哪个门没用
+                                            database_cw.dIndx = database_gz_temp[rand() %j];//随机获取哪个门没用
 
 
 
@@ -5607,8 +5556,9 @@ done_2:
                                 break;
                             case 0x1090:
                                 DB_PR("---q--mima-----.\r\n");
-                                send_cmd_to_lcd_bl_len(0x1080,(uint8_t*)buff_t,30+5);//phone
-                                send_cmd_to_lcd_bl_len(0x1090,(uint8_t*)buff_t,30+5);//key
+                                // send_cmd_to_lcd_bl_len(0x1080,(uint8_t*)buff_t,30+5);//phone
+                                // send_cmd_to_lcd_bl_len(0x1090,(uint8_t*)buff_t,30+5);//key
+
                                 //DB_PR("---phone_weishu_ok=%d---.\r\n",phone_weishu_ok);
 
                                 //存物的格口编号（123）、格口类型（1：小，2：中，3：大）
@@ -5626,6 +5576,14 @@ done_2:
 
                                     DB_PR("mima_number=");
                                     uart0_debug_str(mima_number,6);
+
+
+                                    if(0==memcmp(mima_number,buff_t,6))
+                                    {
+                                        DB_PR("------q mima all=0-------.\r\n");
+                                        goto done_qu;
+                                    }
+
                                     for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
                                         DB_PR("0x%.2X ", (uint8_t)data_rx_t[i]);
                                         if(data_rx_t[i] == 0xFF)
@@ -5897,7 +5855,7 @@ done_kai_admin:
                             case 0x10c0://xiangmenhao   kaixiang
                                 send_cmd_to_lcd_bl_len(0x10c0,(uint8_t*)buff_t,2*2+5);//key
                                 
-                                DB_PR("----admin --mima-----.\r\n");
+                                DB_PR("----admin --xmh open-----.\r\n");
                                 //uint8_t temp_xiangmen[4]={0}; 
                                 memset(temp_xiangmen,0,4);
                                 j=0;
@@ -6681,9 +6639,21 @@ void Add_FR_First()
 
 
 
-//录指纹
+//录指纹  2
 void Add_FR()
 {
+
+
+    audio_pipeline_stop(pipeline);
+    audio_pipeline_wait_for_stop(pipeline);
+    audio_pipeline_terminate(pipeline);
+    audio_pipeline_reset_ringbuffer(pipeline);
+    audio_pipeline_reset_elements(pipeline);
+
+    DB_PR("[2.6-d-zw] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)\r\n");
+    audio_element_set_uri(tone_stream_reader, tone_uri[TONE_TYPE_CL]);
+    audio_pipeline_run(pipeline);
+
     //return_cause_zw=0;
 //     u8 zw_likai_flag=0;
 //     for(uint16_t i=0;i<50;i++)//
@@ -6727,6 +6697,9 @@ void Add_FR()
 	while(1)
 	{
         vTaskDelay(10 / portTICK_PERIOD_MS);
+
+        DB_PR("----1---i=%d----\r\n",i);
+
 		switch (processnum)
 		{
 
@@ -6871,7 +6844,7 @@ void Add_FR()
                 //AS608Para.PS_max-ValidN
                 uint16_t j =0, k=0;
                 int rand_temp=0;
-                for(uint16_t i=0;i<AS608Para.PS_max;i++)//
+                for(uint16_t i=1;i<AS608Para.PS_max;i++)//
                 {
                     if(database_ad.zhiwen_page_id_adm[i] ==0)//weiyong
                     {
@@ -6966,7 +6939,7 @@ void Add_FR()
                             if(j>0)
                             {
                                 srand((unsigned int) time(NULL));
-                                database_cw.dIndx = database_gz_temp[rand()%j];//随机获取哪个门没用
+                                database_cw.dIndx = database_gz_temp[rand() %j];//随机获取哪个门没用
 
                                 database_cw.state=1;
                                 // database_gz[database_cw.dIndx].state_gz =database_cw.state;
@@ -7044,7 +7017,7 @@ void Add_FR()
                             if(j>0)
                             {
                                 srand((unsigned int) time(NULL));
-                                database_cw.dIndx = database_gz_temp[rand()%j];//随机获取哪个门没用
+                                database_cw.dIndx = database_gz_temp[rand() %j];//随机获取哪个门没用
 
                                 database_cw.state=1;
                                 // database_gz[database_cw.dIndx].state_gz =database_cw.state;
@@ -7120,7 +7093,7 @@ void Add_FR()
                             if(j>0)
                             {
                                 srand((unsigned int) time(NULL));
-                                database_cw.dIndx = database_gz_temp[rand()%j];//随机获取哪个门没用
+                                database_cw.dIndx = database_gz_temp[rand() %j];//随机获取哪个门没用
 
                                 database_cw.state=1;
                                 // database_gz[database_cw.dIndx].state_gz =database_cw.state;
@@ -7477,7 +7450,7 @@ void Add_FR_CQ()
                 //AS608Para.PS_max-ValidN
                 uint16_t j =0, k=0;
                 int rand_temp=0;
-                for(uint16_t i=0;i<AS608Para.PS_max;i++)//
+                for(uint16_t i=1;i<AS608Para.PS_max;i++)//1 - 119
                 {
                     if(database_ad.zhiwen_page_id_adm[i] ==0)//weiyong
                     {
@@ -7899,8 +7872,7 @@ void del_zw_database(u16 num)
         return;
     }
     DB_PR("-------database_ad.zhiwen_page_id_adm[num]=%d\r\n",database_ad.zhiwen_page_id_adm[num]);
-    if(database_ad.zhiwen_page_id_adm[num] ==1)
-    //if(1)
+    if(database_ad.zhiwen_page_id_adm[num] ==1) //if(1)
     {
 
         // database_cw.dIndx = find_pid_lock_idx(num);
