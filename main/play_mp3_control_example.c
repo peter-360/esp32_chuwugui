@@ -5963,33 +5963,9 @@ done_kai_admin:
 
                                     DB_PR("-----2 1-----[ * ] Starting audio pipeline");
 
-                                    // audio_pipeline_stop(pipeline);
-                                    // audio_pipeline_wait_for_stop(pipeline);
-                                    // audio_pipeline_terminate(pipeline);
-                                    // audio_pipeline_reset_ringbuffer(pipeline);
-                                    // audio_pipeline_reset_elements(pipeline);
-
-                                    // //set_next_file_marker();
-                                    // DB_PR("[2.6-b] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)");
-                                    // audio_element_set_uri(tone_stream_reader, tone_uri[database_gz[database_cw.dIndx].dIndx_gz]);
-                                    // audio_pipeline_run(pipeline);
-
+  
                                     xTaskCreate(audio_play_my_mp3, "audio_play_my_mp3", 2048, NULL, 10, NULL);
-                                    //audio_play_my_mp3();
-                                    //audio_play_mp3_over=1;
-                                    
 
-                                    // delay_ms(5000);
-                                    // audio_pipeline_stop(pipeline);
-                                    // audio_pipeline_wait_for_stop(pipeline);
-                                    // audio_pipeline_terminate(pipeline);
-                                    // audio_pipeline_reset_ringbuffer(pipeline);
-                                    // audio_pipeline_reset_elements(pipeline);
-
-                                    // //set_next_file_marker();
-                                    // DB_PR("[2.6-b] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)");
-                                    // audio_element_set_uri(tone_stream_reader, tone_uri[1]);
-                                    // audio_pipeline_run(pipeline);
 
                                 }
                                 else
@@ -8156,18 +8132,6 @@ void uart_init_all(void)
 void audio_play_my_mp3(void)
 {
     u8 i=1;
-    // audio_play_mp3_over =0;
-    // audio_pipeline_stop(pipeline);
-    // audio_pipeline_wait_for_stop(pipeline);
-    // audio_pipeline_terminate(pipeline);
-    // audio_pipeline_reset_ringbuffer(pipeline);
-    // audio_pipeline_reset_elements(pipeline);
-
-    // //set_next_file_marker();
-    // DB_PR("[2.6-b1] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)");
-    // audio_element_set_uri(tone_stream_reader, tone_uri[TONE_TYPE_OPEN]);
-    // audio_pipeline_run(pipeline);
-
     while (1) {
         vTaskDelay(10 / portTICK_PERIOD_MS);
         
@@ -8178,15 +8142,9 @@ void audio_play_my_mp3(void)
             audio_play_mp3_over =0;
             i++;
             DB_PR("22---audio_play_mp3_over=%d----\r\n",audio_play_mp3_over);
-            // audio_pipeline_stop(pipeline);
-            // audio_pipeline_wait_for_stop(pipeline);
-            // audio_pipeline_terminate(pipeline);
-            // audio_pipeline_reset_ringbuffer(pipeline);
-            // audio_pipeline_reset_elements(pipeline);
 
-            //set_next_file_marker();
             DB_PR("[2.6-b2] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)\r\n");
-            audio_element_set_uri(tone_stream_reader, tone_uri[2]);//TONE_TYPE_OPEN
+            audio_element_set_uri(tone_stream_reader, tone_uri[TONE_TYPE_OPEN]);//TONE_TYPE_OPEN
             audio_pipeline_run(pipeline);  
             break;
         }
@@ -8195,14 +8153,9 @@ void audio_play_my_mp3(void)
             audio_play_mp3_over=0;
             i++;
             DB_PR("11---audio_play_mp3_over=%d----\r\n",audio_play_mp3_over);
-            // audio_pipeline_stop(pipeline);
-            // audio_pipeline_wait_for_stop(pipeline);
-            // audio_pipeline_terminate(pipeline);
-            // audio_pipeline_reset_ringbuffer(pipeline);
-            // audio_pipeline_reset_elements(pipeline);
 
             DB_PR("[2.6-b1] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)\r\n");
-            audio_element_set_uri(tone_stream_reader, tone_uri[4]);//tone_uri[database_gz[database_cw.dIndx].dIndx_gz]
+            audio_element_set_uri(tone_stream_reader, tone_uri[database_gz[database_cw.dIndx].dIndx_gz]);//
             audio_pipeline_run(pipeline);
             continue;
       
@@ -8258,7 +8211,7 @@ void audio_init(void)
     audio_pipeline_link(pipeline, &link_tag[0], 3);
 
     DB_PR("[2.6] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)");
-    audio_element_set_uri(tone_stream_reader, tone_uri[TONE_TYPE_KAIJI]);//kaji
+    audio_element_set_uri(tone_stream_reader, tone_uri[TONE_TYPE_AKAIJI]);//kaji
 
     DB_PR("[ 3 ] Set up event listener");
     audio_event_iface_cfg_t evt_cfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
@@ -8319,9 +8272,7 @@ void audio_init(void)
             // {
             //     test_i=0;
             // }
-            
 
-            // break;
         }
 
 
