@@ -3241,13 +3241,6 @@ gekou_fail_x:
                                     database_cw.dIndx =0;
                                     database_cw.dIndx = find_lock_index(guimen_gk_temp);
 
-
-                                    if(database_gz[database_cw.dIndx].cunwu_mode_gz ==1)
-                                    {
-                                        Del_FR(database_gz[database_cw.dIndx].zhiwen_page_id_gz);
-                                        //del_zw_database(database_gz[database_cw.dIndx].zhiwen_page_id_gz);
-                                        
-                                    }
                                     
  
                                     if((database_gz[database_cw.dIndx].state_fenpei_gz == 0)
@@ -3291,7 +3284,7 @@ gekou_fail_x:
 
 
 
-                                    if(lock_flag == 0)
+                                    //if(lock_flag == 0)
                                     {
                                         if((0 != database_gz[database_cw.dIndx].state_gz)
                                             ||(0 != database_gz[database_cw.dIndx].changqi))
@@ -3334,6 +3327,8 @@ gekou_fail_x:
                                     DB_PR( "database_gz[database_cw.dIndx].state_gz = %d", database_gz[database_cw.dIndx].state_gz);
                                     
                                     
+
+
 
                                     //if(0 != database_gz[database_cw.dIndx].state_gz)
                                     {
@@ -3639,14 +3634,20 @@ wuci_xmh_lk:
 
 
 
-                                    
  
                                     if((database_gz[database_cw.dIndx].state_fenpei_gz == 0)
                                        ||(database_cw.dIndx ==0))
                                     {
+                                         DB_PR("------no fenpei---------.\r\n");
                                         goto wuci_xmh_unlk;
                                     }
 
+                                    if(database_gz[database_cw.dIndx].lock == 0)
+                                    {
+                                         DB_PR("------no lock------.\r\n");
+                                        goto wuci_xmh_unlk;//todo--------------
+                                    }
+                                    
                                     DB_PR("------lock open--dIndx=%d--.\r\n",database_cw.dIndx); 
                                     guimen_gk_temp = database_cw.dIndx ;
 
@@ -3673,14 +3674,13 @@ wuci_xmh_lk:
 
 
 
-                                    DB_PR("-----2-----[ * ] Starting audio pipeline");
+                                    DB_PR("-----2-----[ * ] Starting audio pipeline\r\n");
 
 
-                                    DB_PR( "database_gz[database_cw.dIndx].state_gz = %d", database_gz[database_cw.dIndx].state_gz);
-                                    DB_PR( "database_gz[database_cw.dIndx].dIndx_gz = %d", database_gz[database_cw.dIndx].dIndx_gz);
-                                    if((2!=database_gz[database_cw.dIndx].changqi)
-                                        &&((0 == database_gz[database_cw.dIndx].state_gz)
-                                       ||(1==database_gz[database_cw.dIndx].lock)))//=0
+                                    DB_PR( "database_gz[database_cw.dIndx].state_gz = %d\r\n", database_gz[database_cw.dIndx].state_gz);
+                                    DB_PR( "database_gz[database_cw.dIndx].dIndx_gz = %d\r\n", database_gz[database_cw.dIndx].dIndx_gz);
+                                    if((0 == database_gz[database_cw.dIndx].state_gz)
+                                        &&(0 == database_gz[database_cw.dIndx].changqi))
                                     {
                                         switch (database_gz[database_cw.dIndx].dzx_mode_gz)
                                         {
@@ -3740,16 +3740,23 @@ wuci_xmh_lk:
          
                                         //nvs_wr_state_gz(1);
 
-                                        if(2==database_gz[database_cw.dIndx].changqi)
+
+
+                                        if(database_gz[database_cw.dIndx].changqi !=0)
                                         {
-                                            database_gz[database_cw.dIndx].changqi =1;
-                                        }
-                                        else
-                                        {
-                                            database_gz[database_cw.dIndx].changqi =0;
+                                            if(2==database_gz[database_cw.dIndx].changqi)
+                                            {
+                                                database_gz[database_cw.dIndx].changqi =1;
+                                            }
+                                            else
+                                            {
+                                                database_gz[database_cw.dIndx].changqi =0;
+                                            }
+                                            nvs_wr_glongtime_gz(1);
                                         }
 
-                                        nvs_wr_glongtime_gz(1);
+
+
                                         nvs_wr_glock_gz(1);
 
                                         // //if(0 == database_gz[database_cw.dIndx].state_gz)
@@ -3895,13 +3902,7 @@ wuci_xmh_unlk:
 
                                     send_cmd_to_lcd_pic(CHANQI_CW_MODE_PIC);
 
-                                    
-
-
-
                                     DB_PR("-----2-----[ * ] Starting audio pipeline");
-
-
                                     DB_PR( "database_gz[database_cw_adm.dIndx].state_gz = %d", database_gz[database_cw_adm.dIndx].state_gz);
 
 
