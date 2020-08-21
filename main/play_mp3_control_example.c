@@ -75,6 +75,7 @@ static void lock_all_clear_task();
 void tongbu_da(void);
 void tongbu_zh(void);
 void tongbu_changqi(void);
+void tongbu_locked(void);
 
 
 TaskHandle_t taskhandle1;
@@ -1123,7 +1124,7 @@ void tongbu_gekou_shuliang_x(uint16_t temp)
 #define  BL_GK_BH_D 0x1400//0x1240
 #define  BL_GK_BH_Z 0x1300//0x1230
 #define  BL_GK_BH_CHANGQI 0x1500//0x1210
-
+#define  BL_GK_BH_LOCKED 0x1900//add
 
 #define  BL_GK_BH_MAX_LEN 0xFC//
 
@@ -1134,6 +1135,8 @@ void tongbu_gekou_shuliang_x(uint16_t temp)
 #define  BL_GK_BH_Z_LEN 0xFC//0x23
 
 #define  BL_GK_BH_CHANGQI_LEN 0xFC//(0xCD)
+
+#define  BL_GK_BH_LOCKED_LEN 0xFC//(0xCD)
 //0xCD//0xCE
 
 //数组
@@ -1813,7 +1816,7 @@ void default_factory_set(void)
     //vTaskDelay(1530 / portTICK_PERIOD_MS);
     tongbu_changqi();
     //vTaskDelay(1530 / portTICK_PERIOD_MS);
-
+    tongbu_locked();   
 
 
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
@@ -1936,9 +1939,9 @@ void default_factory_set_first(void)
 
 void tongbu_da(void)
 {
-    u16 buff_temp1[300]={0};
+    u16 buff_temp1[SHENYU_GEZI_MAX]={0};
 
-    u8 buff_temp1_c[300]={0};//char
+    u8 buff_temp1_c[SHENYU_GEZI_MAX]={0};//char
 
 
     uint16_t j=0,k=0,l=0;
@@ -1991,8 +1994,8 @@ void tongbu_da(void)
 
 void tongbu_zh(void)
 {
-    u16 buff_temp2[300]={0};
-    u8 buff_temp2_c[300]={0};//150
+    u16 buff_temp2[SHENYU_GEZI_MAX]={0};
+    u8 buff_temp2_c[SHENYU_GEZI_MAX]={0};//150
 
     uint16_t j=0,k=0,l=0;
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
@@ -2042,8 +2045,8 @@ void tongbu_zh(void)
 
 void tongbu_changqi(void)
 {
-    u16 buff_temp2[300]={0};
-    u8 buff_temp2_c[300]={0};//150
+    u16 buff_temp2[SHENYU_GEZI_MAX]={0};
+    u8 buff_temp2_c[SHENYU_GEZI_MAX]={0};//150
 
     uint16_t j=0,k=0,l=0;
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
@@ -2068,9 +2071,6 @@ void tongbu_changqi(void)
     }
     //vTaskDelay(10 / portTICK_PERIOD_MS);
 
-    // uart0_debug_data_d(buff_temp1,0x9b);
-    // uart0_debug_data_d(buff_temp1,0x9b);
-
 
     for(uint16_t i=1;i<=300;i++)
     {
@@ -2091,6 +2091,54 @@ void tongbu_changqi(void)
 
 }
 
+
+void tongbu_locked(void)
+{
+    u16 buff_temp2[SHENYU_GEZI_MAX]={0};
+    u8 buff_temp2_c[SHENYU_GEZI_MAX]={0};//150
+
+    uint16_t j=0,k=0,l=0;
+    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
+    {
+        //vTaskDelay(1);
+        if(1== database_gz[i].state_fenpei_gz)
+        {
+
+            if(1== database_gz[i].lock)
+            {
+                buff_temp2[l] = database_gz[i].dIndx_gz;
+                DB_PR("b_temp2[l]= %03d ",buff_temp2[l]);//xiangmenhao
+                itoa(buff_temp2[l],(char*)(buff_temp2_c+4*(l)),10);//+4*(i-1)
+                l++;
+                DB_PR("\r\n");
+            }
+
+        }
+
+        //DB_PR("---i=%d\r\n",i);
+
+    }
+    //vTaskDelay(10 / portTICK_PERIOD_MS);
+
+
+    for(uint16_t i=1;i<=300;i++)
+    {
+        //vTaskDelay(1);
+        if(buff_temp2_c[i]==0)
+        {
+            buff_temp2_c[i]=0x20;
+            DB_PR("kong ");
+        }
+    }
+
+
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+    DB_PR("-----changqi--sync----\r\n");
+    send_cmd_to_lcd_bl_len(BL_GK_BH_LOCKED,buff_temp2_c,BL_GK_BH_LOCKED_LEN);//300 0x23 30
+    vTaskDelay(1);
+
+
+}
 
 
 
@@ -2486,6 +2534,7 @@ static void echo_task2()//lcd
 
                                             tongbu_changqi();
 
+                                            tongbu_locked();   
                                             send_cmd_to_lcd_pic(GUIMEN_OK_PIC);
                                         }
                                         else
@@ -3583,6 +3632,7 @@ wuci_xmh_q:
                                     {
                                         //update xianshi todo
                                         tongbu_changqi();
+                                        tongbu_locked();   
                                     } 
 
 
@@ -3645,14 +3695,16 @@ wuci_xmh_lk:
                                     if((database_gz[database_cw.dIndx].state_fenpei_gz == 0)
                                        ||(database_cw.dIndx ==0))
                                     {
-                                         DB_PR("------no fenpei---------.\r\n");
+                                        DB_PR("------no fenpei---------.\r\n");
                                         goto wuci_xmh_unlk;
                                     }
 
                                     if(database_gz[database_cw.dIndx].lock == 0)
                                     {
-                                         DB_PR("------no lock------.\r\n");
-                                        goto wuci_xmh_unlk;//todo--------------
+                                        DB_PR("------no lock------.\r\n");
+                                        send_cmd_to_lcd_pic(0x0050);
+                                        break;
+                                        //goto wuci_xmh_unlk;//todo--------------
                                     }
                                     
                                     DB_PR("------lock open--dIndx=%d--.\r\n",database_cw.dIndx); 
@@ -3767,6 +3819,9 @@ wuci_xmh_lk:
                                         nvs_wr_glock_gz(1);
 
                                         xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_JIESUO, 10, NULL);
+                                        
+                                        tongbu_locked();   
+                                        
                                         // //if(0 == database_gz[database_cw.dIndx].state_gz)
                                         // {
                                         //     database_gz[database_cw.dIndx].phone_number_nvs_gz = 0;
@@ -8909,7 +8964,7 @@ void app_main(void)
     //vTaskDelay(1530 / portTICK_PERIOD_MS);
     tongbu_changqi();
     //vTaskDelay(1530 / portTICK_PERIOD_MS);
-
+    tongbu_locked();    
 
     // err = save_restart_counter();
     //  if (err != ESP_OK) DB_PR("Error (%s) saving restart counter to NVS!\n", esp_err_to_name(err));
