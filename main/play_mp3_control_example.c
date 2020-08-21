@@ -1716,10 +1716,10 @@ void default_factory_set(void)
 
 
         database_gz[database_cw.dIndx].dIndx_gz =0;
-        database_gz[database_cw.dIndx].state_fenpei_gz =0;
+        // database_gz[database_cw.dIndx].state_fenpei_gz =0;
 
         nvs_wr_index_gz(1);
-        nvs_wr_fenpei_gz(1);
+        // nvs_wr_fenpei_gz(1);
 
 
         database_gz[database_cw.dIndx].changqi = 0;
@@ -1812,7 +1812,15 @@ void default_factory_set(void)
     //vTaskDelay(1530 / portTICK_PERIOD_MS);
     tongbu_changqi();
     //vTaskDelay(1530 / portTICK_PERIOD_MS);
-    
+
+
+
+    for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
+    {
+        database_cw.dIndx = i;
+        database_gz[database_cw.dIndx].state_fenpei_gz =0;
+        nvs_wr_fenpei_gz(1);
+    }
 }
 
 
@@ -1850,8 +1858,8 @@ void default_factory_set_first(void)
         // database_gz[database_cw.dIndx].state_gz =0;
         // nvs_wr_state_gz(1);
 
-        // database_gz[database_cw.dIndx].zhiwen_page_id_gz =0;
-        // nvs_wr_zw_pageid_gz(1);
+        database_gz[database_cw.dIndx].zhiwen_page_id_gz =0;
+        nvs_wr_zw_pageid_gz(1);
 
     }
 
@@ -2102,6 +2110,7 @@ uint8_t return_cause_zanwu_kx;
 uint8_t return_cause_has_be_lock;
 
 uint8_t return_cause_zw;
+uint8_t return_cause_phone;
 
 static void echo_task2()//lcd
 {
@@ -2480,6 +2489,7 @@ static void echo_task2()//lcd
                                         }
                                         else
                                         {
+                                            send_cmd_to_lcd_pic(0x004F);
                                             DB_PR("--input shuliang =err--.\r\n");   
                                         }
                                         
@@ -3081,7 +3091,8 @@ gekou_fail_z:
                                         //vTaskDelay(10 / portTICK_PERIOD_MS);
 
 
-                                        //tongbu_zh();
+                                        tongbu_da();
+                                        tongbu_zh();//add
                                         
                                     }
 
@@ -3272,45 +3283,8 @@ gekou_fail_x:
 
 
                                     DB_PR("-----2-----[ * ] Starting audio pipeline");
-                                    // audio_pipeline_stop(pipeline);
-                                    // audio_pipeline_wait_for_stop(pipeline);
-                                    // audio_pipeline_terminate(pipeline);
-                                    // audio_pipeline_reset_ringbuffer(pipeline);
-                                    // audio_pipeline_reset_elements(pipeline);
 
-                                    // // set_next_file_marker((int)(database_cw.dIndx));
-                                    // //set_next_file_marker();
-                                    // //static int idx = 0;
-
-                                    // //static int midx = 0;
-                                    // DB_PR( "--sound-- index = %d", database_cw.dIndx);
-                                    // switch (1) {
-                                    //    case 0:
-                                    //         m_mp3_start = lr_mp3_start;
-                                    //         m_mp3_end   = lr_mp3_end;
-                                    //         break;
-
-                                    //     case 1:
-                                    //         m_mp3_start = adf_music_mp3_start;
-                                    //         m_mp3_end   = adf_music_mp3_end;
-                                    //         break;
-
-  
-                                    //     case 2:
-                                    //         m_mp3_start = mr_mp3_start;
-                                    //         m_mp3_end   = mr_mp3_end;
-                                    //         break;
-                                    //     case 3:
-                                    //         m_mp3_start = hr_mp3_start;
-                                    //         m_mp3_end   = hr_mp3_end;
-                                    //         break;
-  
-                                    //     default:
-                                    //         m_mp3_start = adf_music_mp3_start;
-                                    //         m_mp3_end   = adf_music_mp3_end;
-                                    //         DB_PR( "[ * ] Not supported index = %d", database_cw.dIndx);
-                                    // }
-                                    // audio_pipeline_run(pipeline);
+                         
 
 
 
@@ -3363,12 +3337,6 @@ gekou_fail_x:
 
                                     //if(0 != database_gz[database_cw.dIndx].state_gz)
                                     {
-
-                                        // char key_name[15];//15
-                                        // esp_err_t err;
-
-
-         
 
 
                                         if(database_gz[database_cw.dIndx].cunwu_mode_gz ==1)
@@ -3712,7 +3680,7 @@ wuci_xmh_lk:
                                     DB_PR( "database_gz[database_cw.dIndx].dIndx_gz = %d", database_gz[database_cw.dIndx].dIndx_gz);
                                     if((2!=database_gz[database_cw.dIndx].changqi)
                                         &&((0 == database_gz[database_cw.dIndx].state_gz)
-                                       ||(0==database_gz[database_cw.dIndx].lock)))
+                                       ||(1==database_gz[database_cw.dIndx].lock)))//=0
                                     {
                                         switch (database_gz[database_cw.dIndx].dzx_mode_gz)
                                         {
@@ -4237,7 +4205,7 @@ wuci_xmh_xinz:
                                     }
 done_longtime:
                                     DB_PR("----test2-error--.\r\n");  
-                                    send_cmd_to_lcd_pic(0x0007);
+                                    send_cmd_to_lcd_pic(0x001e);//0x0007
                                 }
 done_longtime_2:
                                 DB_PR("----test3-done--.\r\n");  
@@ -4783,28 +4751,40 @@ done_mima_nosame:
                                         send_cmd_to_lcd_pic(0x0003);
                                     }
                                 }
-                                
-                                
-                                
                                 return_cause_zw =1;
 
-                                
-                                if( taskhandle1 != NULL )
-                                {
-                                    //DB_PR("1-vTask: delete vTask1. taskhandle1=%d\r\n"(int)*taskhandle1);
-                                    vTaskDelete(taskhandle1);
-                                }
-                                else
-                                {
-                                    DB_PR("taskhandle1 is NULL.\r\n");
-                                }
-                                
-              
-
-
+                                // if( taskhandle1 != NULL ) //todo
+                                // {
+                                //     //DB_PR("1-vTask: delete vTask1. taskhandle1=%d\r\n"(int)*taskhandle1);
+                                //     vTaskDelete(taskhandle1);
+                                // }
+                                // else
+                                // {
+                                //     DB_PR("taskhandle1 is NULL.\r\n");
+                                // }
 
                                 break;
 
+                            case 0x12e0://shoujihao close
+                                DB_PR("---shoujihao cun close---.\r\n");   
+
+                                if(((shengyu_xiao==0) && (shengyu_zhong==0))
+                                    ||((shengyu_da==0) && (shengyu_xiao==0))
+                                    ||((shengyu_da==0) && (shengyu_zhong==0)))
+                                {
+                                    DB_PR("--2 cunwu--.\r\n");  
+                                    //baocun 1
+                                    send_cmd_to_lcd_pic(0x0002);
+                
+                                }
+                                else
+                                {
+                                    DB_PR("--2 gekou--.\r\n");  
+                                    send_cmd_to_lcd_pic(0x0003);
+                                }
+                                
+                                return_cause_phone =1;
+                                break;
 
 
 
@@ -4903,13 +4883,8 @@ done_mima_nosame:
                                 // if(((shengyu_xiao==0) && (shengyu_zhong==0))
                                 //     ||((shengyu_da==0) && (shengyu_xiao==0))
                                 //     ||((shengyu_da==0) && (shengyu_zhong==0)))
-                                if(return_cause_zanwu_kx == 3)
-                                {
-                                    DB_PR("--2 cunwu--.\r\n");  
-                                    //baocun 1
-                                    send_cmd_to_lcd_pic(0x0002);
-                                }
-                                else if(return_cause_zanwu_kx == 4)
+                                if((return_cause_zanwu_kx == 3)||
+                                    (return_cause_zanwu_kx == 4))
                                 {
                                     DB_PR("--2 gekou--.\r\n");  
                                     send_cmd_to_lcd_pic(0x0003);
