@@ -83,6 +83,7 @@ esp_timer_handle_t oneshot_timer;
 
 u8 audio_play_mp3_over;
 void audio_play_my_mp3(void);
+void audio_play_one_mp3(int num);
 // static const char *TAG = "PLAY_MP3_FLASH";
 
 /*
@@ -3275,8 +3276,7 @@ gekou_fail_x:
 
 
 
-                                    DB_PR("-----2-----[ * ] Starting audio pipeline");
-
+                                    
                          
 
 
@@ -3367,6 +3367,10 @@ gekou_fail_x:
                                         nvs_wr_state_gz(1);
                                         nvs_wr_glongtime_gz(1);
 
+
+
+                                        DB_PR("-----2-----[ * ] Starting audio pipeline");
+                                        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);
                                         //update xianshi todo
                                         tongbu_changqi();
 
@@ -3573,11 +3577,14 @@ wuci_xmh_q:
                                         // }
 
                                     }
+                                    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_SUODING, 10, NULL);
+
                                     //if(database_gz[database_cw.dIndx].changqi == 1)
                                     {
                                         //update xianshi todo
                                         tongbu_changqi();
                                     } 
+
 
                                 }
                                 else
@@ -3759,6 +3766,7 @@ wuci_xmh_lk:
 
                                         nvs_wr_glock_gz(1);
 
+                                        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_JIESUO, 10, NULL);
                                         // //if(0 == database_gz[database_cw.dIndx].state_gz)
                                         // {
                                         //     database_gz[database_cw.dIndx].phone_number_nvs_gz = 0;
@@ -4181,7 +4189,8 @@ wuci_xmh_xinz:
 
                                     }
 
-
+                                    DB_PR("-----2-----[ * ] Starting audio pipeline");
+                                    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);
                                     //if(database_gz[database_cw_adm.dIndx].changqi == 0)
                                     {
                                         //update xianshi todo
@@ -4291,7 +4300,9 @@ done_longtime_2:
                                     DB_PR("-da-lock:%d ok--.\r\n",j);
                                     send_cmd_to_lock(k+1,j);
                                     send_cmd_to_lcd_bl(0x1120,database_gz[database_cw.dIndx].dIndx_gz);
-            
+
+                                    DB_PR("-----2-----[ * ] Starting audio pipeline");
+                                    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);
                                     //send_cmd_to_lcd_pic(0x0024);
                                     send_cmd_to_lcd_pic(UN_CHANGQI_OK_PIC);
 
@@ -4351,6 +4362,7 @@ done_longtime_2:
 
                                         if(database_gz[database_cw.dIndx].cunwu_mode_gz ==1)
                                         {
+                                            DB_PR("----test--.\r\n");  
                                             Del_FR(database_gz[database_cw.dIndx].zhiwen_page_id_gz);
                                             //del_zw_database(database_gz[database_cw.dIndx].zhiwen_page_id_gz);
 
@@ -4362,6 +4374,7 @@ done_longtime_2:
                                         }
                                         else  if(database_gz[database_cw.dIndx].cunwu_mode_gz ==2)
                                         {
+                                            DB_PR("----test--.\r\n");  
                                             database_gz[database_cw.dIndx].phone_number_nvs_gz = 0;
                                             database_gz[database_cw.dIndx].mima_number_nvs_gz = 0;
                                             nvs_wr_phone_number_nvs_gz(1);
@@ -5348,7 +5361,8 @@ done_mima_nosame:
                                             
                                     }
 
-
+                                    DB_PR("-----2-----[ * ] Starting audio pipeline");
+                                    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);
 
                                     DB_PR("----test--.\r\n");  
                                     if(0 != database_cw.dzx_mode)
@@ -5400,6 +5414,8 @@ done_mima_nosame:
 
 
                                         send_cmd_to_lcd_pic(0x0008);
+
+                                        database_cw.dzx_mode = 0 ;
 
                                     }
                                     // uart0_debug_data_dec(database_gz_temp,j);
@@ -5466,7 +5482,7 @@ done_2:
                                 send_cmd_to_lcd_bl_len(0x1060,(uint8_t*)buff_t,6+5);//key
                                 
                                 database_cw.cunwu_mode =0;
-                                database_cw.dzx_mode = 0 ;
+                                // database_cw.dzx_mode = 0 ;
                                 database_cw.state=0;
 
                                 // phone_weishu_ok =0;
@@ -5641,7 +5657,8 @@ done_2:
                                         send_cmd_to_lock(k+1,j);
                                         send_cmd_to_lcd_bl(0x10a0,database_gz[database_cw.dIndx].dIndx_gz);//weishu bugou
                 
-                                            
+                                        DB_PR("-----2-----[ * ] Starting audio pipeline");
+                                        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3_1", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);   
 
 
 
@@ -5759,7 +5776,7 @@ done_qu:
                                 send_cmd_to_lcd_bl_len(0x1090,(uint8_t*)buff_t,30+5);//key
 
                                 database_cw.cunwu_mode =0;
-                                database_cw.dzx_mode = 0 ;
+                                database_cw.dzx_mode = 0 ;//?
                                 database_cw.state=0;
 
                                 
@@ -5897,8 +5914,8 @@ done_kai_admin:
 
                                     DB_PR("-----2 1-----[ * ] Starting audio pipeline");
 
-  
-                                    xTaskCreate(audio_play_my_mp3, "audio_play_my_mp3", 2048, NULL, 10, NULL);
+                                    
+                                    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);
 
 
                                 }
@@ -6619,16 +6636,18 @@ void Add_FR_First()
 void Add_FR()
 {
 
+    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_CL, 10, NULL);
+    // audio_pipeline_stop(pipeline);
+    // audio_pipeline_wait_for_stop(pipeline);
+    // audio_pipeline_terminate(pipeline);
+    // audio_pipeline_reset_ringbuffer(pipeline);
+    // audio_pipeline_reset_elements(pipeline);
 
-    audio_pipeline_stop(pipeline);
-    audio_pipeline_wait_for_stop(pipeline);
-    audio_pipeline_terminate(pipeline);
-    audio_pipeline_reset_ringbuffer(pipeline);
-    audio_pipeline_reset_elements(pipeline);
+    // DB_PR("[2.6-d-zw] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)\r\n");
+    // audio_element_set_uri(tone_stream_reader, tone_uri[TONE_TYPE_CL]);
+    // audio_pipeline_run(pipeline);
 
-    DB_PR("[2.6-d-zw] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)\r\n");
-    audio_element_set_uri(tone_stream_reader, tone_uri[TONE_TYPE_CL]);
-    audio_pipeline_run(pipeline);
+
 
     //return_cause_zw=0;
 //     u8 zw_likai_flag=0;
@@ -7119,7 +7138,8 @@ void Add_FR()
                                 
                         }
 
-
+                        DB_PR("-----2-----[ * ] Starting audio pipeline");
+                        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);
 
                         DB_PR("--11111111111--test--.\r\n");  
                         if(0 != database_cw.dzx_mode)
@@ -7176,6 +7196,9 @@ void Add_FR()
                             //unique number
 
                             send_cmd_to_lcd_pic(0x0008);
+
+
+                            database_cw.dzx_mode = 0 ;//add
                         }
                         // uart0_debug_data_dec(database_gz_temp,j);
                         // uart0_debug_data_dec(database_gz_temp_onuse,k);
@@ -7213,7 +7236,7 @@ void Add_FR()
                         DB_PR("---xiangmen---guimen_gk_temp=%u\r\n",guimen_gk_temp);
 
                         database_cw.cunwu_mode =0;
-                        database_cw.dzx_mode = 0 ;
+
                         database_cw.state=0;
 
 
@@ -7232,7 +7255,7 @@ done_zwc_fail:
                         processnum=1;
                         DB_PR("---done_zwc_fail----\r\n");
                         database_cw.cunwu_mode =0;
-                        database_cw.dzx_mode = 0 ;
+                        // database_cw.dzx_mode = 0 ;
                         database_cw.state=0;
                         send_cmd_to_lcd_pic(0x0001);
                         return_cause_zanwu_kx =8;
@@ -7257,6 +7280,7 @@ done_zwc_fail:
 		if(i==20)//超过5次没有按手指则退出
 		{
             DB_PR("---->5a---- 超过5次没有按手指则退出 \r\n");
+            send_cmd_to_lcd_pic(0x004C);
 			//LCD_Fill(0,100,lcddev.width,160,WHITE);
 			break;	
 		}				
@@ -7525,11 +7549,8 @@ void Add_FR_CQ()
 
 
                         
-
-
-
                         DB_PR("-----2-----[ * ] Starting audio pipeline");
-
+                        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);
 
                         DB_PR( "database_gz[database_cw_adm.dIndx].state_gz = %d", database_gz[database_cw_adm.dIndx].state_gz);
                         if(0 == database_gz[database_cw_adm.dIndx].state_gz)
@@ -7792,6 +7813,10 @@ void press_FR(void)
 //删除指纹
 void Del_FR(u16 num)
 {
+
+    DB_PR("1******del***pageid hex**********num=%x \r\n",num);
+    DB_PR("2******del***pageid dec**********num=%d \r\n",num);
+
     if(HandShakeFlag ==1)
     {
         send_cmd_to_lcd_pic(0x0005);
@@ -7805,8 +7830,6 @@ void Del_FR(u16 num)
 	DB_PR("请输入指纹ID按Enter发送 \r\n");
 	DB_PR("0=< ID <=299 \r\n");
 
-    DB_PR("1*********pageid hex**********num=%x \r\n",num);
-    DB_PR("2*********pageid dec**********num=%d \r\n",num);
 	delay_ms(50);
 	//AS608_load_keyboard(0,170,(u8**)kbd_delFR);
 	//num=GET_NUM();//获取返回的数值
@@ -7890,8 +7913,9 @@ void del_zw_database(u16 num)
             send_cmd_to_lock(k+1,j);
             send_cmd_to_lcd_bl(0x10a0,database_gz[database_cw.dIndx].dIndx_gz);//weishu bugou
 
-                
 
+            DB_PR("-----2-----[ * ] Starting audio pipeline");
+            xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);
 
 
 
@@ -8077,6 +8101,39 @@ void uart_init_all(void)
 
 }
 
+
+void audio_play_one_mp3(int num)
+{
+    DB_PR("\r\n22---mp3 num=%d----\r\n",num);
+    //if(NULL!=&num)
+    {
+        DB_PR("\r\n33---mp3 num=%d----\r\n",num);
+        while (1) {
+            vTaskDelay(10 / portTICK_PERIOD_MS);
+            
+            if(audio_play_mp3_over==1)
+            {
+                audio_play_mp3_over =0;
+                DB_PR("22---audio_play_mp3_over=%d----\r\n",audio_play_mp3_over);
+
+                DB_PR("[2.6-b2] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)\r\n");
+                audio_element_set_uri(tone_stream_reader, tone_uri[num]);//TONE_TYPE_OPEN
+                audio_pipeline_run(pipeline);  
+                break;
+            }
+        }
+        audio_play_mp3_over =0;
+        //i=0;
+
+    }
+    
+
+    vTaskDelay(1);
+    vTaskDelete(NULL);
+
+}
+
+
 void audio_play_my_mp3(void)
 {
     u8 i=1;
@@ -8159,7 +8216,7 @@ void audio_init(void)
     audio_pipeline_link(pipeline, &link_tag[0], 3);
 
     DB_PR("[2.6] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)");
-    audio_element_set_uri(tone_stream_reader, tone_uri[TONE_TYPE_AKAIJI]);//kaji
+    audio_element_set_uri(tone_stream_reader, tone_uri[TONE_TYPE_KAIJI]);//kaji
 
     DB_PR("[ 3 ] Set up event listener");
     audio_event_iface_cfg_t evt_cfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
