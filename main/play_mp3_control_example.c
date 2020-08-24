@@ -4027,6 +4027,9 @@ wuci_xmh_xinz:
                                     //baocun 2
 									send_cmd_to_lcd_pic(0x001d);
                                     database_cw_adm.cunwu_mode = 2;
+
+                                    send_cmd_to_lcd_bl_len(0x1100,(uint8_t*)buff_t,30+5);//phone
+                                    send_cmd_to_lcd_bl_len(0x1110,(uint8_t*)buff_t,30+5);//key
                                 }
 
 
@@ -4282,7 +4285,11 @@ wuci_xmh_xinz:
 
                                         //unique number
 
+                                    database_cw_adm.cunwu_mode =0;
+                                    database_cw_adm.dzx_mode = 0 ;
 
+                                    send_cmd_to_lcd_bl_len(0x1100,(uint8_t*)buff_t,30+5);//phone
+                                    send_cmd_to_lcd_bl_len(0x1110,(uint8_t*)buff_t,30+5);//key
                                 }
                                 else
                                 {
@@ -4297,13 +4304,13 @@ done_longtime:
 done_longtime_2:
                                 DB_PR("----test3-done--.\r\n");  
 
-                                send_cmd_to_lcd_bl_len(0x1100,(uint8_t*)buff_t,30+5);//phone
-                                send_cmd_to_lcd_bl_len(0x1110,(uint8_t*)buff_t,30+5);//key
+
                                 // send_cmd_to_lcd_bl(0x1100,0);//phone
                                 // send_cmd_to_lcd_bl(0x1110,0);//key
                                 
-                                database_cw.cunwu_mode =0;
-                                database_cw.dzx_mode = 0 ;
+
+
+                                
 
 
                                 // phone_weishu_ok =0;
@@ -5142,7 +5149,6 @@ done_mima_nosame:
                                         if(data_rx_t[i] == 0xFF)
                                         {
                                             DB_PR("--no--mima_weishu_ok---.\r\n");
-                                            // send_cmd_to_lcd_pic(0x001F);
                                             goto done;
                                         }
                                     }
@@ -5166,7 +5172,7 @@ done_mima_nosame:
                                             {
                                                 //chongfu_flag =1;
                                                 DB_PR("---phone_number and key_number has in database\r\n");
-                                                send_cmd_to_lcd_pic(0x001F);
+                                                send_cmd_to_lcd_pic(0x001F);//todo
                                                 goto done_2;
                                             }
                                             else
@@ -5500,7 +5506,7 @@ done_mima_nosame:
 
                                         send_cmd_to_lcd_pic(0x0008);
 
-                                        database_cw.dzx_mode = 0 ;
+
 
                                     }
                                     // uart0_debug_data_dec(database_gz_temp,j);
@@ -5537,6 +5543,16 @@ done_mima_nosame:
                                     uart0_debug_data_dec(database_gz_temp_onuse,k);//no
                                     DB_PR("---lock idx---database_cw.dIndx=%u\r\n",database_cw.dIndx);
                                     DB_PR("---xiangmen---guimen_gk_temp=%u\r\n",guimen_gk_temp);
+                                
+                                
+                                    database_cw.dzx_mode = 0 ;
+                                    database_cw.cunwu_mode =0;
+                                    // database_cw.dzx_mode = 0 ;
+                                    database_cw.state=0;
+
+                                    send_cmd_to_lcd_bl_len(0x1050,(uint8_t*)buff_t,12+5);//phone
+                                    send_cmd_to_lcd_bl_len(0x1060,(uint8_t*)buff_t,6+5);//key
+                                
                                 }
                                 else
                                 {
@@ -5563,12 +5579,7 @@ done_2:
                                 // send_cmd_to_lcd_bl(0x1060,0);//key
                                 
 
-                                send_cmd_to_lcd_bl_len(0x1050,(uint8_t*)buff_t,12+5);//phone
-                                send_cmd_to_lcd_bl_len(0x1060,(uint8_t*)buff_t,6+5);//key
-                                
-                                database_cw.cunwu_mode =0;
-                                // database_cw.dzx_mode = 0 ;
-                                database_cw.state=0;
+
 
                                 // phone_weishu_ok =0;
 
@@ -5839,6 +5850,15 @@ done_2:
 
                                         send_cmd_to_lcd_pic(0x000e); 
                                     }
+
+                                    database_cw.cunwu_mode =0;
+                                    database_cw.state=0;
+                                    database_cw.dzx_mode = 0 ;//?
+
+                                    // send_cmd_to_lcd_bl(0x1080,0);//phone
+                                    // send_cmd_to_lcd_bl(0x1090,0);//key
+                                    send_cmd_to_lcd_bl_len(0x1080,(uint8_t*)buff_t,30+5);//phone
+                                    send_cmd_to_lcd_bl_len(0x1090,(uint8_t*)buff_t,30+5);//key
                                 }
                                 else
                                 {
@@ -5855,14 +5875,9 @@ done_qu:
                                 DB_PR("----test3-done--.\r\n");  
 
                                 
-                                // send_cmd_to_lcd_bl(0x1080,0);//phone
-                                // send_cmd_to_lcd_bl(0x1090,0);//key
-                                send_cmd_to_lcd_bl_len(0x1080,(uint8_t*)buff_t,30+5);//phone
-                                send_cmd_to_lcd_bl_len(0x1090,(uint8_t*)buff_t,30+5);//key
 
-                                database_cw.cunwu_mode =0;
-                                database_cw.dzx_mode = 0 ;//?
-                                database_cw.state=0;
+
+
 
                                 
                                 break;
@@ -7283,7 +7298,6 @@ void Add_FR()
                             send_cmd_to_lcd_pic(0x0008);
 
 
-                            database_cw.dzx_mode = 0 ;//add
                         }
                         // uart0_debug_data_dec(database_gz_temp,j);
                         // uart0_debug_data_dec(database_gz_temp_onuse,k);
@@ -7324,8 +7338,7 @@ void Add_FR()
 
                         database_cw.state=0;
 
-
-
+                        database_cw.dzx_mode = 0 ;//add
 
                         //send_cmd_to_lcd_pic(0x0008);
                         //LCD_Fill(0,100,240,160,WHITE);
@@ -7339,9 +7352,9 @@ void Add_FR()
 done_zwc_fail:
                         processnum=1;
                         DB_PR("---done_zwc_fail----\r\n");
-                        database_cw.cunwu_mode =0;
-                        // database_cw.dzx_mode = 0 ;
-                        database_cw.state=0;
+                        // database_cw.cunwu_mode =0;
+                        // // database_cw.dzx_mode = 0 ;
+                        // database_cw.state=0;
                         send_cmd_to_lcd_pic(0x0001);
                         return_cause_zanwu_kx =8;
                         ShowErrMessage(ensure);
