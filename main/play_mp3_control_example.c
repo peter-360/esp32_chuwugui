@@ -85,7 +85,7 @@ esp_timer_handle_t oneshot_timer;
 
 u8 audio_play_mp3_over;
 
-u8 audio_play_mp3_stop;
+
 void audio_play_my_mp3(void);
 void audio_play_one_mp3(int num);
 // static const char *TAG = "PLAY_MP3_FLASH";
@@ -326,6 +326,7 @@ uint8_t flag_rx2;
 #define ADM_KEY_SHENGYU_Z_MAX "ad_sy_z_m"
 #define ADM_KEY_SHENGYU_X_MAX "ad_sy_x_m"
 #define ADM_KEY_ZW_PAGEID_F "_ad_zwpid"
+#define ADM_KEY_MP3_CTL "_ad_mp3_ctl"
 
 
 //3
@@ -353,7 +354,7 @@ uint16_t shengyu_all=0;//
 uint16_t shengyu_da=1;
 uint16_t shengyu_zhong=15;
 uint16_t shengyu_xiao=100;
-
+u8 audio_play_mp3_stop;
 
 
 //admin 
@@ -407,7 +408,7 @@ typedef struct
     
     bool zhiwen_page_id_adm[ZHIWEN_PAGE_ID_MAX];//flag
     // uint16_t zhiwen_gz_index[300];//gz
-
+    
     uint8_t shengyu1;
     uint8_t shengyu2;
 
@@ -1712,7 +1713,22 @@ void nvs_wr_adm_zwpageid_flag(uint8_t mode,uint16_t zhiwen_page_id_temp)//->all
     if (err != ESP_OK) DB_PR("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 }
 
-
+//
+void nvs_wr_mp3_ctl(uint8_t mode)//->all
+{
+    char key_name[15];//15
+    esp_err_t err;
+    if(mode == 1)
+    {
+        //x
+        //DB_PR("--key_name=%s--\r\n",NAMESPACE_ADM_KEY_SHENGYU_D);
+        DB_PR("--write--\r\n");
+        err = save_u8_value(STORAGE_NAMESPACE_ADM,ADM_KEY_MP3_CTL,audio_play_mp3_stop);
+        if (err != ESP_OK) DB_PR("Error (%s) write data from NVS!\n", esp_err_to_name(err));
+    }
+    err = read_u8_value(STORAGE_NAMESPACE_ADM,ADM_KEY_MP3_CTL, (uint16_t*)(&audio_play_mp3_stop));
+    if (err != ESP_OK) DB_PR("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+}
 
 
 void default_factory_set(void)
@@ -1829,6 +1845,8 @@ void default_factory_set(void)
         database_gz[database_cw.dIndx].state_fenpei_gz =0;
         nvs_wr_fenpei_gz(1);
     }
+
+    nvs_wr_mp3_ctl(1);
 }
 
 
@@ -4639,20 +4657,21 @@ done_mima_nosame:
                                 if(02== data_rx_t[8])
                                 {
                                     DB_PR("-------yuyin off-----------.\r\n");
-                                    audio_play_mp3_stop =2;
+                                    audio_play_mp3_stop =1;
                                     send_cmd_to_lcd_pic(MUSIC_OFF_PIC);//default
                                     //close_mp3();
                                     //xTaskCreate(audio_init, "audio_init1", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);   
                                 }
                                 if(01== data_rx_t[8])
                                 {
-                                    audio_play_mp3_stop =1;
+                                    audio_play_mp3_stop =0;
                                     DB_PR("-------yuyin on------------.\r\n");
                                     send_cmd_to_lcd_pic(MUSIC_ON_PIC);
                                     //esp_restart();
                                     //xTaskCreate(audio_init, "audio_init2", 2048, NULL, 3, NULL);   
 
                                 }
+                                nvs_wr_mp3_ctl(1);
                                 DB_PR("00---audio_play_mp3_stop=%d----\r\n",audio_play_mp3_stop);
                                 break;
 
@@ -8174,7 +8193,7 @@ void audio_play_one_mp3(int num)
     DB_PR("\r\n22---mp3 audio_play_mp3_stop=%d----\r\n",audio_play_mp3_stop);
     DB_PR("\r\n22---mp3 audio_play_mp3_over=%d----\r\n",audio_play_mp3_over);
     //if(NULL!=&num)
-    if(audio_play_mp3_stop!=2)
+    if(audio_play_mp3_stop==0)
     {
         DB_PR("\r\n33---mp3 num=%d----\r\n",num);
         //while (1) 
@@ -8203,7 +8222,6 @@ void audio_play_one_mp3(int num)
 
     }
     
-    // audio_play_mp3_over =0;
     
 
     vTaskDelay(1);
@@ -8358,16 +8376,6 @@ void audio_init(void)
             continue;
         }
 
-        if(audio_play_mp3_stop==1)
-        {
-            DB_PR("11---audio_play_mp3_stop=%d----\r\n",audio_play_mp3_stop);
-            continue;
-        }
-        // if(audio_play_mp3_stop==2)
-        // {
-        //     DB_PR("22---audio_play_mp3_stop=%d----\r\n",audio_play_mp3_stop);
-        //     break;
-        // }
 
         /* Stop when the last pipeline element (i2s_stream_writer in this case) receives stop event */
         if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT && msg.source == (void *) i2s_stream_writer
@@ -8477,6 +8485,11 @@ void read_nvs_guizi_all()
     esp_err_t err;
     uint16_t page_id_temp1[ZHIWEN_PAGE_ID_MAX]={0};
     uint16_t page_id_temp2[ZHIWEN_PAGE_ID_MAX]={0};
+
+
+    nvs_wr_mp3_ctl(0);
+    DB_PR("audio_play_mp3_stop=%d\r\n",audio_play_mp3_stop);
+
 
     DB_PR("AS608Para.PS_max=%d, ValidN =%d ",AS608Para.PS_max, ValidN);
     for(uint16_t i=0;i<AS608Para.PS_max;i++)
