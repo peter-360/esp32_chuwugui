@@ -76,13 +76,16 @@ void tongbu_da(void);
 void tongbu_zh(void);
 void tongbu_changqi(void);
 void tongbu_locked(void);
-
+void audio_init(void);
+void close_mp3(void);
 
 TaskHandle_t taskhandle1;
 esp_timer_handle_t oneshot_timer;
 
 
 u8 audio_play_mp3_over;
+
+u8 audio_play_mp3_stop;
 void audio_play_my_mp3(void);
 void audio_play_one_mp3(int num);
 // static const char *TAG = "PLAY_MP3_FLASH";
@@ -98,6 +101,7 @@ int test_i;
 // audio_pipeline_handle_t pipeline;
 audio_element_handle_t tone_stream_reader, i2s_stream_writer, mp3_decoder;
 audio_pipeline_handle_t pipeline;
+audio_event_iface_handle_t m_audio_evt;
 // extern const uint8_t lr_mp3_start[] asm("_binary_16b_2c_8000hz_mp3_start");
 // extern const uint8_t lr_mp3_end[]   asm("_binary_16b_2c_8000hz_mp3_end");
 
@@ -4631,18 +4635,25 @@ done_mima_nosame:
 
                             case 0x1200:
                                 DB_PR("--sound setting--.\r\n");
-
+                                
                                 if(02== data_rx_t[8])
                                 {
-                                    DB_PR("--yuyin off--.\r\n");
+                                    DB_PR("-------yuyin off-----------.\r\n");
+                                    audio_play_mp3_stop =2;
                                     send_cmd_to_lcd_pic(MUSIC_OFF_PIC);//default
+                                    //close_mp3();
+                                    //xTaskCreate(audio_init, "audio_init1", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);   
                                 }
                                 if(01== data_rx_t[8])
                                 {
-                                    DB_PR("--yuyin on--.\r\n");
+                                    audio_play_mp3_stop =1;
+                                    DB_PR("-------yuyin on------------.\r\n");
                                     send_cmd_to_lcd_pic(MUSIC_ON_PIC);
-                                }
+                                    //esp_restart();
+                                    //xTaskCreate(audio_init, "audio_init2", 2048, NULL, 3, NULL);   
 
+                                }
+                                DB_PR("00---audio_play_mp3_stop=%d----\r\n",audio_play_mp3_stop);
                                 break;
 
 
@@ -5713,7 +5724,7 @@ done_2:
                                         send_cmd_to_lcd_bl(0x10a0,database_gz[database_cw.dIndx].dIndx_gz);//weishu bugou
                 
                                         DB_PR("-----2-----[ * ] Starting audio pipeline");
-                                        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3_1", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);   
+                                        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);   
 
 
 
@@ -8160,27 +8171,39 @@ void uart_init_all(void)
 void audio_play_one_mp3(int num)
 {
     DB_PR("\r\n22---mp3 num=%d----\r\n",num);
+    DB_PR("\r\n22---mp3 audio_play_mp3_stop=%d----\r\n",audio_play_mp3_stop);
+    DB_PR("\r\n22---mp3 audio_play_mp3_over=%d----\r\n",audio_play_mp3_over);
     //if(NULL!=&num)
+    if(audio_play_mp3_stop!=2)
     {
         DB_PR("\r\n33---mp3 num=%d----\r\n",num);
-        while (1) {
+        //while (1) 
+        {
             vTaskDelay(10 / portTICK_PERIOD_MS);
             
-            if(audio_play_mp3_over==1)
+            //if(audio_play_mp3_over==1)
             {
                 audio_play_mp3_over =0;
                 DB_PR("22---audio_play_mp3_over=%d----\r\n",audio_play_mp3_over);
 
+                audio_pipeline_stop(pipeline);
+                audio_pipeline_wait_for_stop(pipeline);
+                audio_pipeline_terminate(pipeline);
+                audio_pipeline_reset_ringbuffer(pipeline);
+                audio_pipeline_reset_elements(pipeline);
                 DB_PR("[2.6-b2] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)\r\n");
                 audio_element_set_uri(tone_stream_reader, tone_uri[num]);//TONE_TYPE_OPEN
                 audio_pipeline_run(pipeline);  
-                break;
+
+                //break;
             }
         }
-        audio_play_mp3_over =0;
+        
         //i=0;
 
     }
+    
+    // audio_play_mp3_over =0;
     
 
     vTaskDelay(1);
@@ -8189,51 +8212,61 @@ void audio_play_one_mp3(int num)
 }
 
 
-void audio_play_my_mp3(void)
-{
-    u8 i=1;
-    while (1) {
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+// void audio_play_my_mp3(void)
+// {
+//     u8 i=1;
+//     while (1) {
+//         vTaskDelay(10 / portTICK_PERIOD_MS);
         
 
-        if((audio_play_mp3_over==1)&&(i==2))
-        {
+//         if((audio_play_mp3_over==1)&&(i==2))
+//         {
+//             // audio_pipeline_stop(pipeline);
+//             // audio_pipeline_wait_for_stop(pipeline);
+//             // audio_pipeline_terminate(pipeline);
+//             // audio_pipeline_reset_ringbuffer(pipeline);
+//             // audio_pipeline_reset_elements(pipeline);
 
-            audio_play_mp3_over =0;
-            i++;
-            DB_PR("22---audio_play_mp3_over=%d----\r\n",audio_play_mp3_over);
+//             audio_play_mp3_over =0;
+//             i++;
+//             DB_PR("22---audio_play_mp3_over=%d----\r\n",audio_play_mp3_over);
 
-            DB_PR("[2.6-b2] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)\r\n");
-            audio_element_set_uri(tone_stream_reader, tone_uri[TONE_TYPE_OPEN]);//TONE_TYPE_OPEN
-            audio_pipeline_run(pipeline);  
-            break;
-        }
-        else if((audio_play_mp3_over==1)&&(i==1))
-        {
-            audio_play_mp3_over=0;
-            i++;
-            DB_PR("11---audio_play_mp3_over=%d----\r\n",audio_play_mp3_over);
+//             DB_PR("[2.6-b2] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)\r\n");
+//             audio_element_set_uri(tone_stream_reader, tone_uri[TONE_TYPE_OPEN]);//TONE_TYPE_OPEN
+//             audio_pipeline_run(pipeline);  
+//             break;
+//         }
+//         else if((audio_play_mp3_over==1)&&(i==1))
+//         {
+//             // audio_pipeline_stop(pipeline);
+//             // audio_pipeline_wait_for_stop(pipeline);
+//             // audio_pipeline_terminate(pipeline);
+//             // audio_pipeline_reset_ringbuffer(pipeline);
+//             // audio_pipeline_reset_elements(pipeline);
 
-            DB_PR("[2.6-b1] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)\r\n");
-            audio_element_set_uri(tone_stream_reader, tone_uri[database_gz[database_cw.dIndx].dIndx_gz]);//
-            audio_pipeline_run(pipeline);
-            continue;
+//             audio_play_mp3_over=0;
+//             i++;
+//             DB_PR("11---audio_play_mp3_over=%d----\r\n",audio_play_mp3_over);
+
+//             DB_PR("[2.6-b1] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)\r\n");
+//             audio_element_set_uri(tone_stream_reader, tone_uri[database_gz[database_cw.dIndx].dIndx_gz]);//
+//             audio_pipeline_run(pipeline);
+//             continue;
       
-        }
+//         }
 
-        
-    }
-    audio_play_mp3_over =0;
-    //i=0;
 
-    vTaskDelay(1);
-    vTaskDelete(NULL);
+//     }
+//     audio_play_mp3_over =0;
+//     //i=0;
 
-}
+//     vTaskDelay(1);
+//     vTaskDelete(NULL);
+
+// }
 
 void audio_init(void)
 {
-
 
     esp_log_level_set("*", ESP_LOG_WARN);
     esp_log_level_set(TAG, ESP_LOG_INFO);
@@ -8242,56 +8275,75 @@ void audio_init(void)
     // audio_board_handle_t board_handle = audio_board_init();
     // audio_hal_ctrl_codec(board_handle->audio_hal, AUDIO_HAL_CODEC_MODE_DECODE, AUDIO_HAL_CTRL_START);
 
-    DB_PR("[2.0] Create audio pipeline for playback");
+    DB_PR("[2.0] Create audio pipeline for playback\r\n");
     audio_pipeline_cfg_t pipeline_cfg = DEFAULT_AUDIO_PIPELINE_CONFIG();
     pipeline = audio_pipeline_init(&pipeline_cfg);
     AUDIO_NULL_CHECK(TAG, pipeline, return);
 
-    DB_PR("[2.1] Create tone stream to read data from flash");
+    DB_PR("[2.1] Create tone stream to read data from flash\r\n");
     tone_stream_cfg_t tone_cfg = TONE_STREAM_CFG_DEFAULT();
     tone_cfg.type = AUDIO_STREAM_READER;
     tone_stream_reader = tone_stream_init(&tone_cfg);
 
-    DB_PR("[2.2] Create i2s stream to write data to codec chip");
+    DB_PR("[2.2] Create i2s stream to write data to codec chip\r\n");
     i2s_stream_cfg_t i2s_cfg = I2S_STREAM_CFG_DEFAULT();
     i2s_cfg.type = AUDIO_STREAM_WRITER;
     i2s_stream_writer = i2s_stream_init(&i2s_cfg);
 
-    DB_PR("[2.3] Create mp3 decoder to decode mp3 file");
+    DB_PR("[2.3] Create mp3 decoder to decode mp3 file\r\n");
     mp3_decoder_cfg_t mp3_cfg = DEFAULT_MP3_DECODER_CONFIG();
     mp3_decoder = mp3_decoder_init(&mp3_cfg);
 
-    DB_PR("[2.4] Register all elements to audio pipeline");
+    DB_PR("[2.4] Register all elements to audio pipeline\r\n");
     audio_pipeline_register(pipeline, tone_stream_reader, "tone");
     audio_pipeline_register(pipeline, mp3_decoder, "mp3");
     audio_pipeline_register(pipeline, i2s_stream_writer, "i2s");
 
-    DB_PR("[2.5] Link it together [flash]-->tone_stream-->mp3_decoder-->i2s_stream-->[codec_chip]");
+    DB_PR("[2.5] Link it together [flash]-->tone_stream-->mp3_decoder-->i2s_stream-->[codec_chip]\r\n");
     const char *link_tag[3] = {"tone", "mp3", "i2s"};
     audio_pipeline_link(pipeline, &link_tag[0], 3);
 
-    DB_PR("[2.6] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)");
-    audio_element_set_uri(tone_stream_reader, tone_uri[TONE_TYPE_KAIJI]);//kaji
 
-    DB_PR("[ 3 ] Set up event listener");
+
+
+    DB_PR("[ 3 ] Set up event listener\r\n");
     audio_event_iface_cfg_t evt_cfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
-    audio_event_iface_handle_t evt = audio_event_iface_init(&evt_cfg);
+    // audio_event_iface_handle_t m_audio_evt;
+    m_audio_evt = audio_event_iface_init(&evt_cfg);
 
-    DB_PR("[3.1] Listening event from all elements of pipeline");
-    audio_pipeline_set_listener(pipeline, evt);
+    DB_PR("[3.1] Listening event from all elements of pipeline\r\n");
+    audio_pipeline_set_listener(pipeline, m_audio_evt);
 
-    DB_PR("[ 4 ] Start audio_pipeline");
-    audio_pipeline_run(pipeline);
 
+    if(audio_play_mp3_stop ==0)
+    {
+        DB_PR("[2.6] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)\r\n");
+        audio_element_set_uri(tone_stream_reader, tone_uri[TONE_TYPE_KAIJI]);//kaji
+    }
+
+    if(audio_play_mp3_stop ==0)
+    {
+        DB_PR("[ 4 ] Start audio_pipeline\r\n");
+        audio_pipeline_run(pipeline);
+    }
     DB_PR("[ 4 ] Listen for all pipeline events\r\n");
+
+    int j=0;
     while (1) {
-        
+        j++;
+        DB_PR("-------- heart1---------\r\n");
+        if(j%5 ==0)
+        {
+            DB_PR("-------- heart2---------\r\n");
+        }
+        vTaskDelay(10 / portTICK_PERIOD_MS);
         audio_event_iface_msg_t msg = { 0 };
-        esp_err_t ret = audio_event_iface_listen(evt, &msg, portMAX_DELAY);
+        esp_err_t ret = audio_event_iface_listen(m_audio_evt, &msg, portMAX_DELAY);
         if (ret != ESP_OK) {
             DB_PR( "[ * ] Event interface error : %d\r\n", ret);
             continue;
         }
+        DB_PR("-------- heart3---------\r\n");
 
         if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT && msg.source == (void *) mp3_decoder
             && msg.cmd == AEL_MSG_CMD_REPORT_MUSIC_INFO) {
@@ -8299,12 +8351,23 @@ void audio_init(void)
             audio_element_getinfo(mp3_decoder, &music_info);
 
             DB_PR("[ * ] Receive music info from mp3 decoder, sample_rates=%d, bits=%d, ch=%d\r\n",
-                     music_info.sample_rates, music_info.bits, music_info.channels);
+                    music_info.sample_rates, music_info.bits, music_info.channels);
 
             audio_element_setinfo(i2s_stream_writer, &music_info);
             i2s_stream_set_clk(i2s_stream_writer, music_info.sample_rates, music_info.bits, music_info.channels);
             continue;
         }
+
+        if(audio_play_mp3_stop==1)
+        {
+            DB_PR("11---audio_play_mp3_stop=%d----\r\n",audio_play_mp3_stop);
+            continue;
+        }
+        // if(audio_play_mp3_stop==2)
+        // {
+        //     DB_PR("22---audio_play_mp3_stop=%d----\r\n",audio_play_mp3_stop);
+        //     break;
+        // }
 
         /* Stop when the last pipeline element (i2s_stream_writer in this case) receives stop event */
         if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT && msg.source == (void *) i2s_stream_writer
@@ -8314,11 +8377,11 @@ void audio_init(void)
 
 
 
-            audio_pipeline_stop(pipeline);
-            audio_pipeline_wait_for_stop(pipeline);
-            audio_pipeline_terminate(pipeline);
-            audio_pipeline_reset_ringbuffer(pipeline);
-            audio_pipeline_reset_elements(pipeline);
+            // audio_pipeline_stop(pipeline);
+            // audio_pipeline_wait_for_stop(pipeline);
+            // audio_pipeline_terminate(pipeline);
+            // audio_pipeline_reset_ringbuffer(pipeline);
+            // audio_pipeline_reset_elements(pipeline);
             audio_play_mp3_over=1;
             DB_PR("00---audio_play_mp3_over=%d----\r\n",audio_play_mp3_over);
 
@@ -8333,12 +8396,14 @@ void audio_init(void)
             //     test_i=0;
             // }
 
+
+
         }
 
 
 
     }
-
+    
     DB_PR("[ 5 ] Stop audio_pipeline\r\n");
     audio_pipeline_stop(pipeline);
     audio_pipeline_wait_for_stop(pipeline);
@@ -8352,17 +8417,47 @@ void audio_init(void)
     audio_pipeline_remove_listener(pipeline);
 
     /* Make sure audio_pipeline_remove_listener & audio_event_iface_remove_listener are called before destroying event_iface */
-    audio_event_iface_destroy(evt);
+    audio_event_iface_destroy(m_audio_evt);
 
     /* Release all resources */
     audio_pipeline_deinit(pipeline);
     audio_element_deinit(tone_stream_reader);
     audio_element_deinit(i2s_stream_writer);
     audio_element_deinit(mp3_decoder);
+
+    DB_PR("[ 6 ] Stop over \r\n");
+    vTaskDelay(1);
+    vTaskDelete(NULL);
+
 }
 
 
+void close_mp3(void)
+{
+    DB_PR("[ 5 ] Stop audio_pipeline\r\n");
+    audio_pipeline_stop(pipeline);
+    audio_pipeline_wait_for_stop(pipeline);
+    audio_pipeline_terminate(pipeline);
 
+    audio_pipeline_unregister(pipeline, tone_stream_reader);
+    audio_pipeline_unregister(pipeline, i2s_stream_writer);
+    audio_pipeline_unregister(pipeline, mp3_decoder);
+
+    /* Terminal the pipeline before removing the listener */
+    audio_pipeline_remove_listener(pipeline);
+
+
+    /* Make sure audio_pipeline_remove_listener & audio_event_iface_remove_listener are called before destroying event_iface */
+    audio_event_iface_destroy(m_audio_evt);
+
+
+    /* Release all resources */
+    audio_pipeline_deinit(pipeline);
+    audio_element_deinit(tone_stream_reader);
+    audio_element_deinit(i2s_stream_writer);
+    audio_element_deinit(mp3_decoder);
+
+}
 
 
 
@@ -8655,12 +8750,12 @@ static void gpio_task_example(void* arg)
     uint32_t io_num;
     for(;;) {
         if(xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) {
-            DB_PR("GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));
+            DB_PR("GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));//yizhi dayin????
 
             if((io_num==GPIO_INPUT_IO_ADMIN)
                 &&(gpio_get_level(io_num)==0))
             {
-                DB_PR("------------admin mode-----------\r\n");
+                DB_PR("------------admin mode-----------\r\n");// no print???
                 send_cmd_to_lcd_pic(0x0011);
                 vTaskDelay(1000 / portTICK_PERIOD_MS);
                 gpio_set_level(LED_BLUE, 0);
@@ -9033,8 +9128,8 @@ void app_main(void)
     //     gpio_set_level(LED_RED, 1);
 
     // }
-    audio_init();
-
+    // audio_init();
+    xTaskCreate(audio_init, "audio_init0", 2048, NULL, 3, NULL);   
 
 
 }
