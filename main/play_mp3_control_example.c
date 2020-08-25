@@ -1733,7 +1733,18 @@ void nvs_wr_mp3_ctl(uint8_t mode)//->all
 
 void default_factory_set(void)
 {
+    u8  ensure;
+	ensure=PS_Empty();//清空指纹库
 
+	if(ensure==0)
+	{
+		//LCD_Fill(0,120,lcddev.width,160,WHITE);
+		DB_PR("---del all zhiwen ok -----删除指纹成功 \r\n");		
+	}
+    else
+		ShowErrMessage(ensure);	
+
+        
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
     {
         database_cw.dIndx = i;
@@ -1846,12 +1857,25 @@ void default_factory_set(void)
         nvs_wr_fenpei_gz(1);
     }
 
+    audio_play_mp3_stop=0;
     nvs_wr_mp3_ctl(1);
 }
 
 
 void default_factory_set_first(void)
 {
+    u8  ensure;
+	ensure=PS_Empty();//清空指纹库
+
+	if(ensure==0)
+	{
+		//LCD_Fill(0,120,lcddev.width,160,WHITE);
+		DB_PR("---del all zhiwen ok -----删除指纹成功 \r\n");		
+	}
+    else
+		ShowErrMessage(ensure);	
+
+
 
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
     {
@@ -1950,7 +1974,8 @@ void default_factory_set_first(void)
     // DB_PR("---shengyu_zhong_max=%d----\n",shengyu_zhong_max);
     // DB_PR("---shengyu_xiao_max=%d----\n",shengyu_xiao_max);
 
-    
+    audio_play_mp3_stop=0;
+    nvs_wr_mp3_ctl(1);
 }
 
 
@@ -4892,8 +4917,39 @@ done_mima_nosame:
                                 return_cause_phone =1;
                                 break;
 
+                            case 0x2090://mima chongfu close
+                                DB_PR("---mima chongfu close---.\r\n");   
 
+                                if(database_cw_adm.changqi_tmp == 0)
+                                {
+                                    DB_PR("--2 cunwu mima--.\r\n");  
+                                    send_cmd_to_lcd_pic(0x0006);
+                                }
+                                else
+                                {
+                                    DB_PR("--2 changqi--.\r\n");  
+                                }
+                                
 
+                                break;
+
+                            case 0x12f0://mp3 switch
+                                DB_PR("---mp3 switch---.\r\n");   
+
+                                if(audio_play_mp3_stop ==0)
+                                {
+                                    DB_PR("--2 mp3 on--.\r\n");  
+                                    send_cmd_to_lcd_pic(MUSIC_ON_PIC);
+
+                
+                                }
+                                else if(audio_play_mp3_stop ==1)
+                                {
+                                    DB_PR("--2 mp3 off--.\r\n");  
+                                    send_cmd_to_lcd_pic(MUSIC_OFF_PIC);
+                                }
+
+                                break;
 //-----------------------------------------cun-----------------------------------------------------
                             case 0x2080://
                                 DB_PR("--cunwu--.\r\n");   
@@ -6530,7 +6586,7 @@ void ShowErrMessage(u8 ensure)
 // 				DB_PR("--2-duibi--对比两次指纹 ");
 // 				//ensure=PS_Match();
 //                 SearchResult *p_rsp=NULL;
-//                 //ensure = PS_Search(0x02, 0x0000, 0x00AA, p_rsp);
+//                 //ensure = PS_Search(0x02, 0x0000, ZHIWEN_PAGE_ID_MAX, p_rsp);
 //                 ensure =0;
 //                 //DB_PR("--2-pageID=%d, mathscore=%d",p_rsp->pageID,p_rsp->mathscore);
 // 				if(ensure==0x00) 
@@ -6638,7 +6694,7 @@ void Add_FR_First()
 					{
                         delay_ms(120);
                         DB_PR("--0-ok1--指纹正常\r\n");
-                        ensure = PS_Search(CharBuffer1, 0x0000, 0x00AA, &p_rsp);//0x02
+                        ensure = PS_Search(CharBuffer1, 0x0000, ZHIWEN_PAGE_ID_MAX, &p_rsp);//0x02 0x00AA
                         //delay_ms(50);
                         DB_PR("--0--ensure=%d\r\n",ensure);
                         if(ensure==0x00)
@@ -6813,7 +6869,7 @@ void Add_FR()
 					{
                         delay_ms(120);
                         DB_PR("--1-ok1--指纹正常 \r\n");
-                        ensure = PS_Search(CharBuffer2, 0x0000, 0x00AA, &p_rsp);//0x02
+                        ensure = PS_Search(CharBuffer2, 0x0000, ZHIWEN_PAGE_ID_MAX, &p_rsp);//0x02
                         if(ensure==0x00)
                         {
                             ////LCD_Fill(0,120,lcddev.width,160,WHITE);
@@ -6864,7 +6920,7 @@ void Add_FR()
 					{
                         delay_ms(120);
                         DB_PR("--2-ok--指纹正常 \r\n");
-                        ensure = PS_Search(CharBuffer3, 0x0000, 0x00AA, &p_rsp);//0x02
+                        ensure = PS_Search(CharBuffer3, 0x0000, ZHIWEN_PAGE_ID_MAX, &p_rsp);//0x02
                         if(ensure==0x00)
                         {
                             ////LCD_Fill(0,120,lcddev.width,160,WHITE);
@@ -7426,7 +7482,7 @@ void Add_FR_CQ()
 					{
                         delay_ms(120);
                         DB_PR("--1-ok1--指纹正常 \r\n");
-                        ensure = PS_Search(CharBuffer2, 0x0000, 0x00AA, &p_rsp);//0x02
+                        ensure = PS_Search(CharBuffer2, 0x0000, ZHIWEN_PAGE_ID_MAX, &p_rsp);//0x02
                         if(ensure==0x00)
                         {
                             ////LCD_Fill(0,120,lcddev.width,160,WHITE);
@@ -7475,7 +7531,7 @@ void Add_FR_CQ()
 					{
                         delay_ms(120);
                         DB_PR("--2-ok--指纹正常 \r\n");
-                        ensure = PS_Search(CharBuffer3, 0x0000, 0x00AA, &p_rsp);//0x02
+                        ensure = PS_Search(CharBuffer3, 0x0000, ZHIWEN_PAGE_ID_MAX, &p_rsp);//0x02
                         if(ensure==0x00)
                         {
                             ////LCD_Fill(0,120,lcddev.width,160,WHITE);
@@ -7935,8 +7991,8 @@ void Del_FR(u16 num)
 	if(num==0xFFFF)
         return ;
 		//goto MENU ; //返回主页面-------------
-	else if(num==0xFF00)
-		ensure=PS_Empty();//清空指纹库
+	// else if(num==0xFF00)
+	// 	ensure=PS_Empty();//清空指纹库
 	else 
 		ensure=PS_DeletChar(num,1);//删除单个指纹
 	if(ensure==0)
@@ -8979,7 +9035,7 @@ void app_main(void)
     //hook isr handler for specific gpio pin
     gpio_isr_handler_add(GPIO_INPUT_IO_ADMIN, gpio_isr_handler, (void*) GPIO_INPUT_IO_ADMIN);
     //hook isr handler for specific gpio pin
-    gpio_isr_handler_add(GPIO_INPUT_IO_ZW_JC, gpio_isr_handler, (void*) GPIO_INPUT_IO_ZW_JC);
+    //gpio_isr_handler_add(GPIO_INPUT_IO_ZW_JC, gpio_isr_handler, (void*) GPIO_INPUT_IO_ZW_JC);
 
     //remove isr handler for gpio number.
     gpio_isr_handler_remove(GPIO_INPUT_IO_ADMIN);
@@ -9154,8 +9210,8 @@ void app_main(void)
     //     gpio_set_level(LED_RED, 1);
 
     // }
-    // audio_init();
-    xTaskCreate(audio_init, "audio_init0", 2048, NULL, 3, NULL);   
+    audio_init();
+    //xTaskCreate(audio_init, "audio_init0", 2048, NULL, 3, NULL);   
 
 
 }
