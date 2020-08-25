@@ -7453,7 +7453,7 @@ void Add_FR_CQ()
     //return_cause_zw =0;
     // if(HandShakeFlag ==1)
     // {
-    //     send_cmd_to_lcd_pic(0x0005);
+    //     send_cmd_to_lcd_pic(0x004D);
     //     DB_PR("---zhiwen connect fail\r\n");
     //     vTaskDelete(NULL);
     // }
@@ -7872,7 +7872,7 @@ void press_FR(void)
 {
     if(HandShakeFlag ==1)
     {
-        send_cmd_to_lcd_pic(0x0005);
+        send_cmd_to_lcd_pic(0x004D);
         DB_PR("---zhiwen connect fail\r\n");
         vTaskDelete(NULL);
     }
@@ -7914,11 +7914,11 @@ void press_FR(void)
                     if(database_gz[database_cw.dIndx].changqi == 0)
                     {
                         Del_FR(seach.pageID);
-                        DB_PR("-----changqi cunwu \r\n");	
+                        DB_PR("-----normal cunwu \r\n");	
                     }
                     else
                     {
-                        DB_PR("-----normal cunwu \r\n");			
+                        DB_PR("-----changqi cunwu \r\n");			
                     }
                     
                     del_zw_database(seach.pageID);
@@ -7973,7 +7973,7 @@ void Del_FR(u16 num)
 
     if(HandShakeFlag ==1)
     {
-        send_cmd_to_lcd_pic(0x0005);
+        send_cmd_to_lcd_pic(0x004D);
         DB_PR("---zhiwen connect fail\r\n");
         return;
     }
@@ -8020,7 +8020,7 @@ void del_zw_database(u16 num)
 {
     if(HandShakeFlag ==1)
     {
-        send_cmd_to_lcd_pic(0x0005);
+        send_cmd_to_lcd_pic(0x004D);
         DB_PR("---zhiwen connect fail\r\n");
         return;
     }
