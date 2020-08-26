@@ -455,7 +455,7 @@ typedef struct
 }shujuku_struct_gz;
 //={0,0,0,3};//柜子
 
-shujuku_struct_gz database_gz[SHENYU_GEZI_MAX];//i/lock  idx
+shujuku_struct_gz database_gz[SHENYU_GEZI_MAX+1];//i/lock  idx
 // shujuku_struct_gz database_gz[SHENYU_GEZI_MAX]=
 // {
 //     .state_gz = 0 ,
@@ -564,7 +564,8 @@ uint16_t find_lock_index(uint16_t guimen_index)
     uint16_t lock_index=0;
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
     {
-        if(database_gz[i].dIndx_gz == guimen_index)
+        if((database_gz[i].state_fenpei_gz == 1)
+            &&(database_gz[i].dIndx_gz == guimen_index))
         {
             lock_index = i;
             DB_PR("--ok--lock_index=%d--.\r\n",lock_index); 
@@ -1889,10 +1890,10 @@ void default_factory_set_first(void)
         nvs_wr_fenpei_gz(1);
 
 
-        // database_gz[database_cw.dIndx].changqi = 0;
+        database_gz[database_cw.dIndx].changqi = 0;
         database_gz[database_cw.dIndx].lock = 0;
         nvs_wr_glock_gz(1);
-        // nvs_wr_glongtime_gz(1);
+        nvs_wr_glongtime_gz(1);
 
 
         database_gz[database_cw.dIndx].cunwu_mode_gz = 0;
@@ -2317,7 +2318,7 @@ static void echo_task2()//lcd
 
 //-------------------admin--------------guimenshezhi-----------2次------------------------------------------
                             case 0x11A0://
-                                DB_PR("--kajishezhi--.\r\n");   
+                                DB_PR("--kaijishezhi--.\r\n");   
                                 int j=0;
                                 for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
                                     DB_PR("0x%.2X ", (uint8_t)data_rx_t[i]);
@@ -2426,6 +2427,28 @@ static void echo_task2()//lcd
 
                                             }
 
+                                        }
+
+
+                                        if((hang_shu_max+1)> 13)
+                                        {
+                                            DB_PR("-----err2 >12gm 12 lock------\r\n");
+                                            send_cmd_to_lcd_pic(0x004F);
+                                            break;
+                                        }
+                                        if((hang_shu_max+1) == 13)
+                                        {
+                                            if(guimen_x_gk_max_temp[12] > 12)
+                                            {
+                                                DB_PR("-----err1 >12gm 12 lock------\r\n");
+                                                send_cmd_to_lcd_pic(0x004F);
+                                                break;
+                                            }
+                                            else
+                                            {
+                                                DB_PR("-----ok <12gm 12 lock------\r\n");
+                                            }
+                                            
                                         }
 
                                         DB_PR("\r\n");
@@ -2622,7 +2645,7 @@ static void echo_task2()//lcd
 
 
 
-                            //-------------格口设置 dazhongxiao
+                            //-------2------格口设置 dazhongxiao
                             //da
                             case BL_GK_SZ_D://
                                 
@@ -2699,79 +2722,81 @@ static void echo_task2()//lcd
                                             DB_PR("-------guimen_gk_temp--dIndx=%d--.\r\n",guimen_gk_temp); 
 
 
-                                            if((guimen_gk_temp >=SHENYU_GEZI_MAX)||(0==guimen_gk_temp))
-                                            {
-                                                DB_PR("--gekou set fail--.\r\n");   
-                                                goto gekou_fail;
+                                            // if((guimen_gk_temp >=SHENYU_GEZI_MAX)||(0==guimen_gk_temp))
+                                            // {
+                                            //     DB_PR("--gekou set fail--.\r\n");   
+                                            //     goto gekou_fail;
 
-                                            }
+                                            // }
                                             database_cw.dIndx =0;
                                             database_cw.dIndx = find_lock_index(guimen_gk_temp);
 
                                             DB_PR("---2----lock--dIndx=%d--.\r\n",database_cw.dIndx); 
-                                            if(database_cw.dIndx ==0)
+                                            if(database_cw.dIndx !=0)
                                             {
-                                                DB_PR("--gekou set fail2--.\r\n");   
-                                                goto gekou_fail;
+                                                DB_PR("--gekou set one ok--.\r\n");   
+                                                switch(database_gz[database_cw.dIndx].dzx_mode_gz)
+                                                {
+                                                case 1:
+                                                    // no gai
+                                                //     shengyu_da_max++;
+                                                //     shengyu_zhong_max--;
+                                                //     //shengyu_xiao_max--;
+                                                //     shengyu_da ++;
+                                                //     shengyu_zhong--;
+                                                //     //shengyu_xiao --;
+
+                                                    break;
+                                                case 2:
+                                                    shengyu_da_max++;
+                                                    shengyu_zhong_max--;
+                                                    //shengyu_xiao_max--;
+                                                    shengyu_da ++;
+                                                    shengyu_zhong--;
+                                                    //shengyu_xiao --;
+                                                    break;
+                                                case 3:
+                                                    shengyu_da_max++;
+                                                    //shengyu_zhong_max--;
+                                                    shengyu_xiao_max--;
+                                                    shengyu_da ++;
+                                                    //shengyu_zhong--;
+                                                    shengyu_xiao --;
+                                                    break;
+        
+                                                default:
+                                                    DB_PR("--other--.\r\n");   
+                                                }
+                                                DB_PR("---shengyu_all=%d----\n",shengyu_all);
+
+                                                DB_PR("---shengyu_da=%d----\n",shengyu_da);
+                                                DB_PR("---shengyu_zhong=%d----\n",shengyu_zhong);
+                                                DB_PR("---shengyu_xiao=%d----\n",shengyu_xiao);
+
+
+                                                //shengyu_all_max = shengyu_da_max + shengyu_zhong_max + shengyu_xiao_max;
+                                                DB_PR("-2-shengyu_all_max=%d----\n",shengyu_all_max);
+                                                DB_PR("---shengyu_da_max=%d----\n",shengyu_da_max);
+                                                DB_PR("---shengyu_zhong_max=%d----\n",shengyu_zhong_max);
+                                                DB_PR("---shengyu_xiao_max=%d----\n",shengyu_xiao_max);
+
+
+
+
+
+                                                database_gz[database_cw.dIndx].dzx_mode_gz = 1;
+                                                nvs_wr_dzx_mode_gz(1);
+                                                
+                                                DB_PR("database_cw.dIndx = %03d\r\n\r\n",database_cw.dIndx);
+                                            }
+                                            else
+                                            {
+                                                DB_PR("--gekou set one fail2 d--.\r\n");   
+                                                //goto gekou_fail;
                                             }
                                             
-
-                                            switch(database_gz[database_cw.dIndx].dzx_mode_gz)
-                                            {
-                                            case 1:
-                                                // no gai
-                                            //     shengyu_da_max++;
-                                            //     shengyu_zhong_max--;
-                                            //     //shengyu_xiao_max--;
-                                            //     shengyu_da ++;
-                                            //     shengyu_zhong--;
-                                            //     //shengyu_xiao --;
-
-                                                break;
-                                            case 2:
-                                                shengyu_da_max++;
-                                                shengyu_zhong_max--;
-                                                //shengyu_xiao_max--;
-                                                shengyu_da ++;
-                                                shengyu_zhong--;
-                                                //shengyu_xiao --;
-                                                break;
-                                            case 3:
-                                                shengyu_da_max++;
-                                                //shengyu_zhong_max--;
-                                                shengyu_xiao_max--;
-                                                shengyu_da ++;
-                                                //shengyu_zhong--;
-                                                shengyu_xiao --;
-                                                break;
-    
-                                            default:
-                                                DB_PR("--other--.\r\n");   
-                                            }
-                                            DB_PR("---shengyu_all=%d----\n",shengyu_all);
-
-                                            DB_PR("---shengyu_da=%d----\n",shengyu_da);
-                                            DB_PR("---shengyu_zhong=%d----\n",shengyu_zhong);
-                                            DB_PR("---shengyu_xiao=%d----\n",shengyu_xiao);
-
-
-                                            //shengyu_all_max = shengyu_da_max + shengyu_zhong_max + shengyu_xiao_max;
-                                            DB_PR("-2-shengyu_all_max=%d----\n",shengyu_all_max);
-                                            DB_PR("---shengyu_da_max=%d----\n",shengyu_da_max);
-                                            DB_PR("---shengyu_zhong_max=%d----\n",shengyu_zhong_max);
-                                            DB_PR("---shengyu_xiao_max=%d----\n",shengyu_xiao_max);
-
-
-
-
-
-                                            database_gz[database_cw.dIndx].dzx_mode_gz = 1;
-                                            nvs_wr_dzx_mode_gz(1);
-                                            
-                                            DB_PR("database_cw.dIndx = %03d\r\n\r\n",database_cw.dIndx);
-
                                         }
-                                        DB_PR("\r\n");
+                                        DB_PR("-------ts1-------\r\n");
                                         DB_PR("shengyu_all_max=%03d\r\n",shengyu_all_max);
 
      
@@ -2813,7 +2838,7 @@ static void echo_task2()//lcd
                                 else
                                 {
 //da
-gekou_fail:
+// gekou_fail:
                                     //send_cmd_to_lcd_pic(GEKOU_PIC);
                                     DB_PR("-2-gekou fail--.\r\n");   
                                 }
@@ -2905,79 +2930,89 @@ gekou_fail:
                                             DB_PR("-------guimen_gk_temp--dIndx=%d--.\r\n",guimen_gk_temp); 
 
 
-                                            if((guimen_gk_temp >=SHENYU_GEZI_MAX)||(0==guimen_gk_temp))
-                                            {
-                                                DB_PR("--gekou set fail--.\r\n");   
-                                                goto gekou_fail_z;
+                                            // if((guimen_gk_temp >=SHENYU_GEZI_MAX)||(0==guimen_gk_temp))
+                                            // {
+                                            //     DB_PR("--gekou set fail--.\r\n");   
+                                            //     goto gekou_fail_z;
 
-                                            }
+                                            // }
                                             database_cw.dIndx =0;
                                             database_cw.dIndx = find_lock_index(guimen_gk_temp);
 
                                             DB_PR("---2----lock--dIndx=%d--.\r\n",database_cw.dIndx); 
-                                            if(database_cw.dIndx ==0)
+                                            // if(database_cw.dIndx ==0)
+                                            // {
+                                            //     DB_PR("--gekou set fail2--.\r\n");   
+                                            //     goto gekou_fail_z;
+                                            // }
+                                            
+                                            if(database_cw.dIndx !=0)
                                             {
-                                                DB_PR("--gekou set fail2--.\r\n");   
-                                                goto gekou_fail_z;
+                                                DB_PR("--gekou set one ok--.\r\n");   
+                                                switch(database_gz[database_cw.dIndx].dzx_mode_gz)
+                                                {
+                                                case 1:
+                                                    // no gai
+                                                    shengyu_da_max--;
+                                                    shengyu_zhong_max++;
+                                                    //shengyu_xiao_max--;
+                                                    shengyu_da --;
+                                                    shengyu_zhong++;
+                                                    //shengyu_xiao --;
+
+                                                    break;
+                                                case 2:
+                                                    // shengyu_da_max++;
+                                                    // shengyu_zhong_max--;
+                                                    // //shengyu_xiao_max--;
+                                                    // shengyu_da ++;
+                                                    // shengyu_zhong--;
+                                                    // //shengyu_xiao --;
+                                                    break;
+                                                case 3:
+                                                    shengyu_zhong_max++;
+                                                    //shengyu_zhong_max--;
+                                                    shengyu_xiao_max--;
+
+                                                    shengyu_zhong ++;
+                                                    //shengyu_zhong--;
+                                                    shengyu_xiao --;
+                                                    break;
+        
+                                                default:
+                                                    DB_PR("--other--.\r\n");   
+                                                }
+                                                DB_PR("---shengyu_all=%d----\n",shengyu_all);
+
+                                                DB_PR("---shengyu_da=%d----\n",shengyu_da);
+                                                DB_PR("---shengyu_zhong=%d----\n",shengyu_zhong);
+                                                DB_PR("---shengyu_xiao=%d----\n",shengyu_xiao);
+
+
+                                                //shengyu_all_max = shengyu_da_max + shengyu_zhong_max + shengyu_xiao_max;
+                                                DB_PR("-2-shengyu_all_max=%d----\n",shengyu_all_max);
+                                                DB_PR("---shengyu_da_max=%d----\n",shengyu_da_max);
+                                                DB_PR("---shengyu_zhong_max=%d----\n",shengyu_zhong_max);
+                                                DB_PR("---shengyu_xiao_max=%d----\n",shengyu_xiao_max);
+
+
+
+
+
+                                                database_gz[database_cw.dIndx].dzx_mode_gz = 2;
+                                                nvs_wr_dzx_mode_gz(1);
+                                                
+                                                DB_PR("database_cw.dIndx = %03d\r\n\r\n",database_cw.dIndx);
+
+                                            }
+                                            else
+                                            {
+                                                DB_PR("--gekou set one fail2 z--.\r\n");   
+                                                //goto gekou_fail_z;
                                             }
                                             
-
-                                            switch(database_gz[database_cw.dIndx].dzx_mode_gz)
-                                            {
-                                            case 1:
-                                                // no gai
-                                                shengyu_da_max--;
-                                                shengyu_zhong_max++;
-                                                //shengyu_xiao_max--;
-                                                shengyu_da --;
-                                                shengyu_zhong++;
-                                                //shengyu_xiao --;
-
-                                                break;
-                                            case 2:
-                                                // shengyu_da_max++;
-                                                // shengyu_zhong_max--;
-                                                // //shengyu_xiao_max--;
-                                                // shengyu_da ++;
-                                                // shengyu_zhong--;
-                                                // //shengyu_xiao --;
-                                                break;
-                                            case 3:
-                                                shengyu_zhong_max++;
-                                                //shengyu_zhong_max--;
-                                                shengyu_xiao_max--;
-
-                                                shengyu_zhong ++;
-                                                //shengyu_zhong--;
-                                                shengyu_xiao --;
-                                                break;
-    
-                                            default:
-                                                DB_PR("--other--.\r\n");   
-                                            }
-                                            DB_PR("---shengyu_all=%d----\n",shengyu_all);
-
-                                            DB_PR("---shengyu_da=%d----\n",shengyu_da);
-                                            DB_PR("---shengyu_zhong=%d----\n",shengyu_zhong);
-                                            DB_PR("---shengyu_xiao=%d----\n",shengyu_xiao);
-
-
-                                            //shengyu_all_max = shengyu_da_max + shengyu_zhong_max + shengyu_xiao_max;
-                                            DB_PR("-2-shengyu_all_max=%d----\n",shengyu_all_max);
-                                            DB_PR("---shengyu_da_max=%d----\n",shengyu_da_max);
-                                            DB_PR("---shengyu_zhong_max=%d----\n",shengyu_zhong_max);
-                                            DB_PR("---shengyu_xiao_max=%d----\n",shengyu_xiao_max);
-
-
-
-
-
-                                            database_gz[database_cw.dIndx].dzx_mode_gz = 2;
-                                            nvs_wr_dzx_mode_gz(1);
-                                            
-                                            DB_PR("database_cw.dIndx = %03d\r\n\r\n",database_cw.dIndx);
-
                                         }
+                                        DB_PR("-------ts1-------\r\n");
                                         DB_PR("\r\n");
                                         DB_PR("shengyu_all_max=%03d\r\n",shengyu_all_max);
 
@@ -3020,7 +3055,7 @@ gekou_fail:
                                 else
                                 {
 //z
-gekou_fail_z:
+// gekou_fail_z:
                                     //send_cmd_to_lcd_pic(GEKOU_PIC);
                                     DB_PR("-2-gekou fail--.\r\n");   
                                 }
@@ -3109,64 +3144,74 @@ gekou_fail_z:
                                             DB_PR("-------guimen_gk_temp--dIndx=%d--.\r\n",guimen_gk_temp); 
 
 
-                                            if((guimen_gk_temp >=SHENYU_GEZI_MAX)||(0==guimen_gk_temp))
-                                            {
-                                                DB_PR("--gekou set fail--.\r\n");   
-                                                goto gekou_fail_x;
-
-                                            }
+                                            // if((guimen_gk_temp >=SHENYU_GEZI_MAX)||(0==guimen_gk_temp))
+                                            // {
+                                            //     DB_PR("--gekou set fail--.\r\n");   
+                                            //     goto gekou_fail_x;
+                                            // }
                                             database_cw.dIndx =0;
                                             database_cw.dIndx = find_lock_index(guimen_gk_temp);
 
                                             DB_PR("---2----lock--dIndx=%d--.\r\n",database_cw.dIndx); 
-                                            if(database_cw.dIndx ==0)
-                                            {
-                                                DB_PR("--gekou set fail2--.\r\n");   
-                                                goto gekou_fail_x;
-                                            }
+                                            // if(database_cw.dIndx ==0)
+                                            // {
+                                            //     DB_PR("--gekou set fail2--.\r\n");   
+                                            //     goto gekou_fail_x;
+                                            // }
                                             
-
-                                            switch(database_gz[database_cw.dIndx].dzx_mode_gz)
+                                            if(database_cw.dIndx !=0)
                                             {
-                                            case 1:
-                                                // no gai
-                                                shengyu_da_max--;
-                                                //shengyu_zhong_max++;
-                                                shengyu_xiao_max++;
-                                                shengyu_da --;
-                                                //shengyu_zhong++;
-                                                shengyu_xiao ++;
+                                                DB_PR("--gekou set one ok--.\r\n");   
+                                                switch(database_gz[database_cw.dIndx].dzx_mode_gz)
+                                                {
+                                                case 1:
+                                                    // no gai
+                                                    shengyu_da_max--;
+                                                    //shengyu_zhong_max++;
+                                                    shengyu_xiao_max++;
+                                                    shengyu_da --;
+                                                    //shengyu_zhong++;
+                                                    shengyu_xiao ++;
 
-                                                break;
-                                            case 2:
-                                                //shengyu_da_max++;
-                                                shengyu_zhong_max--;
-                                                shengyu_xiao_max++;
-                                                //shengyu_da ++;
-                                                shengyu_zhong--;
-                                                shengyu_xiao ++;
-                                                break;
-                                            case 3:
-                                                // shengyu_zhong_max++;
-                                                // //shengyu_zhong_max--;
-                                                // shengyu_xiao_max--;
+                                                    break;
+                                                case 2:
+                                                    //shengyu_da_max++;
+                                                    shengyu_zhong_max--;
+                                                    shengyu_xiao_max++;
+                                                    //shengyu_da ++;
+                                                    shengyu_zhong--;
+                                                    shengyu_xiao ++;
+                                                    break;
+                                                case 3:
+                                                    // shengyu_zhong_max++;
+                                                    // //shengyu_zhong_max--;
+                                                    // shengyu_xiao_max--;
 
-                                                // shengyu_zhong ++;
-                                                // //shengyu_zhong--;
-                                                // shengyu_xiao --;
-                                                break;
-    
-                                            default:
-                                                DB_PR("--other--.\r\n");   
-                                            }
+                                                    // shengyu_zhong ++;
+                                                    // //shengyu_zhong--;
+                                                    // shengyu_xiao --;
+                                                    break;
+        
+                                                default:
+                                                    DB_PR("--other--.\r\n");   
+                                                }
          
 
-                                            database_gz[database_cw.dIndx].dzx_mode_gz = 3;
-                                            nvs_wr_dzx_mode_gz(1);
-                                            
-                                            DB_PR("database_cw.dIndx = %03d\r\n\r\n",database_cw.dIndx);
+                                                database_gz[database_cw.dIndx].dzx_mode_gz = 3;
+                                                nvs_wr_dzx_mode_gz(1);
+                                                
+                                                DB_PR("database_cw.dIndx = %03d\r\n\r\n",database_cw.dIndx);
 
+                                            }
+                                            else
+                                            {
+                                                DB_PR("--gekou set one fail2 x--.\r\n");   
+                                                //goto gekou_fail_x;
+                                            }
+                                            
                                         }
+                                        DB_PR("-------ts1-------\r\n");
+
                                         DB_PR("\r\n");
                                         DB_PR("shengyu_all_max=%03d\r\n",shengyu_all_max);
 
@@ -3209,7 +3254,7 @@ gekou_fail_z:
                                 else
                                 {
 //x
-gekou_fail_x:
+// gekou_fail_x:
                                     //send_cmd_to_lcd_pic(GEKOU_PIC);
                                     DB_PR("-2-gekou fail--.\r\n");   
                                 }
@@ -3379,49 +3424,44 @@ gekou_fail_x:
 
 
 
-
-
-
-                                    //if(lock_flag == 0)
+                                    if((0 != database_gz[database_cw.dIndx].state_gz)
+                                        ||(0 != database_gz[database_cw.dIndx].changqi))
                                     {
-                                        if((0 != database_gz[database_cw.dIndx].state_gz)
-                                            ||(0 != database_gz[database_cw.dIndx].changqi))
+                                        switch (database_gz[database_cw.dIndx].dzx_mode_gz)
                                         {
-                                            switch (database_gz[database_cw.dIndx].dzx_mode_gz)
-                                            {
-                                            case 1:
-                                                //d
-                                                shengyu_da ++;
-                                                tongbu_gekou_shuliang_d(shengyu_da); 
-                                                break;
-                                            case 2:
-                                                //z
-                                                shengyu_zhong ++;
-                                                tongbu_gekou_shuliang_z(shengyu_zhong); 
-                                                break;
-                                            case 3:
-                                                //x
-                                                shengyu_xiao ++;
-                                                tongbu_gekou_shuliang_x(shengyu_xiao); 
-                                                break;
+                                        case 1:
+                                            //d
+                                            shengyu_da ++;
+                                            tongbu_gekou_shuliang_d(shengyu_da); 
+                                            break;
+                                        case 2:
+                                            //z
+                                            shengyu_zhong ++;
+                                            tongbu_gekou_shuliang_z(shengyu_zhong); 
+                                            break;
+                                        case 3:
+                                            //x
+                                            shengyu_xiao ++;
+                                            tongbu_gekou_shuliang_x(shengyu_xiao); 
+                                            break;
 
-                                            default:
-                                                break;
-                                            }
-
-                                            DB_PR("----test--.\r\n");  
-                                            
-
-                                            shengyu_all ++ ;
-                                            tongbu_gekou_shuliang_all(shengyu_all);
-
-
-                                            nvs_wr_shengyu_da(1);
-                                            nvs_wr_shengyu_zhong(1);
-                                            nvs_wr_shengyu_xiao(1);
+                                        default:
+                                            break;
                                         }
 
+                                        DB_PR("----test--.\r\n");  
+                                        
+
+                                        shengyu_all ++ ;
+                                        tongbu_gekou_shuliang_all(shengyu_all);
+
+
+                                        nvs_wr_shengyu_da(1);
+                                        nvs_wr_shengyu_zhong(1);
+                                        nvs_wr_shengyu_xiao(1);
                                     }
+
+                                    
                                     DB_PR( "database_gz[database_cw.dIndx].state_gz = %d\r\n", database_gz[database_cw.dIndx].state_gz);
                                     
                                     
@@ -3453,8 +3493,6 @@ gekou_fail_x:
 
                                         database_gz[database_cw.dIndx].cunwu_mode_gz = 0;
                                         //database_gz[database_cw.dIndx].dzx_mode_gz = 0;
-                                        // database_gz[database_cw.dIndx].phone_number_nvs_gz = 0;
-                                        // database_gz[database_cw.dIndx].mima_number_nvs_gz = 0;
                                         database_gz[database_cw.dIndx].state_gz =0;
                                         database_gz[database_cw.dIndx].changqi =0;
                                        
@@ -6301,6 +6339,20 @@ static void lock_all_clear_task()
     uint16_t m=0,n=0;
 
     send_cmd_to_lcd_pic(0x004b);
+
+
+    u8  ensure;
+	ensure=PS_Empty();//清空指纹库
+
+	if(ensure==0)
+	{
+		//LCD_Fill(0,120,lcddev.width,160,WHITE);
+		DB_PR("---del all zhiwen ok -----删除指纹成功 \r\n");		
+	}
+    else
+		ShowErrMessage(ensure);	
+
+
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
     {
         //vTaskDelay(1);
@@ -6312,52 +6364,42 @@ static void lock_all_clear_task()
 
             if(0== database_gz[database_cw.dIndx].lock)
             {
-                // if((0 == database_gz[database_cw.dIndx].state_gz)
-                //     ||(0 == database_gz[database_cw.dIndx].changqi))
+                if(1== database_gz[database_cw.dIndx].dzx_mode_gz)
                 {
-                    if(database_gz[database_cw.dIndx].cunwu_mode_gz ==1)
-                    {
-                        Del_FR(database_gz[database_cw.dIndx].zhiwen_page_id_gz);
-                        //del_zw_database(database_gz[database_cw.dIndx].zhiwen_page_id_gz);
-                        //if(database_ad.zhiwen_page_id_adm[database_gz[database_cw.dIndx].zhiwen_page_id_gz]==1)//AS608Para.PS_max   
-                        {
-                            nvs_wr_adm_zwpageid_flag(1,database_gz[database_cw.dIndx].zhiwen_page_id_gz);
-                        }
-                    }
-
-                    if(1== database_gz[database_cw.dIndx].dzx_mode_gz)
-                    {
-                        j++;
-                    }
-                    else if(2== database_gz[database_cw.dIndx].dzx_mode_gz)
-                    {
-                        k++;
-                    }
-                    else if(3== database_gz[database_cw.dIndx].dzx_mode_gz)
-                    {
-                        l++; 
-                    }
-
-
-                    database_gz[database_cw.dIndx].cunwu_mode_gz = 0;
-                    //database_gz[database_cw.dIndx].dzx_mode_gz = 0;
-                    database_gz[database_cw.dIndx].phone_number_nvs_gz = 0;
-                    database_gz[database_cw.dIndx].mima_number_nvs_gz = 0;
-                    database_gz[database_cw.dIndx].state_gz =0;
-                    database_gz[database_cw.dIndx].changqi =0;
-                    database_gz[database_cw.dIndx].zhiwen_page_id_gz =0;
-                    nvs_wr_cunwu_mode_gz(1);
-                    //nvs_wr_dzx_mode_gz(1);
-                    nvs_wr_phone_number_nvs_gz(1);
-                    nvs_wr_mima_number_nvs_gz(1);
-                    nvs_wr_state_gz(1);
-                    nvs_wr_glongtime_gz(1);
-                    nvs_wr_zw_pageid_gz(1);
-                    
+                    j++;
+                }
+                else if(2== database_gz[database_cw.dIndx].dzx_mode_gz)
+                {
+                    k++;
+                }
+                else if(3== database_gz[database_cw.dIndx].dzx_mode_gz)
+                {
+                    l++; 
                 }
 
-
             }
+
+
+            //if(database_gz[database_cw.dIndx].cunwu_mode_gz ==1)
+            // Del_FR(database_gz[database_cw.dIndx].zhiwen_page_id_gz);
+            nvs_wr_adm_zwpageid_flag(1,database_gz[database_cw.dIndx].zhiwen_page_id_gz);
+
+            database_gz[database_cw.dIndx].cunwu_mode_gz = 0;
+            //database_gz[database_cw.dIndx].dzx_mode_gz = 0;
+            database_gz[database_cw.dIndx].phone_number_nvs_gz = 0;
+            database_gz[database_cw.dIndx].mima_number_nvs_gz = 0;
+            database_gz[database_cw.dIndx].state_gz =0;
+            database_gz[database_cw.dIndx].changqi =0;
+            database_gz[database_cw.dIndx].zhiwen_page_id_gz =0;
+            nvs_wr_cunwu_mode_gz(1);
+            //nvs_wr_dzx_mode_gz(1);
+            nvs_wr_phone_number_nvs_gz(1);
+            nvs_wr_mima_number_nvs_gz(1);
+            nvs_wr_state_gz(1);
+            nvs_wr_glongtime_gz(1);
+            nvs_wr_zw_pageid_gz(1);
+
+
 
 
             m = i/24;
@@ -6383,8 +6425,13 @@ static void lock_all_clear_task()
     shengyu_zhong = k;
     shengyu_xiao = l;
 
-    shengyu_all = j+k+l;
+    shengyu_all = shengyu_da + shengyu_zhong + shengyu_xiao;
 
+    DB_PR("---shengyu_all=%d----\n",shengyu_all);
+
+    DB_PR("---shengyu_da=%d----\n",shengyu_da);
+    DB_PR("---shengyu_zhong=%d----\n",shengyu_zhong);
+    DB_PR("---shengyu_xiao=%d----\n",shengyu_xiao);
 
     tongbu_gekou_shuliang_all(shengyu_all);
     //vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -8952,13 +8999,15 @@ void app_main(void)
     gpio_set_direction(RE_485_GPIO, GPIO_MODE_OUTPUT);
     
     
+
+    //todo 4G DTU
     gpio_pad_select_gpio(ECHO_TEST3_TXD);
     /* Set the GPIO as a push/pull output */
     gpio_set_direction(ECHO_TEST3_TXD, GPIO_MODE_DISABLE);
 
-    // gpio_pad_select_gpio(ECHO_TEST3_RXD);
-    // /* Set the GPIO as a push/pull output */
-    // gpio_set_direction(ECHO_TEST3_RXD, GPIO_MODE_DISABLE);
+    gpio_pad_select_gpio(ECHO_TEST3_RXD);
+    /* Set the GPIO as a push/pull output */
+    gpio_set_direction(ECHO_TEST3_RXD, GPIO_MODE_DISABLE);
 
 
 
@@ -8983,17 +9032,23 @@ void app_main(void)
     gpio_set_direction(LED_RED, GPIO_MODE_OUTPUT);
     gpio_set_level(LED_RED, 1);
 
+
+
     // gpio_pad_select_gpio(emac->int_gpio_num);
     // gpio_set_direction(emac->int_gpio_num, GPIO_MODE_INPUT);
     // gpio_set_pull_mode(emac->int_gpio_num, GPIO_PULLDOWN_ONLY);
     // gpio_set_intr_type(emac->int_gpio_num, GPIO_INTR_POSEDGE);
 
-    gpio_pad_select_gpio(GPIO_INPUT_IO_ZW_2);
-    /* Set the GPIO as a push/pull output */
-    gpio_set_direction(GPIO_INPUT_IO_ZW_2, GPIO_MODE_INPUT);
-    //gpio_pullup_en(GPIO_INPUT_IO_ZW_2);
-    //gpio_pullup_dis(GPIO_INPUT_IO_ZW_2);
-    gpio_set_pull_mode(GPIO_INPUT_IO_ZW_2,GPIO_PULLUP_ONLY);//GPIO_PULLUP_ONLY
+    // gpio_pad_select_gpio(GPIO_INPUT_IO_ZW_2);
+    // /* Set the GPIO as a push/pull output */
+    // gpio_set_direction(GPIO_INPUT_IO_ZW_2, GPIO_MODE_INPUT);
+    // //gpio_pullup_en(GPIO_INPUT_IO_ZW_2);
+    // //gpio_pullup_dis(GPIO_INPUT_IO_ZW_2);
+    // gpio_set_pull_mode(GPIO_INPUT_IO_ZW_2,GPIO_PULLUP_ONLY);//GPIO_PULLUP_ONLY
+
+
+
+
 
     gpio_config_t io_conf;
     // //disable interrupt
@@ -9073,30 +9128,6 @@ void app_main(void)
                 DB_PR("zw_page_id= %03d, ",database_gz[i].zhiwen_page_id_gz);
 
 
-
-
-                // if(1== database_gz[i].dzx_mode_gz)
-                // {
-                //     //char *	_EXFUN(itoa,(int, char *, int));
-
-                //     buff_temp1[k] = database_gz[i].dIndx_gz;
-                //     DB_PR("b_temp1[k]= %03d ",buff_temp1[k]);//xiangmenhao
-                    
-                //     itoa(buff_temp1[k],(char*)(buff_temp1_c+4*(k)),10);//+4*(i-1)
-                //     k++;
-                // }
-                // else if(2== database_gz[i].dzx_mode_gz)
-                // {
-                //     buff_temp2[l] = database_gz[i].dIndx_gz;
-                //     DB_PR("b_temp2[l]= %03d ",buff_temp2[l]);//xiangmenhao
-                //     itoa(buff_temp2[l],(char*)(buff_temp2_c+4*(l)),10);//+4*(i-1)
-                //     l++;
-                // }
-
-
-
-
-
                 DB_PR("\r\n");
             }
 
@@ -9110,28 +9141,7 @@ void app_main(void)
     vTaskDelay(30 / portTICK_PERIOD_MS);
 
     // uart0_debug_data_d(buff_temp1,0x9b);
-    // uart0_debug_data_d(buff_temp1,0x9b);
 
-
-    // for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
-    // {
-    //     if(buff_temp2_c[i]==0)
-    //     {
-    //         buff_temp2_c[i]=0x20;
-    //     }
-    //     if(buff_temp1_c[i]==0)
-    //     {
-    //         buff_temp1_c[i]=0x20;
-    //     }
-    // }
-
-
-    // vTaskDelay(50 / portTICK_PERIOD_MS);
-    // DB_PR("-----gekouleixing-----\r\n");
-    // send_cmd_to_lcd_bl_len(BL_GK_BH_Z,buff_temp2_c,BL_GK_BH_Z_LEN);//300 0x23 30
-    // vTaskDelay(1 / portTICK_PERIOD_MS);
-    // send_cmd_to_lcd_bl_len(BL_GK_BH_D,buff_temp1_c,BL_GK_BH_D_LEN);//300   空格
-    // vTaskDelay(30 / portTICK_PERIOD_MS);
     tongbu_da();
     //vTaskDelay(1530 / portTICK_PERIOD_MS);
     tongbu_zh();
