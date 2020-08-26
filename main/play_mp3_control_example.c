@@ -3353,6 +3353,94 @@ static void echo_task2()//lcd
                                 return_cause =0;
                                 break;
 
+
+
+                            case 0x10c0://xiangmenhao   kaixiang
+                                send_cmd_to_lcd_bl_len(0x10c0,(uint8_t*)buff_t,2*2+5);//key
+                                
+                                DB_PR("----admin --xmh open-----.\r\n");
+                                uint8_t temp_xiangmen[4]={0}; 
+                                memset(temp_xiangmen,0,4);
+                                j=0;
+                                k=0;//k:board  j:lock
+                                //uint8_t temp_xiangmen_uint=0; //16
+                                memcpy(temp_xiangmen,data_rx_t+7,3);//len todo 
+                                if(02== data_rx_t[6])//-------------------------
+                                {
+                                    guimen_gk_temp = atoi((const char*)temp_xiangmen);
+                                    DB_PR("-------guimen_gk_temp--dIndx=%d--.\r\n",guimen_gk_temp); 
+
+                                    database_cw.dIndx =0;
+                                    // for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
+                                    // {
+                                    //     if(database_gz[i].dIndx_gz == guimen_gk_temp)
+                                    //     {
+                                    //         database_cw.dIndx = i;
+                                    //         DB_PR("-------lock--dIndx=%d--.\r\n",database_cw.dIndx); 
+                                    //     }
+                                       
+                                    // }
+
+
+                                    database_cw.dIndx = find_lock_index(guimen_gk_temp);
+  
+ 
+                                    if(database_gz[database_cw.dIndx].state_fenpei_gz == 0)
+                                    {
+                                        goto wuci_xmh;
+                                    }
+
+                                    DB_PR("------lock open--dIndx=%d--.\r\n",database_cw.dIndx); 
+                                    guimen_gk_temp = database_cw.dIndx ;
+
+
+      
+                                    DB_PR("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
+
+
+                                    uint16_t j=0,k=0;
+
+                                    k = guimen_gk_temp/24;
+                                    j = guimen_gk_temp%24;
+
+                                    if(guimen_gk_temp%24 ==0)
+                                    {
+                                        k = guimen_gk_temp/24 -1;
+                                        j = 24;
+                                    }
+
+                                    DB_PR("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
+
+
+
+                                    DB_PR("-da-lock:%d ok--.\r\n",j);
+                                    send_cmd_to_lock(k+1,j);
+                                    send_cmd_to_lcd_bl(0x10c0,database_gz[database_cw.dIndx].dIndx_gz);
+            
+                                    send_cmd_to_lcd_pic(0x0014);
+
+
+
+
+                                    DB_PR("-----2 1-----[ * ] Starting audio pipeline");
+
+                                    
+                                    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);
+
+
+                                }
+                                else
+                                {
+wuci_xmh:
+                                    send_cmd_to_lcd_pic(FAIL_XMH_PIC);
+                                    return_cause = 1;
+                                    DB_PR("----admin --wu ci xiangmenhao-----.\r\n");
+                                }
+                                //send_cmd_to_lcd_bl(0x10C0,database_gz[database_cw.dIndx].dIndx_gz);//xiangmen------------
+                                
+                                break;
+
+
                            case 0x1130://
                                 DB_PR("--qingxiang--.\r\n");   
                                 send_cmd_to_lcd_bl_len(0x1130,(uint8_t*)buff_t,2*2+5);//
@@ -3370,7 +3458,7 @@ static void echo_task2()//lcd
                                 //xTaskCreate(lock_all_open_task, "lk_all_open_task", 2* 1024, NULL, 2, NULL);//1024 10
                                 
                                 
-                                uint8_t temp_xiangmen[4]={0}; 
+
                                 memset(temp_xiangmen,0,4);
                                 j=0;
                                 k=0;//k:board  j:lock
@@ -4750,6 +4838,23 @@ done_mima_nosame:
                                 break;
 
 
+                            case 0x12f0://mp3 switch
+                                DB_PR("---mp3 switch---.\r\n");   
+                                // send_cmd_to_lcd_bl_len(0x10c0,(uint8_t*)buff_t,2*2+5);//key
+                                if(audio_play_mp3_stop ==0)
+                                {
+                                    DB_PR("--2 mp3 on--.\r\n");  
+                                    send_cmd_to_lcd_pic(MUSIC_ON_PIC);
+
+                
+                                }
+                                else if(audio_play_mp3_stop ==1)
+                                {
+                                    DB_PR("--2 mp3 off--.\r\n");  
+                                    send_cmd_to_lcd_pic(MUSIC_OFF_PIC);
+                                }
+
+                                break;
 
 
 
@@ -4952,23 +5057,6 @@ done_mima_nosame:
 
                                 break;
 
-                            case 0x12f0://mp3 switch
-                                DB_PR("---mp3 switch---.\r\n");   
-
-                                if(audio_play_mp3_stop ==0)
-                                {
-                                    DB_PR("--2 mp3 on--.\r\n");  
-                                    send_cmd_to_lcd_pic(MUSIC_ON_PIC);
-
-                
-                                }
-                                else if(audio_play_mp3_stop ==1)
-                                {
-                                    DB_PR("--2 mp3 off--.\r\n");  
-                                    send_cmd_to_lcd_pic(MUSIC_OFF_PIC);
-                                }
-
-                                break;
 //-----------------------------------------cun-----------------------------------------------------
                             case 0x2080://
                                 DB_PR("--cunwu--.\r\n");   
@@ -5967,7 +6055,6 @@ done_qu:
                                 //mima 666888 todo----------------
 
                                 if(03== data_rx_t[6])
-                                //if(1)
                                 {   
                                     memcpy( mima_number,data_rx_t+7 ,6);
 
@@ -6020,90 +6107,6 @@ done_kai_admin:
                                 break;
 
 
-                            case 0x10c0://xiangmenhao   kaixiang
-                                send_cmd_to_lcd_bl_len(0x10c0,(uint8_t*)buff_t,2*2+5);//key
-                                
-                                DB_PR("----admin --xmh open-----.\r\n");
-                                //uint8_t temp_xiangmen[4]={0}; 
-                                memset(temp_xiangmen,0,4);
-                                j=0;
-                                k=0;//k:board  j:lock
-                                //uint8_t temp_xiangmen_uint=0; //16
-                                memcpy(temp_xiangmen,data_rx_t+7,3);//len todo 
-                                if(02== data_rx_t[6])//-------------------------
-                                {
-                                    guimen_gk_temp = atoi((const char*)temp_xiangmen);
-                                    DB_PR("-------guimen_gk_temp--dIndx=%d--.\r\n",guimen_gk_temp); 
-
-                                    database_cw.dIndx =0;
-                                    // for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
-                                    // {
-                                    //     if(database_gz[i].dIndx_gz == guimen_gk_temp)
-                                    //     {
-                                    //         database_cw.dIndx = i;
-                                    //         DB_PR("-------lock--dIndx=%d--.\r\n",database_cw.dIndx); 
-                                    //     }
-                                       
-                                    // }
-
-
-                                    database_cw.dIndx = find_lock_index(guimen_gk_temp);
-  
- 
-                                    if(database_gz[database_cw.dIndx].state_fenpei_gz == 0)
-                                    {
-                                        goto wuci_xmh;
-                                    }
-
-                                    DB_PR("------lock open--dIndx=%d--.\r\n",database_cw.dIndx); 
-                                    guimen_gk_temp = database_cw.dIndx ;
-
-
-      
-                                    DB_PR("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
-
-
-                                    uint16_t j=0,k=0;
-
-                                    k = guimen_gk_temp/24;
-                                    j = guimen_gk_temp%24;
-
-                                    if(guimen_gk_temp%24 ==0)
-                                    {
-                                        k = guimen_gk_temp/24 -1;
-                                        j = 24;
-                                    }
-
-                                    DB_PR("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
-
-
-
-                                    DB_PR("-da-lock:%d ok--.\r\n",j);
-                                    send_cmd_to_lock(k+1,j);
-                                    send_cmd_to_lcd_bl(0x10c0,database_gz[database_cw.dIndx].dIndx_gz);
-            
-                                    send_cmd_to_lcd_pic(0x0014);
-
-
-
-
-                                    DB_PR("-----2 1-----[ * ] Starting audio pipeline");
-
-                                    
-                                    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);
-
-
-                                }
-                                else
-                                {
-wuci_xmh:
-                                    send_cmd_to_lcd_pic(FAIL_XMH_PIC);
-                                    return_cause = 1;
-                                    DB_PR("----admin --wu ci xiangmenhao-----.\r\n");
-                                }
-                                //send_cmd_to_lcd_bl(0x10C0,database_gz[database_cw.dIndx].dIndx_gz);//xiangmen------------
-                                
-                                break;
 
 
                             default:
