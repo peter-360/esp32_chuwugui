@@ -343,7 +343,7 @@ uint8_t flag_rx2;
 
 
 
-#define SHENYU_GEZI_MAX 300//310//all kong
+#define SHENYU_GEZI_MAX 288//300//310//all kong
 
 #define ZHIWEN_PAGE_ID_MAX 120//300//all kong
 
@@ -366,7 +366,7 @@ uint16_t shengyu_all_max=0;//shengyu max admin, guding
     uint16_t shengyu_xiao_max=0;
 
 
-#define BOARD_GK_MAX 35//25//all kong
+#define BOARD_GK_MAX 12//35//25//all kong
 int16_t hang_shu_max;
 
 #define GUIMENX_GK_MAX 24//all kong
@@ -2420,6 +2420,17 @@ static void echo_task2()//lcd
                                     DB_PR("hang_shu_max+1=%03d\r\n",hang_shu_max+1);//0
 
   
+
+
+
+                                    if((hang_shu_max+1)> 12)
+                                    {
+                                        DB_PR("-----err2 >12gm 12 lock------\r\n");
+                                        //send_cmd_to_lcd_pic(0x004F);
+                                        // break;
+                                        goto guimen_set_fail;
+                                    }
+
                                     if(hang_shu_max< BOARD_GK_MAX)//300/24 =12.5
                                     {
                                         DB_PR("show2=");
@@ -2435,6 +2446,12 @@ static void echo_task2()//lcd
                                             {
                                                 database_gz[j*24 + k].state_fenpei_gz = 1;
                                                 DB_PR("-1-lock index=%03d\r\n",j*24 + k);
+                                            }
+                                            if(guimen_x_gk_max_temp[12] > 12)
+                                            {
+                                                guimen_x_gk_max_temp[12] =12;
+                                                DB_PR("-----err1-1 >12gm 12 lock------\r\n");
+
                                             }
                                             if(guimen_x_gk_max_temp[j] <24)
                                             {
@@ -2466,26 +2483,22 @@ static void echo_task2()//lcd
                                         }
 
 
-                                        if((hang_shu_max+1)> 13)
-                                        {
-                                            DB_PR("-----err2 >12gm 12 lock------\r\n");
-                                            send_cmd_to_lcd_pic(0x004F);
-                                            break;
-                                        }
-                                        if((hang_shu_max+1) == 13)
-                                        {
-                                            if(guimen_x_gk_max_temp[12] > 12)
-                                            {
-                                                DB_PR("-----err1 >12gm 12 lock------\r\n");
-                                                send_cmd_to_lcd_pic(0x004F);
-                                                break;
-                                            }
-                                            else
-                                            {
-                                                DB_PR("-----ok <12gm 12 lock------\r\n");
-                                            }
+
+                                        // if((hang_shu_max+1) == 13)
+                                        // {
+                                        //     if(guimen_x_gk_max_temp[12] > 12)
+                                        //     {
+                                        //         DB_PR("-----err1-2 >12gm 12 lock------\r\n");
+                                        //         //send_cmd_to_lcd_pic(0x004F);
+                                        //         // break;
+                                        //         goto guimen_set_fail;
+                                        //     }
+                                        //     else
+                                        //     {
+                                        //         DB_PR("-----ok <12gm 12 lock------\r\n");
+                                        //     }
                                             
-                                        }
+                                        // }
 
                                         DB_PR("\r\n");
 
@@ -2647,6 +2660,7 @@ static void echo_task2()//lcd
                                         }
                                         else
                                         {
+guimen_set_fail:
                                             send_cmd_to_lcd_pic(0x004F);
                                             DB_PR("--input shuliang =err--.\r\n");   
                                         }
@@ -6538,7 +6552,7 @@ static void echo_task()
             DB_PR("-----2----flag_rx2=%u\r\n", flag_rx2);
             
 
-            xTaskCreate(echo_task3, "uart_echo_task2",2* 1024, NULL, 2, NULL);//uart2
+            xTaskCreate(echo_task3, "uart_echo_task3",2* 1024, NULL, 2, NULL);//uart2
             //uart_write_bytes(UART_NUM_2, (const char *) data_rx2, len_rx2);
         }
 
