@@ -4910,7 +4910,7 @@ done_mima_nosame:
 
 
                             case 0x1290://zw luru fail   todo
-                                //DB_PR("---return_cause_zanwu_kx=%d---.\r\n",return_cause_zanwu_kx);   
+                                DB_PR("---return_cause_zw_fail=%d---.\r\n",return_cause_zw_fail);   
                                 DB_PR("--- 1 zw luru fail ---.\r\n");   
                                 if(return_cause_zw_fail == 2)//changqi
                                 {
@@ -4943,7 +4943,7 @@ done_mima_nosame:
                                 if(return_cause_zw_handshake_fail == 2)//quwu zw
                                 {
                                     DB_PR("--2 quwu zw--.\r\n");  
-                                    send_cmd_to_lcd_pic(0x000c);
+                                    send_cmd_to_lcd_pic(0x0009);//0x000c
                                 }
                                 else if(return_cause_zw_handshake_fail == 1)
                                 {
@@ -6855,7 +6855,15 @@ void Add_FR_First()
 
 		if(i==40)//超过5次没有按手指则退出
 		{
-            return_cause_zw_fail =1;
+            if(database_cw_adm.changqi_tmp == 0)
+            {
+                return_cause_zw_fail =1;
+            }
+            else
+            {
+                return_cause_zw_fail =2;
+            }
+            
             DB_PR("---->5a---- 超过5次没有按手指则退出 ");
 			//LCD_Fill(0,100,lcddev.width,160,WHITE);
             send_cmd_to_lcd_pic(0x004C);
@@ -7515,7 +7523,7 @@ done_zwc_fail:
             return_cause_zw =0;
             vTaskDelete(NULL);
         }
-		if(i==20)//超过5次没有按手指则退出
+		if(i==40)//超过5次没有按手指则退出
 		{
             return_cause_zw_fail =1;
             DB_PR("---->5a---- 超过5次没有按手指则退出 \r\n");
