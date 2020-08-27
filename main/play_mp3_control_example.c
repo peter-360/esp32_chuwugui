@@ -2139,7 +2139,8 @@ void tongbu_changqi(void)
         if(1== database_gz[i].state_fenpei_gz)
         {
 
-            if(1== database_gz[i].changqi)
+            if((1== database_gz[i].changqi)
+                ||(2== database_gz[i].changqi))
             {
                 buff_temp2[l] = database_gz[i].dIndx_gz;
                 DB_PR("b_temp2[l]= %03d ",buff_temp2[l]);//xiangmenhao
@@ -3829,10 +3830,11 @@ wuci_xmh_q:
   
                                         //database_gz[database_cw.dIndx].state_gz =0;
 
-                                        if(database_gz[database_cw.dIndx].changqi !=0)
+                                        if(database_gz[database_cw.dIndx].changqi ==1)
                                             database_gz[database_cw.dIndx].changqi =2;
-                                        else
-                                            database_gz[database_cw.dIndx].changqi =0;
+                                        DB_PR("--database_gz[database_cw.dIndx].changqi=%d\r\n",database_gz[database_cw.dIndx].changqi);
+                                        // else if(database_gz[database_cw.dIndx].changqi ==0)
+                                        //     database_gz[database_cw.dIndx].changqi =0;
 
                                         database_gz[database_cw.dIndx].lock =1;
                                         //nvs_wr_cunwu_mode_gz(1);
@@ -4019,6 +4021,7 @@ wuci_xmh_lk:
 
                                        
                                         database_gz[database_cw.dIndx].lock =0;
+                                        nvs_wr_glock_gz(1);
                                         //nvs_wr_cunwu_mode_gz(1);
                                         //nvs_wr_dzx_mode_gz(1);
          
@@ -4026,23 +4029,25 @@ wuci_xmh_lk:
 
 
 
-                                        if(database_gz[database_cw.dIndx].changqi !=0)
+                                        DB_PR("-1-database_gz[database_cw.dIndx].changqi=%d\r\n",database_gz[database_cw.dIndx].changqi);
+                                        if(2==database_gz[database_cw.dIndx].changqi)
                                         {
-                                            // if(2==database_gz[database_cw.dIndx].changqi)
-                                            // {
-                                            //     database_gz[database_cw.dIndx].changqi =1;
-                                            // }
-                                            // else
-                                            // {
-                                            //     database_gz[database_cw.dIndx].changqi =0;
-                                            // }
-                                            database_gz[database_cw.dIndx].changqi =0;
+                                            database_gz[database_cw.dIndx].changqi =1;
                                             nvs_wr_glongtime_gz(1);
                                         }
+                                        DB_PR("-2-database_gz[database_cw.dIndx].changqi=%d\r\n",database_gz[database_cw.dIndx].changqi);
+                                        // else
+                                        // {
+                                        //     database_gz[database_cw.dIndx].changqi =0;
+                                        // }
+
+                                        // database_gz[database_cw.dIndx].changqi =0;
+                                        
+                                    
 
 
 
-                                        nvs_wr_glock_gz(1);
+                                        
 
                                         xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_JIESUO, 10, NULL);
                                         
@@ -4917,7 +4922,7 @@ done_mima_nosame:
                                     DB_PR("--2 changqi--.\r\n");  
                                     send_cmd_to_lcd_pic(CHANQI_CW_MODE_PIC);
                                 }
-                                if(return_cause_zw_fail == 3)//qu
+                                else if(return_cause_zw_fail == 3)//qu
                                 {
                                     DB_PR("--2 qu  zw--.\r\n");  
                                     send_cmd_to_lcd_pic(0x0009);
@@ -5101,6 +5106,7 @@ done_mima_nosame:
                                 }
                                 else
                                 {
+                                    send_cmd_to_lcd_pic(0x001d);
                                     DB_PR("--2 changqi--.\r\n");  
                                 }
                                 
@@ -5966,7 +5972,7 @@ done_2:
                                         send_cmd_to_lock(k+1,j);
                                         send_cmd_to_lcd_bl(0x10a0,database_gz[database_cw.dIndx].dIndx_gz);//weishu bugou
                 
-                                        DB_PR("-----2-----[ * ] Starting audio pipeline");
+                                        DB_PR("-----2-----[ * ] Starting audio pipeline\r\n");
                                         xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);   
 
 
@@ -6021,7 +6027,8 @@ done_2:
 
 
 
-                                            if(database_gz[database_cw.dIndx].changqi == 0)
+                                            if((database_gz[database_cw.dIndx].changqi == 0)
+                                                ||(database_gz[database_cw.dIndx].changqi == 2))
                                             {
 
     
@@ -6043,6 +6050,16 @@ done_2:
                             
                                                 database_gz[database_cw.dIndx].state_gz =0;
                                                 nvs_wr_state_gz(1);
+
+                                                DB_PR("--database_gz[database_cw.dIndx].changqi=%d\r\n",database_gz[database_cw.dIndx].changqi);
+                                                if(database_gz[database_cw.dIndx].changqi == 2)
+                                                {
+                                                    database_gz[database_cw.dIndx].changqi =0;
+                                                    nvs_wr_glongtime_gz(1);
+                                                    tongbu_changqi();
+                                                }
+                                                
+
                                             }
 
 
@@ -6863,6 +6880,7 @@ void Add_FR_First()
             {
                 return_cause_zw_fail =2;
             }
+            DB_PR("-1-return_cause_zw_fail=%d---.\r\n",return_cause_zw_fail);   
             
             DB_PR("---->5a---- 超过5次没有按手指则退出 ");
 			//LCD_Fill(0,100,lcddev.width,160,WHITE);
@@ -8227,7 +8245,8 @@ void del_zw_database(u16 num)
 
 
 
-                if(database_gz[database_cw.dIndx].changqi == 0)
+                if((database_gz[database_cw.dIndx].changqi == 0)
+                    ||(database_gz[database_cw.dIndx].changqi == 2))
                 {
                     database_gz[database_cw.dIndx].cunwu_mode_gz = 0;
                     //database_gz[database_cw.dIndx].dzx_mode_gz = 0;
@@ -8241,7 +8260,13 @@ void del_zw_database(u16 num)
                     database_gz[database_cw.dIndx].state_gz =0;
                     nvs_wr_state_gz(1);
 
-
+                    DB_PR("--database_gz[database_cw.dIndx].changqi=%d\r\n",database_gz[database_cw.dIndx].changqi);
+                    if(database_gz[database_cw.dIndx].changqi == 2)
+                    {
+                        database_gz[database_cw.dIndx].changqi =0;
+                        nvs_wr_glongtime_gz(1);
+                        tongbu_changqi();
+                    }
 
                     database_ad.zhiwen_page_id_adm[database_cw.zhiwen_page_id] =0;
                     nvs_wr_adm_zwpageid_flag(1,database_cw.zhiwen_page_id);
