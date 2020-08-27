@@ -1732,6 +1732,38 @@ void nvs_wr_mp3_ctl(uint8_t mode)//->all
 }
 
 
+
+
+
+uint8_t buff_t[100]={0};
+void inputBox_clear(void)
+{
+    send_cmd_to_lcd_bl_len(0x11A0,(uint8_t*)buff_t,30*4+5);//gekou
+    send_cmd_to_lcd_bl_len(BL_GK_SZ_D,(uint8_t*)buff_t,BL_GK_BH_MAX_LEN);//
+    send_cmd_to_lcd_bl_len(BL_GK_SZ_Z,(uint8_t*)buff_t,BL_GK_BH_MAX_LEN);//
+    send_cmd_to_lcd_bl_len(BL_GK_SZ_X,(uint8_t*)buff_t,BL_GK_BH_MAX_LEN);//
+    send_cmd_to_lcd_bl_len(0x10c0,(uint8_t*)buff_t,2*2+5);
+    send_cmd_to_lcd_bl_len(0x1130,(uint8_t*)buff_t,2*2+5);//
+    send_cmd_to_lcd_bl_len(0x1150,(uint8_t*)buff_t,2*2+5);//
+    send_cmd_to_lcd_bl_len(0x1180,(uint8_t*)buff_t,2*2+5);//
+    send_cmd_to_lcd_bl_len(0x10e0,(uint8_t*)buff_t,2*2+5);//
+
+
+    send_cmd_to_lcd_bl_len(0x1100,(uint8_t*)buff_t,30+5);//phone
+    send_cmd_to_lcd_bl_len(0x1110,(uint8_t*)buff_t,30+5);//key del
+    send_cmd_to_lcd_bl_len(0x1120,(uint8_t*)buff_t,2*2+5);//
+
+    send_cmd_to_lcd_bl_len(0x11e0,(uint8_t*)buff_t,30+5);//key
+    send_cmd_to_lcd_bl_len(0x11f0,(uint8_t*)buff_t,30+5);//key2
+
+    send_cmd_to_lcd_bl_len(0x1050,(uint8_t*)buff_t,30+5);//phone
+    send_cmd_to_lcd_bl_len(0x1060,(uint8_t*)buff_t,30+5);//key del
+
+    send_cmd_to_lcd_bl_len(0x1080,(uint8_t*)buff_t,30+5);//phone
+    send_cmd_to_lcd_bl_len(0x1090,(uint8_t*)buff_t,30+5);//key
+    send_cmd_to_lcd_bl_len(0x10B0,(uint8_t*)buff_t,30+5);//key
+}
+
 void default_factory_set(void)
 {
     u8  ensure;
@@ -1860,6 +1892,8 @@ void default_factory_set(void)
 
     audio_play_mp3_stop=0;
     nvs_wr_mp3_ctl(1);
+
+    inputBox_clear();
 }
 
 
@@ -1977,6 +2011,8 @@ void default_factory_set_first(void)
 
     audio_play_mp3_stop=0;
     nvs_wr_mp3_ctl(1);
+
+    inputBox_clear();
 }
 
 
