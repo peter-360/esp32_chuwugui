@@ -652,7 +652,7 @@ u8 PS_ValidTempleteNum(u16 *ValidN)
 
 
 	// Uart1SendString("data[9]=");
-	//DEBUG_MYUSART1_SendData((char)(data_rx2[9]));
+	//DEBUG_MYUSART1_SendData((char)(data_rx2_m[9]));
 
 	// DEBUG_MYUSART1_SendData((char)(data));
 
@@ -716,13 +716,13 @@ u8 PS_HandShake(u32 *PS_Addr)
 	if(flag_rx2 == 1)
 	{		
 		if(//判断是不是模块返回的应答包				
-				data_rx2[0]==0XEF
-				&&data_rx2[1]==0X01
-				&&data_rx2[6]==0X07
+				data_rx2_m[0]==0XEF
+				&&data_rx2_m[1]==0X01
+				&&data_rx2_m[6]==0X07
 			)
 		{
-			*PS_Addr=(data_rx2[2]<<24) + (data_rx2[3]<<16)
-							+(data_rx2[4]<<8) + (data_rx2[5]);
+			*PS_Addr=(data_rx2_m[2]<<24) + (data_rx2_m[3]<<16)
+							+(data_rx2_m[4]<<8) + (data_rx2_m[5]);
 			//USART2_RX_STA=0;
 			flag_rx2 =0 ;		
 			return 0;

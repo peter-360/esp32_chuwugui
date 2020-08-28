@@ -73,10 +73,12 @@ const char *EnsureMessage(u8 ensure);//确认码错误信息解析
 
 extern void delay_ms(u16 nms);
 extern uint8_t flag_rx2;
-extern uint8_t data_rx2[];
+
 extern uint8_t data_rx2_m[];
 extern int len_rx2_m;
-extern int len_rx2;
+
+// extern uint8_t data_rx2[];
+// extern int len_rx2;
 
 extern const char *TAG ;
 

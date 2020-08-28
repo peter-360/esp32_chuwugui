@@ -102,80 +102,6 @@ int test_i;
 audio_element_handle_t tone_stream_reader, i2s_stream_writer, mp3_decoder;
 audio_pipeline_handle_t pipeline;
 audio_event_iface_handle_t m_audio_evt;
-// extern const uint8_t lr_mp3_start[] asm("_binary_16b_2c_8000hz_mp3_start");
-// extern const uint8_t lr_mp3_end[]   asm("_binary_16b_2c_8000hz_mp3_end");
-
-// // medium rate mp3 audio
-// extern const uint8_t mr_mp3_start[] asm("_binary_16b_2c_22050hz_mp3_start");
-// extern const uint8_t mr_mp3_end[]   asm("_binary_16b_2c_22050hz_mp3_end");
-
-// // high rate mp3 audio
-// extern const uint8_t hr_mp3_start[] asm("_binary_16b_2c_44100hz_mp3_start");
-// extern const uint8_t hr_mp3_end[]   asm("_binary_16b_2c_44100hz_mp3_end");
-
-
-
-// extern const uint8_t adf_music_mp3_start[] asm("_binary_adf_music_mp3_start");
-// extern const uint8_t adf_music_mp3_end[]   asm("_binary_adf_music_mp3_end");
-// static int adf_music_mp3_pos;
-
-
-// const uint8_t * m_mp3_start ;
-// const uint8_t * m_mp3_end;
-// static int m_mp3_pos;
-
-
-
-
-// // static void set_next_file_marker(int midx)
-// static void set_next_file_marker(void)
-// {
-//     static int midx = 0;
-
-//     switch (midx) {
-//         case 0:
-//             m_mp3_start = lr_mp3_start;
-//             m_mp3_end   = lr_mp3_end;
-//             break;
-//         case 1:
-//             m_mp3_start = mr_mp3_start;
-//             m_mp3_end   = mr_mp3_end;
-//             break;
-//         case 2:
-//             m_mp3_start = hr_mp3_start;
-//             m_mp3_end   = hr_mp3_end;
-//             break;
-//         case 3:
-//             m_mp3_start = adf_music_mp3_start;
-//             m_mp3_end   = adf_music_mp3_end;
-//             break;
-//         default:
-//             m_mp3_start = adf_music_mp3_start;
-//             m_mp3_end   = adf_music_mp3_end;
-//             DB_PR( "[ * ] Not supported index = %d", midx);
-//     }
-//     // if (++idx > 2) {
-//     //     idx = 0;
-//     // }
-//     m_mp3_pos = 0;
-
-//     return;
-// }
-
-
-
-// int mp3_music_read_cb(audio_element_handle_t el, char *buf, int len, TickType_t wait_time, void *ctx)
-// {
-//     int read_size = m_mp3_end - m_mp3_start - m_mp3_pos;
-//     if (read_size == 0) {
-//         return AEL_IO_DONE;
-//     } else if (len < read_size) {
-//         read_size = len;
-//     }
-//     memcpy(buf, m_mp3_start + m_mp3_pos, read_size);
-//     m_mp3_pos += read_size;
-//     return read_size;
-// }
 
 
 
@@ -276,7 +202,7 @@ const char *TAG = "uart_events";
 #define LED_RED         (GPIO_NUM_27)
 
 
-#define GPIO_INPUT_IO_ZW_2     (4)
+// #define GPIO_INPUT_IO_ZW_2     (4)
 
 #define GPIO_INPUT_IO_ADMIN     39//4
 #define GPIO_INPUT_IO_ZW_JC     35//5
@@ -289,13 +215,18 @@ bool HandShakeFlag = 0;
 bool io_shouzhi_down_flag = 0;
 
 
+//1024
+#define BUF_SIZE (512)
 
-#define BUF_SIZE (1024)
+// uint8_t data_rx0[BUF_SIZE] = {0};
+// uint16_t len_rx0;
+
 uint8_t data_rx[BUF_SIZE] = {0};
 uint16_t len_rx;
 
-uint8_t data_rx2[BUF_SIZE] = {0};
-int len_rx2;
+uint8_t data_rx0[BUF_SIZE] = {0};//485 dtu debug        data_rx2
+int len_rx0;
+
 uint8_t data_rx2_m[BUF_SIZE] = {0};
 int len_rx2_m;
 uint8_t flag_rx2;
@@ -342,10 +273,25 @@ uint8_t flag_rx2;
 #define DZ_ZW_PAGEID "_dz_zwpid"
 
 
+//288//300//310//all kong   480
+#define SHENYU_GEZI_MAX 432
 
-#define SHENYU_GEZI_MAX 288//300//310//all kong
+//300//all kong
+#define ZHIWEN_PAGE_ID_MAX 120
 
-#define ZHIWEN_PAGE_ID_MAX 120//300//all kong
+//35//25//all kong
+#define BOARD_GK_MAX 18
+int16_t hang_shu_max;
+
+// #define GUIMENX_GK_MAX 24//all kong
+
+
+// int16_t guimen_x_gk_max[25]={12,10,10,16,16,16,16,16,16,16,
+//                            16,16,16,16,16,16,16,16,16};//600
+
+int16_t guimen_x_gk_max[BOARD_GK_MAX];//600=24*25   need save?
+
+
 
 
 //admin   need save   实时更新
@@ -366,38 +312,8 @@ uint16_t shengyu_all_max=0;//shengyu max admin, guding
     uint16_t shengyu_xiao_max=0;
 
 
-#define BOARD_GK_MAX 12//35//25//all kong
-int16_t hang_shu_max;
-
-#define GUIMENX_GK_MAX 24//all kong
-
-    int16_t guimen1_gk_max=12;
-    int16_t guimen2_gk_max=10;
-    int16_t guimen3_gk_max=10;//8  guding
-
-    int16_t guimen4_gk_max=16;
-    int16_t guimen5_gk_max=16;
-    int16_t guimen6_gk_max=16;
-    int16_t guimen7_gk_max=16;
-
-    int16_t guimen8_gk_max=16;
-    int16_t guimen9_gk_max=16;
-    int16_t guimen10_gk_max=16;
-    int16_t guimen11_gk_max=16;
-    int16_t guimen12_gk_max=16;
-    int16_t guimen13_gk_max=16;
-    int16_t guimen14_gk_max=16;
-    int16_t guimen15_gk_max=16;
-    int16_t guimen16_gk_max=16;
-    int16_t guimen17_gk_max=16;
-    int16_t guimen18_gk_max=16;
-    int16_t guimen19_gk_max=16;
 
 
-// int16_t guimen_x_gk_max[25]={12,10,10,16,16,16,16,16,16,16,
-//                            16,16,16,16,16,16,16,16,16};//600
-
-int16_t guimen_x_gk_max[BOARD_GK_MAX];//600=24*25   need save?
 
 
 
@@ -409,8 +325,8 @@ typedef struct
     bool zhiwen_page_id_adm[ZHIWEN_PAGE_ID_MAX];//flag
     // uint16_t zhiwen_gz_index[300];//gz
     
-    uint8_t shengyu1;
-    uint8_t shengyu2;
+    // uint8_t shengyu1;
+    // uint8_t shengyu2;
 
 
 }shujuku_struct_admin;
@@ -418,7 +334,7 @@ typedef struct
 shujuku_struct_admin database_ad=
 {
     .mima_number_adm = 666888,
-    .shengyu1 = 0,
+    // .shengyu1 = 0,
 };
 
 
@@ -1148,7 +1064,7 @@ void tongbu_gekou_shuliang_x(uint16_t temp)
 //数组
 void send_cmd_to_lcd_bl_len(uint16_t opCode, uint8_t* buff_temp,uint16_t data_len)//变量
 {
-    uint8_t tx_Buffer[300]={0};  
+    uint8_t tx_Buffer[256]={0};  
     uint16_t crc16_temp=0;
     //xiao
     tx_Buffer[0] = 0x5A;
@@ -2028,7 +1944,7 @@ void tongbu_da(void)
     u8 buff_temp1_c[SHENYU_GEZI_MAX]={0};//char
 
 
-    uint16_t j=0,k=0,l=0;
+    uint16_t k=0;
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
     {
         if(1== database_gz[i].state_fenpei_gz)
@@ -2059,7 +1975,7 @@ void tongbu_da(void)
     // uart0_debug_data_d(buff_temp1,0x9b);
 
 
-    for(uint16_t i=1;i<=300;i++)
+    for(uint16_t i=0;i<SHENYU_GEZI_MAX;i++)
     {
         if(buff_temp1_c[i]==0)
         {
@@ -2081,7 +1997,7 @@ void tongbu_zh(void)
     u16 buff_temp2[SHENYU_GEZI_MAX]={0};
     u8 buff_temp2_c[SHENYU_GEZI_MAX]={0};//150
 
-    uint16_t j=0,k=0,l=0;
+    uint16_t l=0;
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
     {
         if(1== database_gz[i].state_fenpei_gz)
@@ -2108,7 +2024,7 @@ void tongbu_zh(void)
     // uart0_debug_data_d(buff_temp1,0x9b);
 
 
-    for(uint16_t i=1;i<=300;i++)
+    for(uint16_t i=0;i<SHENYU_GEZI_MAX;i++)
     {
         if(buff_temp2_c[i]==0)
         {
@@ -2132,7 +2048,7 @@ void tongbu_changqi(void)
     u16 buff_temp2[SHENYU_GEZI_MAX]={0};
     u8 buff_temp2_c[SHENYU_GEZI_MAX]={0};//150
 
-    uint16_t j=0,k=0,l=0;
+    uint16_t l=0;
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
     {
         //vTaskDelay(1);
@@ -2157,7 +2073,7 @@ void tongbu_changqi(void)
     //vTaskDelay(10 / portTICK_PERIOD_MS);
 
 
-    for(uint16_t i=1;i<=300;i++)
+    for(uint16_t i=0;i<SHENYU_GEZI_MAX;i++)
     {
         //vTaskDelay(1);
         if(buff_temp2_c[i]==0)
@@ -2182,7 +2098,7 @@ void tongbu_locked(void)
     u16 buff_temp2[SHENYU_GEZI_MAX]={0};
     u8 buff_temp2_c[SHENYU_GEZI_MAX]={0};//150
 
-    uint16_t j=0,k=0,l=0;
+    uint16_t l=0;
     for(uint16_t i=1;i<=SHENYU_GEZI_MAX;i++)
     {
         //vTaskDelay(1);
@@ -2206,7 +2122,7 @@ void tongbu_locked(void)
     //vTaskDelay(10 / portTICK_PERIOD_MS);
 
 
-    for(uint16_t i=1;i<=300;i++)
+    for(uint16_t i=0;i<SHENYU_GEZI_MAX;i++)
     {
         //vTaskDelay(1);
         if(buff_temp2_c[i]==0)
@@ -2264,17 +2180,7 @@ static void echo_task2()//lcd
     //while(1)
     {
         //vTaskDelay(40 / portTICK_PERIOD_MS);
-                //&&(flag_rx2 ==0)
-        // if ((len_rx2 > 0) ) {
-        //     flag_rx2 =1;
-        //     len_rx2_m = len_rx2;
-        //     memcpy(data_rx2_m,data_rx2,len_rx2_m);
-        //     DB_PR("uart2-Received %u bytes:", len_rx2_m);
-        //     for (int i = 0; i < len_rx2_m; i++) {
-        //         DB_PR("0x%.2X ", (uint8_t)data_rx2_m[i]);
-        //     }
-        //     DB_PR("] \n");
-        // }
+
 
 								
 		
@@ -2424,9 +2330,9 @@ static void echo_task2()//lcd
 
 
 
-                                    if((hang_shu_max+1)> 12)
+                                    if((hang_shu_max+1)> BOARD_GK_MAX)
                                     {
-                                        DB_PR("-----err2 >12gm 12 lock------\r\n");
+                                        DB_PR("-----err2 >BOARD_GK_MAX lock------\r\n");
                                         //send_cmd_to_lcd_pic(0x004F);
                                         // break;
                                         goto guimen_set_fail;
@@ -2448,12 +2354,12 @@ static void echo_task2()//lcd
                                                 database_gz[j*24 + k].state_fenpei_gz = 1;
                                                 DB_PR("-1-lock index=%03d\r\n",j*24 + k);
                                             }
-                                            if(guimen_x_gk_max_temp[12] > 12)
-                                            {
-                                                guimen_x_gk_max_temp[12] =12;
-                                                DB_PR("-----err1-1 >12gm 12 lock------\r\n");
+                                            // if(guimen_x_gk_max_temp[12] > 12)
+                                            // {
+                                            //     guimen_x_gk_max_temp[12] =12;
+                                            //     DB_PR("-----err1-1 >12gm 12 lock------\r\n");
 
-                                            }
+                                            // }
                                             if(guimen_x_gk_max_temp[j] <24)
                                             {
                                                 for(int k=guimen_x_gk_max_temp[j]+1; k<=24; k++)//列
@@ -2506,7 +2412,7 @@ static void echo_task2()//lcd
 
                                         DB_PR("1-------shengyu_all_max_temp=%03d\r\n",shengyu_all_max_temp);
                                         if((shengyu_all_max_temp>0)
-                                            &&(shengyu_all_max_temp<=300))
+                                            &&(shengyu_all_max_temp<=SHENYU_GEZI_MAX))
                                         {
                                             DB_PR("2-------shengyu_all_max_temp=%03d\r\n",shengyu_all_max_temp);
                                             shengyu_all_max = shengyu_all_max_temp;
@@ -2522,11 +2428,11 @@ static void echo_task2()//lcd
 
 
 
-                                            u16 buff_temp1[300]={0};
-                                            u16 buff_temp2[300]={0};
+                                            // u16 buff_temp1[SHENYU_GEZI_MAX]={0};
+                                            // u16 buff_temp2[SHENYU_GEZI_MAX]={0};
 
-                                            u8 buff_temp1_c[400]={0};//char
-                                            u8 buff_temp2_c[400]={0};//150
+                                            // u8 buff_temp1_c[400]={0};//char
+                                            // u8 buff_temp2_c[400]={0};//150
                                             uint16_t id=0,iz=0,ix=0;
                                             uint16_t id_max=0,iz_max=0,ix_max=0;
                                             uint16_t changqi_num_temp=0;
@@ -6547,19 +6453,20 @@ static void echo_task()
     while (1) {
         //vTaskDelay(10 / portTICK_PERIOD_MS);
         // Read data from the UART
+        len_rx0 = uart_read_bytes(UART_NUM_0, data_rx0, BUF_SIZE, 20 / portTICK_RATE_MS);
         len_rx = uart_read_bytes(UART_NUM_1, data_rx, BUF_SIZE, 20 / portTICK_RATE_MS);
-        len_rx2 = uart_read_bytes(UART_NUM_2, data_rx2, BUF_SIZE, 20 / portTICK_RATE_MS);
+        len_rx2_m = uart_read_bytes(UART_NUM_2, data_rx2_m, BUF_SIZE, 20 / portTICK_RATE_MS);
         // Write data back to the UART
         
         //uart_write_bytes(UART_NUM_1, (const char *) data_rx, len_rx);//len =0 budayin
         //uart_write_bytes(UART_NUM_2, (const char *) data_rx, len_rx);
 
 
-        if ((len_rx2 > 0) ) {
+        if ((len_rx2_m > 0) ) {
             
-            len_rx2_m = len_rx2;
-            memcpy(data_rx2_m,data_rx2,len_rx2_m);
-            DB_PR("2rcv_zhiwen_uart2-Received %u bytes:", len_rx2_m);
+            // len_rx2_m = len_rx2_m;
+            // memcpy(data_rx2_m,data_rx2_m,len_rx2_m);
+            DB_PR("2rcv_zhiwen_uart2-Received %u bytes:", len_rx2_m);//zhiwen
             for (int i = 0; i < len_rx2_m; i++) {
                 DB_PR("0x%.2X ", (uint8_t)data_rx2_m[i]);
             }
@@ -6570,7 +6477,7 @@ static void echo_task()
             
 
             xTaskCreate(echo_task3, "uart_echo_task3",2* 1024, NULL, 2, NULL);//uart2
-            //uart_write_bytes(UART_NUM_2, (const char *) data_rx2, len_rx2);
+            //uart_write_bytes(UART_NUM_2, (const char *) data_rx2_m, len_rx2_m);
         }
 
 								
@@ -6579,7 +6486,7 @@ static void echo_task()
 
         if (len_rx > 0) {
 
-            DB_PR("1rcv_lcd_uart1-Received %u bytes:", len_rx);
+            DB_PR("1rcv_lcd_uart1-Received %u bytes:", len_rx);//lcd
             for (int i = 0; i < len_rx; i++) {
                 DB_PR("0x%.2X ", (uint8_t)data_rx[i]);
                 // if(spear_uart_process_data(data_rx[i]))
@@ -6598,6 +6505,23 @@ static void echo_task()
 
         }
 	
+
+        if (len_rx0 > 0) {
+
+            DB_PR("0rcv_lcd_uart1-Received %u bytes:", len_rx0);//485  DTU
+            for (int i = 0; i < len_rx0; i++) {
+                DB_PR("0x%.2X ", (uint8_t)data_rx0[i]);
+            }
+            DB_PR("] \n");
+
+            //vTaskDelay(2 / portTICK_PERIOD_MS);
+            //xTaskCreate(echo_task0, "uart_echo_task0",8* 1024, NULL, 2, NULL);//uart1
+            // uart_write_bytes(UART_NUM_0, (const char *) data_rx0, len_rx0);//debug---------
+
+        }
+
+
+
     }
     //vTaskDelay(1);
     
@@ -8244,7 +8168,7 @@ void del_zw_database(u16 num)
                 // esp_err_t err;
 
 
-
+                DB_PR("--database_gz[database_cw.dIndx].changqi=%d\r\n",database_gz[database_cw.dIndx].changqi);
                 if((database_gz[database_cw.dIndx].changqi == 0)
                     ||(database_gz[database_cw.dIndx].changqi == 2))
                 {
@@ -9010,14 +8934,37 @@ static void gpio_task_example(void* arg)
 }
 
 
+static void gpio_task_example1(void* arg)
+{
+    uint32_t io_num;
+    for(;;) 
+    {
+        
+        DB_PR("------------zw chong an-----------\r\n");
+
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+        // gpio_set_level(LED_BLUE, 0);
+        gpio_set_level(LED_GRREN, 0);
+        // gpio_set_level(LED_RED, 0);
+
+
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        // gpio_set_level(LED_BLUE, 1);
+        gpio_set_level(LED_GRREN, 1);
+        // gpio_set_level(LED_RED, 1);
+
+    }
+    vTaskDelete(NULL);
+}
+
 
 void app_main(void)
 {
-    u16 buff_temp1[300]={0};
-    u16 buff_temp2[300]={0};
+    // u16 buff_temp1[SHENYU_GEZI_MAX]={0};
+    // u16 buff_temp2[SHENYU_GEZI_MAX]={0};
 
-    u8 buff_temp1_c[400]={0};//char
-    u8 buff_temp2_c[400]={0};//150
+    // u8 buff_temp1_c[400]={0};//char
+    // u8 buff_temp2_c[400]={0};//150
 
 
 
@@ -9118,7 +9065,7 @@ void app_main(void)
     gpio_set_direction(LED_RED, GPIO_MODE_OUTPUT);
     gpio_set_level(LED_RED, 1);
 
-
+    xTaskCreate(gpio_task_example1, "gpio_task_example1", 2048, NULL, 10, NULL);
 
     // gpio_pad_select_gpio(emac->int_gpio_num);
     // gpio_set_direction(emac->int_gpio_num, GPIO_MODE_INPUT);
