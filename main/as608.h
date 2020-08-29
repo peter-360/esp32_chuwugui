@@ -103,7 +103,7 @@ extern const char *TAG ;
 
 
 
-#define _DEBUG_ 1
+#define _DEBUG_ 0
 
 #if _DEBUG_
 #define DB_PR(...) printf(__VA_ARGS__)
