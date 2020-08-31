@@ -2276,45 +2276,97 @@ static void echo_task2()//lcd
                                 if(data_rx_t[2] == 0x6A)//0x9c
                                 {
                                     
+
+                                    // u8 temp_s_flag=0;
                                     // send_cmd_to_lcd_bl(0x11A0,0);
                                     char show[156][10];
                                     char *p = NULL;
                                     char *q = NULL;
                                     int i = 0;
+                                    int j = 0;
                                     // int j;
                                     // DB_PR("请输入字符串shou:");
                                     // gets(shou);
                                     p = q = (char*)tx_Buffer2;
+
+                                    while('-' == *p)    
+                                    {
+                                        *p =0;
+                                        p=p+1;
+                                        q=p;
+                                        //DB_PR("0-a *p=%02x\r\n",*p);//0x2d
+                                    }
+                                    DB_PR("0-b *p=%02x\r\n\r\n",*p);//0x2d
+
                                     while( NULL != (p = strchr(p,'-')))    
                                     {
+                                        
+                                        if(*(p-1) == '-')
+                                        {
+                                            DB_PR("0-c\r\n\r\n");//0x2d
+                                            *(p-1)='\0';
+                                            p=p+1;
+                                            q=p;
+                                            continue;
+                                        }
+                                        
+                                        
+                                        // temp_s_flag =1;
                                         strncpy(show[i],q,p-q);
                                         show[i][p-q] = '\0';
 
-                                        //DB_PR("%02x\r\n",*p);//0x2d
+                                        DB_PR("1 *p=%02x\r\n",*p);//0x2d
+                                        DB_PR("1 i=%02d\r\n",i);//0x2d
+                                        
                                         p = p+1;
-                                        q = p;
-                                        i ++;
+                                        // j++;
+                                        // if( NULL == ((p-1) = strchr(p-1,'-')))
+                                        // if()
+                                        {
+                                            DB_PR("*(p-2)=%02x\r\n",*(p-2));//0x2d
+                                            q = p;
+                                            i ++;
+                                        }  
+
+                                        DB_PR("2 *p=%02x\r\n",*p);//0x2d
+                                        DB_PR("2 i=%02d\r\n\r\n",i);//0x2d
+                                        // else
+                                        // {
+                                        //     DB_PR("2p-1=%02x\r\n",*(p-1));//0x2d
+                                        //     DB_PR("2p-1=%c\r\n",*(p-1));//0x2d
+                                        // }
+                                        
+                                        
+
                                     }
 
                                     if (p == NULL)
                                     {
+                                        DB_PR("3-----\r\n\r\n");//0x2d
                                         strncpy(show[i],q,strlen(q));
                                         show[i][strlen(q)] = '\0';
                                     }
 
                                     hang_shu_max =i;//hang shu
-                                    DB_PR("show1=");
-                                    for(j = 0; j <= hang_shu_max; j++)
-                                    {
-                                        DB_PR("%s\r\n",show[j]);
-                                    }
 
+                                    DB_PR("show0=\r\n");
                                     for(j = 0; j <= strlen(show[hang_shu_max]); j++)//最后一行
                                     {
                                         if(0xff == show[hang_shu_max][j])
+                                        {
                                             show[hang_shu_max][j] = '\0';
+                                        }
+
                                         DB_PR("%02x-",show[hang_shu_max][j]);
                                     }
+
+                                    DB_PR("\r\nshow1=\r\n");
+                                    for(j = 0; j <= hang_shu_max; j++)
+                                    {
+                                        DB_PR("j=%s\r\n",show[j]);
+                                    }
+                                    DB_PR("hang_shu_max=%03d\r\n",hang_shu_max);//0
+
                                     DB_PR("\r\n");
 
 
@@ -2341,7 +2393,7 @@ static void echo_task2()//lcd
                                     int gm_one_num=0;
                                     if(hang_shu_max< BOARD_GK_MAX)//300/24 =12.5
                                     {
-                                        DB_PR("show2=");
+                                        DB_PR("show2=\r\n");
                                         for(j = 0; j < hang_shu_max+1; j++)//i 个柜子
                                         {
                                             gm_one_num = atoi((const char*)show[j]);
@@ -2438,7 +2490,7 @@ static void echo_task2()//lcd
                                         if(shengyu_all_max_temp==0)
                                         {
                                             DB_PR("-----------shengyu_all_max_temp =0--------------\r\n");
-                                            //send_cmd_to_lcd_pic(0x0053);
+                                            send_cmd_to_lcd_pic(0x0052);
                                             break;
                                         }
 
@@ -9095,7 +9147,7 @@ static void gpio_task_example1(void* arg)
         
         DB_PR("------------system heart-----------\r\n");
 
-        vTaskDelay(1000 / portTICK_PERIOD_MS);//off
+        vTaskDelay(1000 / portTICK_PERIOD_MS);//off   del
         // gpio_set_level(LED_BLUE, 0);
         gpio_set_level(LED_GRREN, 0);
         // gpio_set_level(LED_RED, 0);
