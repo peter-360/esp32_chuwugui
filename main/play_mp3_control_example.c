@@ -5350,7 +5350,7 @@ done_mima_nosame:
                                         DB_PR("--2 zhiwen--.\r\n");  
                                         //baocun 1
                                         send_cmd_to_lcd_pic(0x0004);
-                                        xTaskCreate(Add_FR_First, "add_zhiwen_task1", 6* 1024, NULL, 2, taskhandle1);//1024 10
+                                        xTaskCreate(Add_FR_First, "add_zhiwen_task1", 6* 1024, NULL, 2, &taskhandle1);//1024 10
                                     }
                                     else if(02== data_rx_t[8])//mi ma
                                     {
@@ -5443,7 +5443,7 @@ done_mima_nosame:
                                     else if(01 == database_cw.cunwu_mode)//2010 指纹 ->指纹判断 0005 todo
                                     {
                                         send_cmd_to_lcd_pic(0x0004);
-                                        xTaskCreate(Add_FR_First, "add_zhiwen_task1", 6* 1024, NULL, 2, taskhandle1);//1024 10
+                                        xTaskCreate(Add_FR_First, "add_zhiwen_task1", 6* 1024, NULL, 2, &taskhandle1);//1024 10
                                     } 
                                 }
                                 else
@@ -6740,17 +6740,17 @@ static void echo_task()
             flag_rx2 =1;
             DB_PR("-----2----flag_rx2=%u\r\n", flag_rx2);
             
-            if(taskhandle_uart2!=NULL)
-            {
-                DB_PR("--uart2--111111-----.\r\n");
-                vTaskDelete(taskhandle_uart2);
-                taskhandle_uart2 =NULL;
-            }
-            else
-            {
-                DB_PR("--uart2--222222 =NULL-----.\r\n");
-            }
-            xTaskCreate(echo_task3, "uart_echo_task3",2* 1024, NULL, 2, taskhandle_uart2);//uart2
+            // if(taskhandle_uart2!=NULL)
+            // {
+            //     DB_PR("--uart2--111111-----.\r\n");
+            //     vTaskDelete(taskhandle_uart2);
+            //     taskhandle_uart2 =NULL;
+            // }
+            // else
+            // {
+            //     DB_PR("--uart2--222222 =NULL-----.\r\n");
+            // }
+            xTaskCreate(echo_task3, "uart_echo_task3",2* 1024, NULL, 2, &taskhandle_uart2);//uart2
             //uart_write_bytes(UART_NUM_2, (const char *) data_rx2_m, len_rx2_m);
         }
 
@@ -8602,14 +8602,14 @@ void audio_play_one_mp3(int num)
     audio_play_mp3_task =1;
     DB_PR("\r\n22---mp3 num=%d----\r\n",num);
     DB_PR("\r\n22---mp3 audio_play_mp3_stop=%d----\r\n",audio_play_mp3_stop);
-    DB_PR("\r\n22---mp3 audio_play_mp3_over=%d----\r\n",audio_play_mp3_over);
+    // DB_PR("\r\n22---mp3 audio_play_mp3_over=%d----\r\n",audio_play_mp3_over);
     //if(NULL!=&num)
     if(audio_play_mp3_stop==0)//kaiguan
     {
         DB_PR("\r\n33---mp3 num=%d----\r\n",num);
         //while (1) 
         {
-            vTaskDelay(10 / portTICK_PERIOD_MS);
+            // vTaskDelay(10 / portTICK_PERIOD_MS);
             
             //if(audio_play_mp3_over==1)
             {
@@ -8637,7 +8637,7 @@ void audio_play_one_mp3(int num)
 
     vTaskDelay(1);
     audio_play_mp3_task =0;
-    vTaskDelete(taskhandle_mp3);
+    vTaskDelete(NULL);//taskhandle_mp3
 
 }
 
