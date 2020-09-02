@@ -79,7 +79,10 @@ void tongbu_locked(void);
 void audio_init(void);
 void close_mp3(void);
 
-TaskHandle_t taskhandle1;
+TaskHandle_t taskhandle1= NULL;
+TaskHandle_t taskhandle_temp= NULL;
+TaskHandle_t taskhandle_mp3 = NULL;
+TaskHandle_t taskhandle_uart2 = NULL;
 esp_timer_handle_t oneshot_timer;
 
 
@@ -302,6 +305,7 @@ uint16_t shengyu_zhong=15;
 uint16_t shengyu_xiao=100;
 u8 audio_play_mp3_stop;
 
+bool audio_play_mp3_task;
 
 //admin 
 //and cun de yong
@@ -1985,7 +1989,7 @@ void tongbu_da(void)
     }
 
 
-    vTaskDelay(5 / portTICK_PERIOD_MS);
+    // vTaskDelay(5 / portTICK_PERIOD_MS);
     DB_PR("-----gekouleixing-d-----\r\n");
     send_cmd_to_lcd_bl_len(BL_GK_BH_D,buff_temp1_c,BL_GK_BH_D_LEN);//300
     vTaskDelay(1 / portTICK_PERIOD_MS);
@@ -2034,7 +2038,7 @@ void tongbu_zh(void)
     }
 
 
-    vTaskDelay(5 / portTICK_PERIOD_MS);
+    // vTaskDelay(5 / portTICK_PERIOD_MS);
     DB_PR("-----gekouleixing-z-----\r\n");
     send_cmd_to_lcd_bl_len(BL_GK_BH_Z,buff_temp2_c,BL_GK_BH_Z_LEN);//300 0x23 30
     vTaskDelay(1 / portTICK_PERIOD_MS);
@@ -2084,7 +2088,7 @@ void tongbu_changqi(void)
     }
 
 
-    vTaskDelay(10 / portTICK_PERIOD_MS);
+    // vTaskDelay(10 / portTICK_PERIOD_MS);
     DB_PR("-----changqi--sync----\r\n");
     send_cmd_to_lcd_bl_len(BL_GK_BH_CHANGQI,buff_temp2_c,BL_GK_BH_CHANGQI_LEN);//300 0x23 30
     vTaskDelay(1);
@@ -2133,7 +2137,7 @@ void tongbu_locked(void)
     }
 
 
-    vTaskDelay(10 / portTICK_PERIOD_MS);
+    // vTaskDelay(10 / portTICK_PERIOD_MS);
     DB_PR("-----changqi--sync----\r\n");
     send_cmd_to_lcd_bl_len(BL_GK_BH_LOCKED,buff_temp2_c,BL_GK_BH_LOCKED_LEN);//300 0x23 30
     vTaskDelay(1);
@@ -3501,10 +3505,23 @@ guimen_set_fail:
 
 
                             case 0x10c0://xiangmenhao   kaixiang
-                                send_cmd_to_lcd_bl_len(0x10c0,(uint8_t*)buff_t,2*2+5);//key
-                                
                                 DB_PR("----admin --xmh open-----.\r\n");
+                                // TaskHandle_t TaskHandle;	
+                                // // TaskStatus_t TaskStatus;
+                                // eTaskState TaskState;
+
+                                // TaskHandle=xTaskGetHandle("gpio_task_example1");		//获取任务句柄（返回值任务句柄）（参数为任务名：query_task）
+                                // TaskState=eTaskGetState(TaskHandle);			//获取任务状态函数（返回值任务状态）（参数为任务句柄：TaskHandle）
+                                // DB_PR("-------TaskState=%d--.\r\n",TaskState); 
+
+                                // vTaskDelete(TaskHandle);
+                                // TaskState=eTaskGetState(TaskHandle);			//获取任务状态函数（返回值任务状态）（参数为任务句柄：TaskHandle）
+                                // DB_PR("-------TaskState=%d--.\r\n",TaskState); 
+
+
+                                
                                 uint8_t temp_xiangmen[4]={0}; 
+                                u8 buff_temp1_c[32]={0};
                                 memset(temp_xiangmen,0,4);
                                 j=0;
                                 k=0;//k:board  j:lock
@@ -3558,26 +3575,50 @@ guimen_set_fail:
                                     DB_PR("------open------ board-addr k+1=%d, lock-addr j=%d--\r\n",k+1,j);
 
 
+                                    // send_cmd_to_lcd_bl_len(0x10c0,(uint8_t*)buff_t,2*2+5);//key
 
                                     DB_PR("-da-lock:%d ok--.\r\n",j);
                                     send_cmd_to_lock(k+1,j);
-                                    send_cmd_to_lcd_bl(0x10c0,database_gz[database_cw.dIndx].dIndx_gz);
+
+                                    memset(buff_temp1_c,0,32);
+                                    buff_temp1_c[0] = database_gz[database_cw.dIndx].dIndx_gz/256;
+                                    buff_temp1_c[1] = database_gz[database_cw.dIndx].dIndx_gz%256;
+                                    send_cmd_to_lcd_bl_len(0x10c0,buff_temp1_c,32+3);
+                                    // send_cmd_to_lcd_bl(0x10c0,database_gz[database_cw.dIndx].dIndx_gz);
             
                                     send_cmd_to_lcd_pic(0x0014);
 
 
 
 
-                                    DB_PR("-----2 1-----[ * ] Starting audio pipeline");
+                                    DB_PR("-----2 1-----[ * ] Starting audio pipeline\r\n");
 
+
+                                    // if(taskhandle_mp3!=NULL)
+
+                                    if(audio_play_mp3_task!=0)
+                                    {
+                                        audio_play_mp3_task =0;
+                                        vTaskDelay(20 / portTICK_PERIOD_MS);
+                                        DB_PR("----111111 -a-----.\r\n");
+                                        vTaskDelete(taskhandle_mp3);
+                                        // taskhandle_mp3 =NULL;
+                                        DB_PR("----111111 -b-----.\r\n");
+                                        // vTaskDelay(500 / portTICK_PERIOD_MS);
+                                    }
+                                    else
+                                    {
+                                        DB_PR("----222222 =NULL-----.\r\n");
+                                    }
                                     
-                                    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);
+                                    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, (TaskHandle_t* )&taskhandle_mp3);
 
 
                                 }
                                 else
                                 {
 wuci_xmh:
+                                    send_cmd_to_lcd_bl_len(0x10c0,(uint8_t*)buff_t,2*2+5);//key
                                     send_cmd_to_lcd_pic(FAIL_XMH_PIC);
                                     return_cause = 1;
                                     DB_PR("----admin --wu ci xiangmenhao-----.\r\n");
@@ -3589,7 +3630,7 @@ wuci_xmh:
 
                            case 0x1130://
                                 DB_PR("--qingxiang--.\r\n");   
-                                send_cmd_to_lcd_bl_len(0x1130,(uint8_t*)buff_t,2*2+5);//
+                                // send_cmd_to_lcd_bl_len(0x1130,(uint8_t*)buff_t,2*2+5);//
                                 // j=0;
                                 // for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
                                 //     DB_PR("0x%.2X ", (uint8_t)data_rx_t[i]);
@@ -3646,7 +3687,12 @@ wuci_xmh:
 
                                     DB_PR("-da-lock:%d ok--.\r\n",j);
                                     send_cmd_to_lock(k+1,j);
-                                    send_cmd_to_lcd_bl(0x1130,database_gz[database_cw.dIndx].dIndx_gz);
+
+                                    memset(buff_temp1_c,0,32);
+                                    buff_temp1_c[0] = database_gz[database_cw.dIndx].dIndx_gz/256;
+                                    buff_temp1_c[1] = database_gz[database_cw.dIndx].dIndx_gz%256;
+                                    send_cmd_to_lcd_bl_len(0x1130,buff_temp1_c,32+3);
+                                    // send_cmd_to_lcd_bl(0x1130,database_gz[database_cw.dIndx].dIndx_gz);
             
                                     //send_cmd_to_lcd_pic(0x0024);
                                     send_cmd_to_lcd_pic(CLEAR_ONE_OK_PIC);
@@ -3742,6 +3788,22 @@ wuci_xmh:
 
 
                                         DB_PR("-----2-----[ * ] Starting audio pipeline");
+
+
+                                        if(audio_play_mp3_task!=0)
+                                        {
+                                            audio_play_mp3_task =0;
+                                            vTaskDelay(20 / portTICK_PERIOD_MS);
+                                            DB_PR("----111111 -a-----.\r\n");
+                                            vTaskDelete(taskhandle_mp3);
+                                            // taskhandle_mp3 =NULL;
+                                            DB_PR("----111111 -b-----.\r\n");
+                                            // vTaskDelay(500 / portTICK_PERIOD_MS);
+                                        }
+                                        else
+                                        {
+                                            DB_PR("----222222 =NULL-----.\r\n");
+                                        }
                                         xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);
                                         //update xianshi todo
                                         tongbu_changqi();
@@ -3753,6 +3815,7 @@ wuci_xmh:
                                 {
 wuci_xmh_q:
                                     send_cmd_to_lcd_pic(FAIL_XMH_PIC);
+                                    send_cmd_to_lcd_bl_len(0x1130,(uint8_t*)buff_t,2*2+5);//
                                     return_cause = 2;
                                     DB_PR("----admin --wu ci xiangmenhao-----.\r\n");
                                 }
@@ -4840,7 +4903,12 @@ wuci_xmh_unchangqi:
                                     DB_PR("mima_number=");
                                     uart0_debug_str(mima_number_a1,6);
 
-
+                                    if(0==memcmp(mima_number_a1,buff_t,6))
+                                    {
+                                        mima_weishu_ok_a1 =0;
+                                        DB_PR("------mima_number_a1 all=0-------.\r\n");
+                                        break;
+                                    }
 
                                     for (int i = 7; i < 7+ data_rx_t[6] *2 -2 ; i++) {
                                         DB_PR("0x%.2X ", (uint8_t)data_rx_t[i]);
@@ -5113,7 +5181,7 @@ done_mima_nosame:
                                 
                                 return_cause_zw =1;
                                 //DB_PR("1-vTask: delete vTask1. taskhandle1=%d\r\n"(int)*taskhandle1);
-                                vTaskDelete(taskhandle1);
+                                // vTaskDelete(taskhandle1);
 
 
                                 break;
@@ -6036,7 +6104,7 @@ done_2:
                                     DB_PR("---add---xmh =%u\r\n",database_gz[database_cw.dIndx].dIndx_gz);
                                     if((database_cw.dIndx == 0)||(database_gz[database_cw.dIndx].dIndx_gz > shengyu_all_max))
                                     {
-                                        send_cmd_to_lcd_pic(0x000d); //
+                                        send_cmd_to_lcd_pic(0x000b); //0x000d
                                         DB_PR("---no find phone\r\n");
                                         // database_cw.dIndx = atoi((const char*)mima_number);//data_rx_t[7] - 0x30;
                                         //goto done_qu_zanwu;//todo
@@ -6179,16 +6247,19 @@ done_2:
                                         }
 
                                         send_cmd_to_lcd_pic(0x000e); 
+
+
+
+                                        database_cw.cunwu_mode =0;
+                                        database_cw.state=0;
+                                        database_cw.dzx_mode = 0 ;//?
+
+                                        // send_cmd_to_lcd_bl(0x1080,0);//phone
+                                        // send_cmd_to_lcd_bl(0x1090,0);//key
+                                        send_cmd_to_lcd_bl_len(0x1080,(uint8_t*)buff_t,30+5);//phone
+                                        send_cmd_to_lcd_bl_len(0x1090,(uint8_t*)buff_t,30+5);//key
                                     }
 
-                                    database_cw.cunwu_mode =0;
-                                    database_cw.state=0;
-                                    database_cw.dzx_mode = 0 ;//?
-
-                                    // send_cmd_to_lcd_bl(0x1080,0);//phone
-                                    // send_cmd_to_lcd_bl(0x1090,0);//key
-                                    send_cmd_to_lcd_bl_len(0x1080,(uint8_t*)buff_t,30+5);//phone
-                                    send_cmd_to_lcd_bl_len(0x1090,(uint8_t*)buff_t,30+5);//key
                                 }
                                 else
                                 {
@@ -6669,8 +6740,17 @@ static void echo_task()
             flag_rx2 =1;
             DB_PR("-----2----flag_rx2=%u\r\n", flag_rx2);
             
-
-            xTaskCreate(echo_task3, "uart_echo_task3",2* 1024, NULL, 2, NULL);//uart2
+            if(taskhandle_uart2!=NULL)
+            {
+                DB_PR("--uart2--111111-----.\r\n");
+                vTaskDelete(taskhandle_uart2);
+                taskhandle_uart2 =NULL;
+            }
+            else
+            {
+                DB_PR("--uart2--222222 =NULL-----.\r\n");
+            }
+            xTaskCreate(echo_task3, "uart_echo_task3",2* 1024, NULL, 2, taskhandle_uart2);//uart2
             //uart_write_bytes(UART_NUM_2, (const char *) data_rx2_m, len_rx2_m);
         }
 
@@ -6695,6 +6775,8 @@ static void echo_task()
             DB_PR("] \n");
 
             //vTaskDelay(2 / portTICK_PERIOD_MS);
+
+
             xTaskCreate(echo_task2, "uart_echo_task2",8* 1024, NULL, 2, NULL);//uart1
 
         }
@@ -8517,11 +8599,12 @@ void uart_init_all(void)
 
 void audio_play_one_mp3(int num)
 {
+    audio_play_mp3_task =1;
     DB_PR("\r\n22---mp3 num=%d----\r\n",num);
     DB_PR("\r\n22---mp3 audio_play_mp3_stop=%d----\r\n",audio_play_mp3_stop);
     DB_PR("\r\n22---mp3 audio_play_mp3_over=%d----\r\n",audio_play_mp3_over);
     //if(NULL!=&num)
-    if(audio_play_mp3_stop==0)
+    if(audio_play_mp3_stop==0)//kaiguan
     {
         DB_PR("\r\n33---mp3 num=%d----\r\n",num);
         //while (1) 
@@ -8533,12 +8616,12 @@ void audio_play_one_mp3(int num)
                 audio_play_mp3_over =0;
                 DB_PR("22---audio_play_mp3_over=%d----\r\n",audio_play_mp3_over);
 
-                audio_pipeline_stop(pipeline);
-                audio_pipeline_wait_for_stop(pipeline);
-                audio_pipeline_terminate(pipeline);
-                audio_pipeline_reset_ringbuffer(pipeline);
-                audio_pipeline_reset_elements(pipeline);
-                DB_PR("[2.6-b2] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)\r\n");
+                // audio_pipeline_stop(pipeline);
+                // audio_pipeline_wait_for_stop(pipeline);
+                // audio_pipeline_terminate(pipeline);
+                // audio_pipeline_reset_ringbuffer(pipeline);
+                // audio_pipeline_reset_elements(pipeline);
+                // DB_PR("[2.6-b2] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)\r\n");
                 audio_element_set_uri(tone_stream_reader, tone_uri[num]);//TONE_TYPE_OPEN
                 audio_pipeline_run(pipeline);  
 
@@ -8553,7 +8636,8 @@ void audio_play_one_mp3(int num)
     
 
     vTaskDelay(1);
-    vTaskDelete(NULL);
+    audio_play_mp3_task =0;
+    vTaskDelete(taskhandle_mp3);
 
 }
 
@@ -8713,11 +8797,11 @@ void audio_init(void)
 
 
 
-            // audio_pipeline_stop(pipeline);
-            // audio_pipeline_wait_for_stop(pipeline);
-            // audio_pipeline_terminate(pipeline);
-            // audio_pipeline_reset_ringbuffer(pipeline);
-            // audio_pipeline_reset_elements(pipeline);
+            audio_pipeline_stop(pipeline);
+            audio_pipeline_wait_for_stop(pipeline);
+            audio_pipeline_terminate(pipeline);
+            audio_pipeline_reset_ringbuffer(pipeline);
+            audio_pipeline_reset_elements(pipeline);
             audio_play_mp3_over=1;
             DB_PR("00---audio_play_mp3_over=%d----\r\n",audio_play_mp3_over);
 
@@ -9147,16 +9231,16 @@ static void gpio_task_example1(void* arg)
         
         DB_PR("------------system heart-----------\r\n");
 
-        vTaskDelay(1000 / portTICK_PERIOD_MS);//off   del
+        vTaskDelay(1000 / portTICK_PERIOD_MS);//on 
         // gpio_set_level(LED_BLUE, 0);
         gpio_set_level(LED_GRREN, 0);
         // gpio_set_level(LED_RED, 0);
 
 
-        vTaskDelay(100 / portTICK_PERIOD_MS);//on
-        // gpio_set_level(LED_BLUE, 1);
-        gpio_set_level(LED_GRREN, 1);
-        // gpio_set_level(LED_RED, 1);
+        // vTaskDelay(100 / portTICK_PERIOD_MS);//off del
+        // // gpio_set_level(LED_BLUE, 1);
+        // gpio_set_level(LED_GRREN, 1);
+        // // gpio_set_level(LED_RED, 1);
 
     }
     vTaskDelete(NULL);
@@ -9270,7 +9354,7 @@ void app_main(void)
     gpio_set_direction(LED_RED, GPIO_MODE_OUTPUT);
     gpio_set_level(LED_RED, 1);
 
-    xTaskCreate(gpio_task_example1, "gpio_task_example1", 2048, NULL, 10, NULL);
+    xTaskCreate(gpio_task_example1, "gpio_task_example1", 2048, NULL, 10, &taskhandle_temp);
 
     // gpio_pad_select_gpio(emac->int_gpio_num);
     // gpio_set_direction(emac->int_gpio_num, GPIO_MODE_INPUT);
