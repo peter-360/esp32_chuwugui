@@ -2792,8 +2792,26 @@ guimen_set_fail:
                                     // DB_PR("请输入字符串shou:");
                                     // gets(shou);
                                     p = q = (char*)tx_Buffer2;
+                                    while('-' == *p)    
+                                    {
+                                        *p =0;
+                                        p=p+1;
+                                        q=p;
+                                        //DB_PR("0-a *p=%02x\r\n",*p);//0x2d
+                                    }
+                                    DB_PR("0-b *p=%02x\r\n\r\n",*p);//0x2d
+
                                     while( NULL != (p = strchr(p,'-')))    
                                     {
+                                        
+                                        if(*(p-1) == '-')
+                                        {
+                                            DB_PR("0-c\r\n\r\n");//0x2d
+                                            *(p-1)='\0';
+                                            p=p+1;
+                                            q=p;
+                                            continue;
+                                        }
                                         strncpy(show[i],q,p-q);
                                         show[i][p-q] = '\0';
 
@@ -2884,17 +2902,44 @@ guimen_set_fail:
                                                     shengyu_da_max++;
                                                     shengyu_zhong_max--;
                                                     //shengyu_xiao_max--;
-                                                    shengyu_da ++;
-                                                    shengyu_zhong--;
+
+                                                    if((database_gz[database_cw.dIndx].state_gz ==0) //no use
+                                                        &&(database_gz[database_cw.dIndx].lock == 0)
+                                                        &&(database_gz[database_cw.dIndx].changqi == 0))
+                                                    {
+                                                        DB_PR("--no use--.\r\n");   
+                                                        shengyu_da ++;
+                                                        shengyu_zhong--;
+                                                    }
+                                                    else
+                                                    {
+                                                        DB_PR("--on use--.\r\n");   
+                                                    }
+                                                    
+                                                    
+
                                                     //shengyu_xiao --;
                                                     break;
                                                 case 3:
                                                     shengyu_da_max++;
                                                     //shengyu_zhong_max--;
                                                     shengyu_xiao_max--;
-                                                    shengyu_da ++;
-                                                    //shengyu_zhong--;
-                                                    shengyu_xiao --;
+
+                                                    if((database_gz[database_cw.dIndx].state_gz ==0) //no use
+                                                        &&(database_gz[database_cw.dIndx].lock == 0)
+                                                        &&(database_gz[database_cw.dIndx].changqi == 0))
+                                                    {
+                                                        DB_PR("--no use--.\r\n");   
+
+                                                        shengyu_da ++;
+                                                        //shengyu_zhong--;
+                                                        shengyu_xiao --;
+                                                    }
+                                                    else
+                                                    {
+                                                        DB_PR("--on use--.\r\n");   
+                                                    }
+
                                                     break;
         
                                                 default:
@@ -3010,8 +3055,26 @@ guimen_set_fail:
                                     // DB_PR("请输入字符串shou:");
                                     // gets(shou);
                                     p = q = (char*)tx_Buffer2;
+                                    while('-' == *p)    
+                                    {
+                                        *p =0;
+                                        p=p+1;
+                                        q=p;
+                                        //DB_PR("0-a *p=%02x\r\n",*p);//0x2d
+                                    }
+                                    DB_PR("0-b *p=%02x\r\n\r\n",*p);//0x2d
+
                                     while( NULL != (p = strchr(p,'-')))    
                                     {
+                                        
+                                        if(*(p-1) == '-')
+                                        {
+                                            DB_PR("0-c\r\n\r\n");//0x2d
+                                            *(p-1)='\0';
+                                            p=p+1;
+                                            q=p;
+                                            continue;
+                                        }
                                         strncpy(show[i],q,p-q);
                                         show[i][p-q] = '\0';
 
@@ -3097,9 +3160,22 @@ guimen_set_fail:
                                                     shengyu_da_max--;
                                                     shengyu_zhong_max++;
                                                     //shengyu_xiao_max--;
-                                                    shengyu_da --;
-                                                    shengyu_zhong++;
-                                                    //shengyu_xiao --;
+
+
+                                                    if((database_gz[database_cw.dIndx].state_gz ==0) //no use
+                                                        &&(database_gz[database_cw.dIndx].lock == 0)
+                                                        &&(database_gz[database_cw.dIndx].changqi == 0))
+                                                    {
+                                                        DB_PR("--no use--.\r\n");   
+                                                        shengyu_da --;
+                                                        shengyu_zhong++;
+                                                        //shengyu_xiao --;
+                                                    }
+                                                    else
+                                                    {
+                                                        DB_PR("--on use--.\r\n");   
+                                                    }
+
 
                                                     break;
                                                 case 2:
@@ -3115,9 +3191,19 @@ guimen_set_fail:
                                                     //shengyu_zhong_max--;
                                                     shengyu_xiao_max--;
 
-                                                    shengyu_zhong ++;
-                                                    //shengyu_zhong--;
-                                                    shengyu_xiao --;
+                                                    if((database_gz[database_cw.dIndx].state_gz ==0) //no use
+                                                        &&(database_gz[database_cw.dIndx].lock == 0)
+                                                        &&(database_gz[database_cw.dIndx].changqi == 0))
+                                                    {
+                                                        shengyu_zhong ++;
+                                                        //shengyu_zhong--;
+                                                        shengyu_xiao --;
+                                                    }
+                                                    else
+                                                    {
+                                                        DB_PR("--on use--.\r\n");   
+                                                    }
+
                                                     break;
         
                                                 default:
@@ -3232,8 +3318,26 @@ guimen_set_fail:
                                     // DB_PR("请输入字符串shou:");
                                     // gets(shou);
                                     p = q = (char*)tx_Buffer2;
+                                    while('-' == *p)    
+                                    {
+                                        *p =0;
+                                        p=p+1;
+                                        q=p;
+                                        //DB_PR("0-a *p=%02x\r\n",*p);//0x2d
+                                    }
+                                    DB_PR("0-b *p=%02x\r\n\r\n",*p);//0x2d
+
                                     while( NULL != (p = strchr(p,'-')))    
                                     {
+                                        
+                                        if(*(p-1) == '-')
+                                        {
+                                            DB_PR("0-c\r\n\r\n");//0x2d
+                                            *(p-1)='\0';
+                                            p=p+1;
+                                            q=p;
+                                            continue;
+                                        }
                                         strncpy(show[i],q,p-q);
                                         show[i][p-q] = '\0';
 
@@ -3318,18 +3422,42 @@ guimen_set_fail:
                                                     shengyu_da_max--;
                                                     //shengyu_zhong_max++;
                                                     shengyu_xiao_max++;
-                                                    shengyu_da --;
-                                                    //shengyu_zhong++;
-                                                    shengyu_xiao ++;
+
+
+                                                    if((database_gz[database_cw.dIndx].state_gz ==0) //no use
+                                                        &&(database_gz[database_cw.dIndx].lock == 0)
+                                                        &&(database_gz[database_cw.dIndx].changqi == 0))
+                                                    {
+                                                        shengyu_da --;
+                                                        //shengyu_zhong++;
+                                                        shengyu_xiao ++;
+                                                    }
+                                                    else
+                                                    {
+                                                        DB_PR("--on use--.\r\n");   
+                                                    }
+
 
                                                     break;
                                                 case 2:
                                                     //shengyu_da_max++;
                                                     shengyu_zhong_max--;
                                                     shengyu_xiao_max++;
-                                                    //shengyu_da ++;
-                                                    shengyu_zhong--;
-                                                    shengyu_xiao ++;
+
+
+                                                    if((database_gz[database_cw.dIndx].state_gz ==0) //no use
+                                                        &&(database_gz[database_cw.dIndx].lock == 0)
+                                                        &&(database_gz[database_cw.dIndx].changqi == 0))
+                                                    {
+                                                        //shengyu_da ++;
+                                                        shengyu_zhong--;
+                                                        shengyu_xiao ++;
+                                                    }
+                                                    else
+                                                    {
+                                                        DB_PR("--on use--.\r\n");   
+                                                    }
+
                                                     break;
                                                 case 3:
                                                     // shengyu_zhong_max++;
@@ -4899,6 +5027,16 @@ wuci_xmh_unchangqi:
                                     
                                     memcpy( mima_number_a1,data_rx_t+7 ,6);
 
+                                    for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
+                                        DB_PR("0x%.2X ", (uint8_t)data_rx_t[i]);
+                                        if(data_rx_t[i] == 0xFF)
+                                        {
+                                            DB_PR("--no--mima_weishu 1---.\r\n");
+                                            break;
+                                        }
+                                    }
+                                    DB_PR("\r\n");
+
 
                                     DB_PR("mima_number=");
                                     uart0_debug_str(mima_number_a1,6);
@@ -4928,7 +5066,7 @@ wuci_xmh_unchangqi:
                                 {
                                     DB_PR("-------1 - mima weishu err--------.\r\n");
                                 }
-                                
+                                // send_cmd_to_lcd_bl_len(0x11e0,(uint8_t*)buff_t,30+5);//key
                                 break;
 
                             case 0x11f0:
@@ -4948,6 +5086,16 @@ wuci_xmh_unchangqi:
                                     
                                     mima_weishu_ok_a1 =0;
                                     memcpy( mima_number_a2,data_rx_t+7 ,6);
+
+                                    for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
+                                        DB_PR("0x%.2X ", (uint8_t)data_rx_t[i]);
+                                        if(data_rx_t[i] == 0xFF)
+                                        {
+                                            DB_PR("--no--mima_weishu 2---.\r\n");
+                                            break;
+                                        }
+                                    }
+                                    DB_PR("\r\n");
 
                                     DB_PR("mima_number1=");
                                     uart0_debug_str(mima_number_a1,6);
@@ -4994,6 +5142,8 @@ wuci_xmh_unchangqi:
                                     DB_PR("-----2-----[ * ] gai -mima success");
                                     nvs_wr_mima_number_adm(1);
 
+                                    send_cmd_to_lcd_bl_len(0x11e0,(uint8_t*)buff_t,30+5);//key
+                                    send_cmd_to_lcd_bl_len(0x11f0,(uint8_t*)buff_t,30+5);//key2
 
                                 }
                                 else
@@ -5011,8 +5161,6 @@ done_mima_nosame:
 
                                 // send_cmd_to_lcd_bl(0x11e0,0);//key
                                 // send_cmd_to_lcd_bl(0x11f0,0);//key2
-                                send_cmd_to_lcd_bl_len(0x11e0,(uint8_t*)buff_t,30+5);//key
-                                send_cmd_to_lcd_bl_len(0x11f0,(uint8_t*)buff_t,30+5);//key2
 
                                 break;
 
