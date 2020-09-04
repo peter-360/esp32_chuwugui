@@ -32,3 +32,7 @@ Load and run the example. Use buttons to control how audio is played:
 - Use [Play] to start, pause and resume playback.
 - Adjust sound volume with [Vol-] or [Vol+].
 - To stop the pipeline press [Set].
+
+
+
+NVS MAX: 0x644000

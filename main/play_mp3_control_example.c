@@ -91,6 +91,7 @@ u8 audio_play_mp3_over;
 
 void audio_play_my_mp3(void);
 void audio_play_one_mp3(int num);
+void simple_ota_example_task(void *pvParameter);
 // static const char *TAG = "PLAY_MP3_FLASH";
 
 /*
@@ -5185,7 +5186,6 @@ done_mima_nosame:
 
                             case 0x1200:
                                 DB_PR("--sound setting--.\r\n");
-                                
                                 if(02== data_rx_t[8])
                                 {
                                     DB_PR("-------yuyin off-----------.\r\n");
@@ -5210,6 +5210,7 @@ done_mima_nosame:
 
                             case 0x12f0://mp3 switch
                                 DB_PR("---mp3 switch---.\r\n");   
+                                xTaskCreate(&simple_ota_example_task, "ota_example_task", 8192, NULL, 5, NULL);
                                 // send_cmd_to_lcd_bl_len(0x10c0,(uint8_t*)buff_t,2*2+5);//key
                                 if(audio_play_mp3_stop ==0)
                                 {
@@ -9420,7 +9421,7 @@ static void gpio_task_example1(void* arg)
 #include "tcpip_adapter.h"
 #include "esp_smartconfig.h"
 
-void simple_ota_example_task(void *pvParameter);
+
 /* FreeRTOS event group to signal when we are connected & ready to make a request */
 static EventGroupHandle_t s_wifi_event_group;
 
@@ -9503,7 +9504,7 @@ static void smartconfig_example_task(void * parm)
         uxBits = xEventGroupWaitBits(s_wifi_event_group, CONNECTED_BIT | ESPTOUCH_DONE_BIT, true, false, portMAX_DELAY); 
         if(uxBits & CONNECTED_BIT) {
             DB_PR( "WiFi Connected to ap\r\n");
-            xTaskCreate(&simple_ota_example_task, "ota_example_task", 8192, NULL, 5, NULL);
+            // xTaskCreate(&simple_ota_example_task, "ota_example_task", 8192, NULL, 5, NULL);
         }
         if(uxBits & ESPTOUCH_DONE_BIT) {
             DB_PR( "smartconfig over\r\n");
@@ -9564,10 +9565,10 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
         DB_PR(  "HTTP_EVENT_HEADER_SENT\r\n");
         break;
     case HTTP_EVENT_ON_HEADER:
-        DB_PR(  "HTTP_EVENT_ON_HEADER, key=%s, value=%s", evt->header_key, evt->header_value);
+        DB_PR(  "HTTP_EVENT_ON_HEADER, key=%s, value=%s\r\n", evt->header_key, evt->header_value);
         break;
     case HTTP_EVENT_ON_DATA:
-        DB_PR(  "HTTP_EVENT_ON_DATA, len=%d", evt->data_len);
+        DB_PR(  "HTTP_EVENT_ON_DATA, len=%d\r\n", evt->data_len);
         break;
     case HTTP_EVENT_ON_FINISH:
         DB_PR(  "HTTP_EVENT_ON_FINISH\r\n");
