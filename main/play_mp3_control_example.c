@@ -84,7 +84,7 @@ TaskHandle_t taskhandle_temp= NULL;
 TaskHandle_t taskhandle_mp3 = NULL;
 TaskHandle_t taskhandle_uart2 = NULL;
 esp_timer_handle_t oneshot_timer;
-
+bool wifi_connected_flag;
 
 u8 audio_play_mp3_over;
 
@@ -5218,7 +5218,6 @@ done_mima_nosame:
 
                             case 0x12f0://mp3 switch
                                 DB_PR("---mp3 switch---.\r\n");   
-                                xTaskCreate(&simple_ota_example_task, "ota_example_task", 8192, NULL, 5, NULL);
                                 // send_cmd_to_lcd_bl_len(0x10c0,(uint8_t*)buff_t,2*2+5);//key
                                 if(audio_play_mp3_stop ==0)
                                 {
@@ -5433,9 +5432,25 @@ done_mima_nosame:
                                     send_cmd_to_lcd_pic(0x001d);
                                     DB_PR("--2 changqi--.\r\n");  
                                 }
-                                
-
                                 break;
+
+
+                            case 0x20A0://
+                                DB_PR("---firmware shengji request---.\r\n");   
+                                if(1==wifi_connected_flag)
+                                {
+                                    xTaskCreate(&simple_ota_example_task, "ota_example_task", 8192, NULL, 5, NULL);
+                                }
+                                else
+                                {
+                                    DB_PR("---wifi discon---.\r\n");   
+                                    send_cmd_to_lcd_pic(0x0054);
+                                }
+                                
+                                
+                                
+                                break;
+
 
 //-----------------------------------------cun-----------------------------------------------------
                             case 0x2080://
@@ -9448,6 +9463,8 @@ static void event_handler(void* arg, esp_event_base_t event_base,
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         xTaskCreate(smartconfig_example_task, "smartconfig_example_task", 4096, NULL, 3, NULL);
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        wifi_connected_flag =0;
+        DB_PR("-2-wifi_connected_flag =%d-----.\r\n",wifi_connected_flag);
         esp_wifi_connect();
         xEventGroupClearBits(s_wifi_event_group, CONNECTED_BIT);
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
@@ -9533,6 +9550,10 @@ static void smartconfig_example_task(void * parm)
         }
         if(uxBits & ESPTOUCH_DONE_BIT) {
             DB_PR( "smartconfig over\r\n");
+
+            wifi_connected_flag =1;
+            DB_PR("-1-wifi_connected_flag =%d-----.\r\n",wifi_connected_flag);
+
             esp_smartconfig_stop();
             vTaskDelete(NULL);
         }
@@ -9582,6 +9603,7 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
     switch (evt->event_id) {
     case HTTP_EVENT_ERROR:
         DB_PR(  "HTTP_EVENT_ERROR\r\n");
+        send_cmd_to_lcd_pic(0x0054);
         break;
     case HTTP_EVENT_ON_CONNECTED:
         DB_PR(  "HTTP_EVENT_ON_CONNECTED\r\n");
@@ -9608,6 +9630,7 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
 void simple_ota_example_task(void *pvParameter)
 {
     DB_PR(  "Starting OTA example\r\n");
+    send_cmd_to_lcd_pic(0x0057);
 
     esp_http_client_config_t config = {
         .url = CONFIG_EXAMPLE_FIRMWARE_UPGRADE_URL,//"192.168.10.108",//
@@ -9635,8 +9658,12 @@ void simple_ota_example_task(void *pvParameter)
 
     esp_err_t ret = esp_https_ota(&config);
     if (ret == ESP_OK) {
+        send_cmd_to_lcd_pic(0x0058);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        DB_PR(  "Firmware upgrade ok\r\n");
         esp_restart();
     } else {
+        send_cmd_to_lcd_pic(0x0054);
         DB_PR(  "Firmware upgrade failed\r\n");
     }
     while (1) {
