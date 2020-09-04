@@ -9,6 +9,8 @@ typedef enum {
     TONE_TYPE_KAIJI,
     TONE_TYPE_OPEN,
     TONE_TYPE_SUODING,
+    TONE_TYPE_WIFI_CON,
+    TONE_TYPE_WIFI_DISCON,
     TONE_TYPE_MAX,
 } tone_type_t;
 

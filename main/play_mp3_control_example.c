@@ -5028,36 +5028,42 @@ wuci_xmh_unchangqi:
                                     
                                     memcpy( mima_number_a1,data_rx_t+7 ,6);
 
-                                    for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
-                                        DB_PR("0x%.2X ", (uint8_t)data_rx_t[i]);
-                                        if(data_rx_t[i] == 0xFF)
-                                        {
-                                            DB_PR("--no--mima_weishu 1---.\r\n");
-                                            break;
-                                        }
-                                    }
-                                    DB_PR("\r\n");
+
 
 
                                     DB_PR("mima_number=");
                                     uart0_debug_str(mima_number_a1,6);
 
-                                    if(0==memcmp(mima_number_a1,buff_t,6))
-                                    {
-                                        mima_weishu_ok_a1 =0;
-                                        DB_PR("------mima_number_a1 all=0-------.\r\n");
-                                        break;
-                                    }
+                                    // if(0==memcmp(mima_number_a1,buff_t,6))
+                                    // {
+                                    //     mima_weishu_ok_a1 =0;
+                                    //     DB_PR("------mima_number_a1 all=0-------.\r\n");
+                                    //     send_cmd_to_lcd_pic(0x0053);
+                                    //     break;
+                                    // }
 
-                                    for (int i = 7; i < 7+ data_rx_t[6] *2 -2 ; i++) {
+
+                                    for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
                                         DB_PR("0x%.2X ", (uint8_t)data_rx_t[i]);
-                                        if(data_rx_t[i] == 0xFF)
+                                        if((data_rx_t[i] == 0xFF)
+                                            ||(data_rx_t[i] == 0x00))
                                         {
                                             mima_weishu_ok_a1 =0;
-                                            DB_PR("--no--mima_weishu_ok_a1=%d---.\r\n",mima_weishu_ok_a1);
+                                            send_cmd_to_lcd_pic(0x0053);
+                                            DB_PR("--no--mima_weishu 1---.\r\n");
+                                            break;
                                         }
                                     }
                                     DB_PR("\r\n");
+                                    // for (int i = 7; i < 7+ data_rx_t[6] *2 -2 ; i++) {
+                                    //     DB_PR("0x%.2X ", (uint8_t)data_rx_t[i]);
+                                    //     if(data_rx_t[i] == 0xFF)
+                                    //     {
+                                    //         mima_weishu_ok_a1 =0;
+                                    //         DB_PR("--no--mima_weishu_ok_a1=%d---.\r\n",mima_weishu_ok_a1);
+                                    //     }
+                                    // }
+                                    // DB_PR("\r\n");
 
                                     if(mima_weishu_ok_a1 == 1)
                                         DB_PR("-yes-mima_weishu_ok_a1=%d---.\r\n",mima_weishu_ok_a1);
@@ -5090,8 +5096,10 @@ wuci_xmh_unchangqi:
 
                                     for (int i = 7; i < 7+ data_rx_t[6] *2 ; i++) {
                                         DB_PR("0x%.2X ", (uint8_t)data_rx_t[i]);
-                                        if(data_rx_t[i] == 0xFF)
+                                        if((data_rx_t[i] == 0xFF)
+                                            ||(data_rx_t[i] == 0x00))
                                         {
+                                            send_cmd_to_lcd_pic(0x0053);
                                             DB_PR("--no--mima_weishu 2---.\r\n");
                                             break;
                                         }
@@ -5106,15 +5114,15 @@ wuci_xmh_unchangqi:
 
 
 
-                                    for (int i = 7; i < 7+ data_rx_t[6] *2 -2 ; i++) {
-                                        DB_PR("0x%.2X ", (uint8_t)data_rx_t[i]);
-                                        if(data_rx_t[i] == 0xFF)
-                                        {
-                                            DB_PR("--no--mima_weishu_ok---.\r\n");
-                                            goto done_mima_nosame;
-                                        }
-                                    }
-                                    DB_PR("\r\n");
+                                    // for (int i = 7; i < 7+ data_rx_t[6] *2 -2 ; i++) {
+                                    //     DB_PR("0x%.2X ", (uint8_t)data_rx_t[i]);
+                                    //     if(data_rx_t[i] == 0xFF)
+                                    //     {
+                                    //         DB_PR("--no--mima_weishu_ok---.\r\n");
+                                    //         goto done_mima_nosame;
+                                    //     }
+                                    // }
+                                    // DB_PR("\r\n");
 
 
                                     uint16_t j=0,k=0;
@@ -9504,6 +9512,23 @@ static void smartconfig_example_task(void * parm)
         uxBits = xEventGroupWaitBits(s_wifi_event_group, CONNECTED_BIT | ESPTOUCH_DONE_BIT, true, false, portMAX_DELAY); 
         if(uxBits & CONNECTED_BIT) {
             DB_PR( "WiFi Connected to ap\r\n");
+            if(audio_play_mp3_task!=0)
+            {
+                audio_play_mp3_task =0;
+                vTaskDelay(20 / portTICK_PERIOD_MS);
+                DB_PR("----111111 -a-----.\r\n");
+                vTaskDelete(taskhandle_mp3);
+                // taskhandle_mp3 =NULL;
+                DB_PR("----111111 -b-----.\r\n");
+                // vTaskDelay(500 / portTICK_PERIOD_MS);
+            }
+            else
+            {
+                DB_PR("----222222 =NULL-----.\r\n");
+            }
+            
+            xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_WIFI_CON, 10, (TaskHandle_t* )&taskhandle_mp3);
+
             // xTaskCreate(&simple_ota_example_task, "ota_example_task", 8192, NULL, 5, NULL);
         }
         if(uxBits & ESPTOUCH_DONE_BIT) {
