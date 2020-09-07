@@ -210,10 +210,10 @@ const char *TAG = "uart_events";
 // #define GPIO_INPUT_IO_ZW_2     (4)
 
 #define GPIO_INPUT_IO_ADMIN     39//4
-#define GPIO_INPUT_IO_ZW_JC     35//5
-#define GPIO_INPUT_PIN_SEL  ((1ULL<<GPIO_INPUT_IO_ADMIN) | (1ULL<<GPIO_INPUT_IO_ZW_JC))
+// #define GPIO_INPUT_IO_ZW_JC     35//5
+#define GPIO_INPUT_PIN_SEL  ((1ULL<<GPIO_INPUT_IO_ADMIN))
 #define ESP_INTR_FLAG_DEFAULT 0
-
+// | (1ULL<<GPIO_INPUT_IO_ZW_JC))
 
 
 bool HandShakeFlag = 0;
@@ -279,7 +279,7 @@ uint8_t flag_rx2;
 
 
 //288//300//310//all kong   480    432
-#define SHENYU_GEZI_MAX 60//50
+#define SHENYU_GEZI_MAX 288//50
 
 //300//all kong
 #define ZHIWEN_PAGE_ID_MAX 120
@@ -9355,19 +9355,73 @@ void IRAM_ATTR gpio_isr_handler(void *arg) {
 
 void KeyInit(uint32_t key_gpio_pin) {
 
-	//配置GPIO，下降沿和上升沿触发中断
-	gpio_config_t io_conf;
-	io_conf.intr_type = GPIO_PIN_INTR_NEGEDGE;
-	io_conf.pin_bit_mask = 1 << key_gpio_pin;
-	io_conf.mode = GPIO_MODE_INPUT;
-	io_conf.pull_up_en = 1;//1;
-	gpio_config(&io_conf);
+	// //配置GPIO，下降沿和上升沿触发中断
+	// gpio_config_t io_conf;
+	// io_conf.intr_type = GPIO_PIN_INTR_NEGEDGE;
+	// io_conf.pin_bit_mask = 1 << key_gpio_pin;
+	// io_conf.mode = GPIO_MODE_INPUT;
+	// io_conf.pull_up_en = 1;//1;
+	// gpio_config(&io_conf);
 
-	gpio_set_intr_type(key_gpio_pin, GPIO_INTR_NEGEDGE);
-	gpio_evt_queue = xQueueCreate(2, sizeof(uint32_t));//10
+	// gpio_set_intr_type(key_gpio_pin, GPIO_INTR_NEGEDGE);
+	// gpio_evt_queue = xQueueCreate(2, sizeof(uint32_t));//10
 
-	gpio_install_isr_service(0);
-	gpio_isr_handler_add(key_gpio_pin, gpio_isr_handler, (void *) key_gpio_pin);
+	// gpio_install_isr_service(0);
+	// gpio_isr_handler_add(key_gpio_pin, gpio_isr_handler, (void *) key_gpio_pin);
+
+    // //remove isr handler for gpio number.
+    // gpio_isr_handler_remove(GPIO_INPUT_IO_ADMIN);
+    // //hook isr handler for specific gpio pin again
+    // gpio_isr_handler_add(GPIO_INPUT_IO_ADMIN, gpio_isr_handler, (void*) GPIO_INPUT_IO_ADMIN);
+
+
+
+    gpio_config_t io_conf;
+    // //disable interrupt
+    // io_conf.intr_type = GPIO_PIN_INTR_DISABLE;
+    // //set as output mode
+    // io_conf.mode = GPIO_MODE_OUTPUT;
+    // //bit mask of the pins that you want to set,e.g.GPIO18/19
+    // io_conf.pin_bit_mask = GPIO_OUTPUT_PIN_SEL;
+    // //disable pull-down mode
+    // io_conf.pull_down_en = 0;
+    // //disable pull-up mode
+    // io_conf.pull_up_en = 0;
+    // //configure GPIO with the given settings
+    // gpio_config(&io_conf);
+
+    //interrupt of rising edge
+    io_conf.intr_type = GPIO_PIN_INTR_NEGEDGE;//GPIO_PIN_INTR_NEGEDGE;//GPIO_PIN_INTR_POSEDGE;
+    //bit mask of the pins, use GPIO39/35 here
+    io_conf.pin_bit_mask = GPIO_INPUT_PIN_SEL;
+    //set as input mode    
+    io_conf.mode = GPIO_MODE_INPUT;
+    //enable pull-up mode
+    io_conf.pull_up_en = 1;//1;//wai jie?
+    gpio_config(&io_conf);
+
+    //change gpio intrrupt type for one pin
+    gpio_set_intr_type(GPIO_INPUT_IO_ADMIN,GPIO_INTR_NEGEDGE );//GPIO_INTR_ANYEDGE  GPIO_PIN_INTR_NEGEDGE no
+
+    //create a queue to handle gpio event from isr
+    gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
+    //start gpio task
+    // xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
+	
+
+    //install gpio isr service
+    gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
+    //hook isr handler for specific gpio pin
+    gpio_isr_handler_add(GPIO_INPUT_IO_ADMIN, gpio_isr_handler, (void*) GPIO_INPUT_IO_ADMIN);
+    //hook isr handler for specific gpio pin
+    //gpio_isr_handler_add(GPIO_INPUT_IO_ZW_JC, gpio_isr_handler, (void*) GPIO_INPUT_IO_ZW_JC);
+
+    //remove isr handler for gpio number.
+    gpio_isr_handler_remove(GPIO_INPUT_IO_ADMIN);
+    //hook isr handler for specific gpio pin again
+    gpio_isr_handler_add(GPIO_INPUT_IO_ADMIN, gpio_isr_handler, (void*) GPIO_INPUT_IO_ADMIN);
+
+
 }
 
 esp_err_t alink_key_scan(TickType_t ticks_to_wait) {
@@ -9411,7 +9465,7 @@ esp_err_t alink_key_scan(TickType_t ticks_to_wait) {
 
 void key_trigger(void *arg) {
 	esp_err_t ret = 0;
-	//KeyInit(KEY_GPIO);
+	KeyInit(KEY_GPIO);
     DB_PR("------------ key_trigger  -----------\r\n");
 	while (1) {
         vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -9918,55 +9972,9 @@ void app_main(void)
 
 
 
-
-    gpio_config_t io_conf;
-    // //disable interrupt
-    // io_conf.intr_type = GPIO_PIN_INTR_DISABLE;
-    // //set as output mode
-    // io_conf.mode = GPIO_MODE_OUTPUT;
-    // //bit mask of the pins that you want to set,e.g.GPIO18/19
-    // io_conf.pin_bit_mask = GPIO_OUTPUT_PIN_SEL;
-    // //disable pull-down mode
-    // io_conf.pull_down_en = 0;
-    // //disable pull-up mode
-    // io_conf.pull_up_en = 0;
-    // //configure GPIO with the given settings
-    // gpio_config(&io_conf);
-
-    //interrupt of rising edge
-    io_conf.intr_type = GPIO_PIN_INTR_NEGEDGE;//GPIO_PIN_INTR_NEGEDGE;//GPIO_PIN_INTR_POSEDGE;
-    //bit mask of the pins, use GPIO39/35 here
-    io_conf.pin_bit_mask = GPIO_INPUT_PIN_SEL;
-    //set as input mode    
-    io_conf.mode = GPIO_MODE_INPUT;
-    //enable pull-up mode
-    io_conf.pull_up_en = 1;//1;//wai jie?
-    gpio_config(&io_conf);
-
-    //change gpio intrrupt type for one pin
-    gpio_set_intr_type(GPIO_INPUT_IO_ADMIN,GPIO_INTR_NEGEDGE );//GPIO_INTR_ANYEDGE  GPIO_PIN_INTR_NEGEDGE no
-
-    //create a queue to handle gpio event from isr
-    gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
-    //start gpio task
-    // xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
-	xTaskCreate(key_trigger, "key_trigger", 1024 * 2, NULL, 10,NULL);
-
-    //install gpio isr service
-    gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
-    //hook isr handler for specific gpio pin
-    gpio_isr_handler_add(GPIO_INPUT_IO_ADMIN, gpio_isr_handler, (void*) GPIO_INPUT_IO_ADMIN);
-    //hook isr handler for specific gpio pin
-    //gpio_isr_handler_add(GPIO_INPUT_IO_ZW_JC, gpio_isr_handler, (void*) GPIO_INPUT_IO_ZW_JC);
-
-    //remove isr handler for gpio number.
-    gpio_isr_handler_remove(GPIO_INPUT_IO_ADMIN);
-    //hook isr handler for specific gpio pin again
-    gpio_isr_handler_add(GPIO_INPUT_IO_ADMIN, gpio_isr_handler, (void*) GPIO_INPUT_IO_ADMIN);
-
     printf("-----gpio init----- ... \r\n");
 
-
+    xTaskCreate(key_trigger, "key_trigger", 1024 * 2, NULL, 10,NULL);
 
     //log_debug();
     if(1)
