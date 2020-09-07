@@ -69,7 +69,7 @@
 
 
 
-
+static void smartconfig_example_task(void * parm);
 static void lock_all_open_task();
 static void lock_all_clear_task();
 void tongbu_da(void);
@@ -85,6 +85,7 @@ TaskHandle_t taskhandle_mp3 = NULL;
 TaskHandle_t taskhandle_uart2 = NULL;
 esp_timer_handle_t oneshot_timer;
 bool wifi_connected_flag;
+bool wifi_peiwang_over_flag;
 
 u8 audio_play_mp3_over;
 
@@ -278,7 +279,7 @@ uint8_t flag_rx2;
 
 
 //288//300//310//all kong   480    432
-#define SHENYU_GEZI_MAX 50
+#define SHENYU_GEZI_MAX 60//50
 
 //300//all kong
 #define ZHIWEN_PAGE_ID_MAX 120
@@ -9334,65 +9335,185 @@ void zhiwen_init(void )
 }
 
 
+
+
+
+
+typedef enum {
+	KEY_SHORT_PRESS = 1, KEY_LONG_PRESS,
+} alink_key_t;
+
+//宏定义一个GPIO
+#define KEY_GPIO    39//14 4
+
 static xQueueHandle gpio_evt_queue = NULL;
 
-static void IRAM_ATTR gpio_isr_handler(void* arg)
-{
-    uint32_t gpio_num = (uint32_t) arg;
-    xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
+void IRAM_ATTR gpio_isr_handler(void *arg) {
+	uint32_t gpio_num = (uint32_t) arg;
+	xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
 }
 
-static void gpio_task_example(void* arg)
-{
-    uint32_t io_num;
-    for(;;) {
-        if(xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) {
-            DB_PR("GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));//yizhi dayin????
+void KeyInit(uint32_t key_gpio_pin) {
 
-            if((io_num==GPIO_INPUT_IO_ADMIN)
-                &&(gpio_get_level(io_num)==0))
-            {
-                DB_PR("------------admin mode-----------\r\n");// no print???
-                send_cmd_to_lcd_pic(0x0011);
-                vTaskDelay(1000 / portTICK_PERIOD_MS);
-                gpio_set_level(LED_BLUE, 0);
-                gpio_set_level(LED_GRREN, 0);
-                gpio_set_level(LED_RED, 0);
+	//配置GPIO，下降沿和上升沿触发中断
+	gpio_config_t io_conf;
+	io_conf.intr_type = GPIO_PIN_INTR_NEGEDGE;
+	io_conf.pin_bit_mask = 1 << key_gpio_pin;
+	io_conf.mode = GPIO_MODE_INPUT;
+	io_conf.pull_up_en = 1;//1;
+	gpio_config(&io_conf);
 
+	gpio_set_intr_type(key_gpio_pin, GPIO_INTR_NEGEDGE);
+	gpio_evt_queue = xQueueCreate(2, sizeof(uint32_t));//10
 
-                vTaskDelay(1000 / portTICK_PERIOD_MS);
-                gpio_set_level(LED_BLUE, 1);
-                gpio_set_level(LED_GRREN, 1);
-                gpio_set_level(LED_RED, 1);
-
-            }
-            if((io_num==GPIO_INPUT_IO_ZW_JC)
-                &&(gpio_get_level(io_num)==0))
-            {
-                io_shouzhi_down_flag=1;
-                 DB_PR("------------zw chong an-----------\r\n");
-                //send_cmd_to_lcd_pic(0x0011);
-
-
-                // vTaskDelay(1000 / portTICK_PERIOD_MS);
-                // gpio_set_level(LED_BLUE, 0);
-                // gpio_set_level(LED_GRREN, 0);
-                // gpio_set_level(LED_RED, 0);
-
-
-                // vTaskDelay(1000 / portTICK_PERIOD_MS);
-                // gpio_set_level(LED_BLUE, 1);
-                // gpio_set_level(LED_GRREN, 1);
-                // gpio_set_level(LED_RED, 1);
-
-            }
-
-        }
-
-
-    }
-    vTaskDelete(NULL);
+	gpio_install_isr_service(0);
+	gpio_isr_handler_add(key_gpio_pin, gpio_isr_handler, (void *) key_gpio_pin);
 }
+
+esp_err_t alink_key_scan(TickType_t ticks_to_wait) {
+
+	uint32_t io_num;
+	BaseType_t press_key = pdFALSE;
+	BaseType_t lift_key = pdFALSE;
+	int backup_time = 0;
+
+    DB_PR("------------ alink_key_scan  -----------\r\n");
+	while (1) {
+
+		//接收从消息队列发来的消息
+		xQueueReceive(gpio_evt_queue, &io_num, ticks_to_wait);
+
+		//记录下用户按下按键的时间点
+		if (gpio_get_level(io_num) == 0) {
+			press_key = pdTRUE;
+			backup_time = esp_timer_get_time();
+			//如果当前GPIO口的电平已经记录为按下，则开始减去上次按下按键的时间点
+		} else if (press_key) {
+			//记录抬升时间点
+			lift_key = pdTRUE;
+			backup_time = esp_timer_get_time() - backup_time;
+		}
+
+		//近当按下标志位和按键弹起标志位都为1时候，才执行回调
+		if (press_key & lift_key) {
+			press_key = pdFALSE;
+			lift_key = pdFALSE;
+
+			//如果大于1s则回调长按，否则就短按回调
+			if (backup_time > 2000000) {
+				return KEY_LONG_PRESS;
+			} else {
+				return KEY_SHORT_PRESS;
+			}
+		}
+	}
+}
+
+void key_trigger(void *arg) {
+	esp_err_t ret = 0;
+	//KeyInit(KEY_GPIO);
+    DB_PR("------------ key_trigger  -----------\r\n");
+	while (1) {
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+		ret = alink_key_scan(portMAX_DELAY);
+		if (ret == -1)
+			vTaskDelete(NULL);
+
+		switch (ret) {
+		case KEY_SHORT_PRESS:
+			printf("----short-------短按触发回调 ... \r\n");
+            DB_PR("------------admin mode-----------\r\n");// no print???
+            send_cmd_to_lcd_pic(0x0011);
+            vTaskDelay(500 / portTICK_PERIOD_MS);
+            gpio_set_level(LED_BLUE, 0);
+            gpio_set_level(LED_GRREN, 0);
+            gpio_set_level(LED_RED, 0);
+
+
+            vTaskDelay(500 / portTICK_PERIOD_MS);
+            gpio_set_level(LED_BLUE, 1);
+            gpio_set_level(LED_GRREN, 1);
+            gpio_set_level(LED_RED, 1);
+			break;
+
+		case KEY_LONG_PRESS:
+			printf("----long--------长按触发回调 ... \r\n");
+            if(0==wifi_peiwang_over_flag)
+                xTaskCreate(smartconfig_example_task, "smartconfig_example_task", 4096, NULL, 3, NULL);
+			else
+            {
+                printf("-------yi peiwang -------- \r\n");
+            }
+            
+            break;
+
+		default:
+			break;
+		}
+	}
+
+	vTaskDelete(NULL);
+}
+
+// static xQueueHandle gpio_evt_queue = NULL;
+
+// static void IRAM_ATTR gpio_isr_handler(void* arg)
+// {
+//     uint32_t gpio_num = (uint32_t) arg;
+//     xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
+// }
+
+// static void gpio_task_example(void* arg)
+// {
+//     uint32_t io_num;
+//     for(;;) {
+//         if(xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) {
+//             DB_PR("GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));//yizhi dayin????
+
+//             if((io_num==GPIO_INPUT_IO_ADMIN)
+//                 &&(gpio_get_level(io_num)==0))
+//             {
+//                 DB_PR("------------admin mode-----------\r\n");// no print???
+//                 send_cmd_to_lcd_pic(0x0011);
+//                 vTaskDelay(1000 / portTICK_PERIOD_MS);
+//                 gpio_set_level(LED_BLUE, 0);
+//                 gpio_set_level(LED_GRREN, 0);
+//                 gpio_set_level(LED_RED, 0);
+
+
+//                 vTaskDelay(1000 / portTICK_PERIOD_MS);
+//                 gpio_set_level(LED_BLUE, 1);
+//                 gpio_set_level(LED_GRREN, 1);
+//                 gpio_set_level(LED_RED, 1);
+
+//             }
+//             if((io_num==GPIO_INPUT_IO_ZW_JC)
+//                 &&(gpio_get_level(io_num)==0))
+//             {
+//                 io_shouzhi_down_flag=1;
+//                  DB_PR("------------zw chong an-----------\r\n");
+//                 //send_cmd_to_lcd_pic(0x0011);
+
+
+//                 // vTaskDelay(1000 / portTICK_PERIOD_MS);
+//                 // gpio_set_level(LED_BLUE, 0);
+//                 // gpio_set_level(LED_GRREN, 0);
+//                 // gpio_set_level(LED_RED, 0);
+
+
+//                 // vTaskDelay(1000 / portTICK_PERIOD_MS);
+//                 // gpio_set_level(LED_BLUE, 1);
+//                 // gpio_set_level(LED_GRREN, 1);
+//                 // gpio_set_level(LED_RED, 1);
+
+//             }
+
+//         }
+
+
+//     }
+//     vTaskDelete(NULL);
+// }
 
 
 static void gpio_task_example1(void* arg)
@@ -9455,13 +9576,13 @@ static const int CONNECTED_BIT = BIT0;
 static const int ESPTOUCH_DONE_BIT = BIT1;
 //static const char *TAG = "smartconfig_example";
 
-static void smartconfig_example_task(void * parm);
 
 static void event_handler(void* arg, esp_event_base_t event_base, 
                                 int32_t event_id, void* event_data)
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
-        xTaskCreate(smartconfig_example_task, "smartconfig_example_task", 4096, NULL, 3, NULL);
+        DB_PR( "wifi start\r\n");
+        // xTaskCreate(smartconfig_example_task, "smartconfig_example_task", 4096, NULL, 3, NULL);
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         wifi_connected_flag =0;
         DB_PR("-2-wifi_connected_flag =%d-----.\r\n",wifi_connected_flag);
@@ -9521,6 +9642,7 @@ static void initialise_wifi(void)
 
 static void smartconfig_example_task(void * parm)
 {
+    wifi_peiwang_over_flag =1;
     EventBits_t uxBits;
     ESP_ERROR_CHECK( esp_smartconfig_set_type(SC_TYPE_ESPTOUCH) );
     smartconfig_start_config_t cfg = SMARTCONFIG_START_CONFIG_DEFAULT();
@@ -9545,14 +9667,14 @@ static void smartconfig_example_task(void * parm)
             }
             
             xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_WIFI_CON, 10, (TaskHandle_t* )&taskhandle_mp3);
+            wifi_connected_flag =1;
+            DB_PR("-1-wifi_connected_flag =%d-----.\r\n",wifi_connected_flag);
 
             // xTaskCreate(&simple_ota_example_task, "ota_example_task", 8192, NULL, 5, NULL);
         }
         if(uxBits & ESPTOUCH_DONE_BIT) {
             DB_PR( "smartconfig over\r\n");
-
-            wifi_connected_flag =1;
-            DB_PR("-1-wifi_connected_flag =%d-----.\r\n",wifi_connected_flag);
+            wifi_peiwang_over_flag =0;
 
             esp_smartconfig_stop();
             vTaskDelete(NULL);
@@ -9822,12 +9944,13 @@ void app_main(void)
     gpio_config(&io_conf);
 
     //change gpio intrrupt type for one pin
-    gpio_set_intr_type(GPIO_INPUT_IO_ADMIN, GPIO_PIN_INTR_NEGEDGE );//GPIO_INTR_ANYEDGE
+    gpio_set_intr_type(GPIO_INPUT_IO_ADMIN,GPIO_INTR_NEGEDGE );//GPIO_INTR_ANYEDGE  GPIO_PIN_INTR_NEGEDGE no
 
     //create a queue to handle gpio event from isr
     gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
     //start gpio task
-    xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
+    // xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
+	xTaskCreate(key_trigger, "key_trigger", 1024 * 2, NULL, 10,NULL);
 
     //install gpio isr service
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
@@ -9841,6 +9964,7 @@ void app_main(void)
     //hook isr handler for specific gpio pin again
     gpio_isr_handler_add(GPIO_INPUT_IO_ADMIN, gpio_isr_handler, (void*) GPIO_INPUT_IO_ADMIN);
 
+    printf("-----gpio init----- ... \r\n");
 
 
 
