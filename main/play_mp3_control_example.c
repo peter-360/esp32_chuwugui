@@ -9737,6 +9737,72 @@ static void smartconfig_example_task(void * parm)
 }
 
 
+#include "esp_http_client.h"
+esp_err_t _http_event_handler(esp_http_client_event_t *evt);
+
+static void http_rest_with_hostname_path()
+{
+    esp_http_client_config_t config = {
+        .host = "express.admin.modoubox.com",
+        .path = "/api_cabinet/order/checkPaid",
+        .transport_type = HTTP_TRANSPORT_OVER_TCP,
+        .event_handler = _http_event_handler,
+    };
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+
+	printf("\r\n\r\n\r\n");
+    esp_err_t err;
+
+    // POST
+    //const char *post_data = "field1=value1&field2=value2";
+	const char *post_data = "order_code=8268780-1809-32834373";
+    esp_http_client_set_url(client, "/api_cabinet/order/checkPaid");///post
+    esp_http_client_set_method(client, HTTP_METHOD_POST);
+    esp_http_client_set_post_field(client, post_data, strlen(post_data));
+    err = esp_http_client_perform(client);
+    if (err == ESP_OK) {
+        ESP_LOGI(TAG, "HTTP POST Status = %d, content_length = %d",
+                esp_http_client_get_status_code(client),
+                esp_http_client_get_content_length(client));
+        int len =  esp_http_client_get_content_length(client);
+        int read_len = 0;
+        char buf[2048] = {0};
+        read_len = esp_http_client_read(client, buf, 500);
+        printf("----2----recv data len:%d,content_length: %d,\r\n%s\r\n",read_len,len,buf);
+    } else {
+        ESP_LOGE(TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
+    }
+
+    printf("\r\n");
+    esp_http_client_cleanup(client);
+}
+
+
+
+
+
+
+
+
+
+static void http_test_task(void *pvParameters)
+{
+    // http_rest_with_url();
+    http_rest_with_hostname_path();
+
+
+    ESP_LOGI(TAG, "Finish http example");
+    vTaskDelete(NULL);
+}
+
+
+
+
+
+
+
+
+
 
 /* OTA example
 
@@ -9805,14 +9871,20 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
 
 void simple_ota_example_task(void *pvParameter)
 {
+
+    xTaskCreate(&http_test_task, "http_test_task", 8192, NULL, 5, NULL);
+
+
     DB_PR(  "Starting OTA example\r\n");
     send_cmd_to_lcd_pic(0x0057);
 
     esp_http_client_config_t config = {
-        .url = CONFIG_EXAMPLE_FIRMWARE_UPGRADE_URL,//"192.168.10.108",//
+        .url = "http://192.168.10.101:7800/hello-world.bin",//CONFIG_EXAMPLE_FIRMWARE_UPGRADE_URL,//"192.168.10.108",//
         .cert_pem = (char *)server_cert_pem_start,
         .event_handler = _http_event_handler,
     };
+
+    DB_PR("----CONFIG_EXAMPLE_FIRMWARE_UPGRADE_URL=%s\r\n",CONFIG_EXAMPLE_FIRMWARE_UPGRADE_URL);
 
 #ifdef CONFIG_EXAMPLE_FIRMWARE_UPGRADE_URL_FROM_STDIN
     char url_buf[OTA_URL_SIZE];
