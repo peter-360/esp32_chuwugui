@@ -67,7 +67,14 @@
 #include "esp_timer.h"
 
 
+#include "esp_flash.h"
+#include "driver/spi_common_internal.h"
+#include "esp_flash_spi_init.h"
 
+#include "esp_ota_ops.h"
+#include "esp_http_client.h"
+#include "esp_flash_partitions.h"
+#include "esp_partition.h"
 
 static void smartconfig_example_task(void * parm);
 static void lock_all_open_task();
@@ -9753,9 +9760,71 @@ static void http_rest_with_hostname_path()
 	printf("\r\n\r\n\r\n");
     esp_err_t err;
 
+
+
+
+
+
+
+
+
+
+    uint32_t flash_id;
+    esp_flash_t* chip=NULL;
+    esp_err_t ret = esp_flash_read_id(chip, &flash_id);
+    // TEST_ESP_OK(ret);
+    printf("ret=%X \n",ret);
+    printf("CHIP_ID=%08X\n",flash_id);
+    // if ((flash_id >> 16) == 0xEF) {
+    //     printf("111111111111 \n");
+    //     // return true;
+    // } else {
+    //     printf("222222222222 \n");
+    //     // return false;
+    // }
+
+    // printf("esp_read_mac(mac, ESP_MAC_WIFI_STA) =%s \n",platform_create_id_string());
+
+    uint8_t mac[6];
+    esp_read_mac(mac, ESP_MAC_WIFI_STA);
+    printf("MAC_ADDR=");
+    for (uint16_t i = 0; i < 6; i++)//15
+    {
+        printf("%02X",mac[i]);
+    }
+    printf(",MAC_TYPE=%d,CHIP_TYPE=esp32",ESP_MAC_WIFI_STA);
+    printf("\n");
+    
+    const esp_partition_t *running = esp_ota_get_running_partition();
+    esp_app_desc_t running_app_info;
+    if (esp_ota_get_partition_description(running, &running_app_info) == ESP_OK) {
+        // ESP_LOGI(TAG, "Running firmware version: %s", running_app_info.version);
+        printf("RUN_FIRM=%s\n", running_app_info.version);
+    }
+    else
+    {
+        printf("get firmware version err\n");
+    }
+    
+
+
+
+
+    char post_data[200]={0};//15
+    // esp_err_t err;
+    sprintf(post_data, "CHIP_ID=%08X&MAC_ADDR=%02X%02X%02X%02X%02X%02X&MAC_TYPE=%02d&CHIP_TYPE=ESP32&RUN_FIRM=%s",
+            flash_id,
+            mac[0],mac[1],mac[2],mac[3],mac[4],mac[5],
+            ESP_MAC_WIFI_STA,
+            running_app_info.version);
+
+    printf("----------post_data=%s---------------",post_data);
+
+
     // POST
     //const char *post_data = "field1=value1&field2=value2";
-	const char *post_data = "order_code=8268780-1809-32834373";
+	// const char *post_data = "order_code=8268780-1809-32834373";
+    // const char *post_data = "field1=value1&field2=value2";
     esp_http_client_set_url(client, "/api_cabinet/order/checkPaid");///post
     esp_http_client_set_method(client, HTTP_METHOD_POST);
     esp_http_client_set_post_field(client, post_data, strlen(post_data));
@@ -10195,6 +10264,56 @@ void app_main(void)
 #endif // CONFIG_EXAMPLE_CONNECT_WIFI
 
     // xTaskCreate(&simple_ota_example_task, "ota_example_task", 8192, NULL, 5, NULL);
+
+
+
+
+
+
+
+
+
+    // uint32_t flash_id;
+    // esp_flash_t* chip=NULL;
+    // esp_err_t ret = esp_flash_read_id(chip, &flash_id);
+    // // TEST_ESP_OK(ret);
+    // printf("ret=%X \n",ret);
+    // printf("CHIP_ID=%08X\n",flash_id);
+    // // if ((flash_id >> 16) == 0xEF) {
+    // //     printf("111111111111 \n");
+    // //     // return true;
+    // // } else {
+    // //     printf("222222222222 \n");
+    // //     // return false;
+    // // }
+
+    // // printf("esp_read_mac(mac, ESP_MAC_WIFI_STA) =%s \n",platform_create_id_string());
+
+    // uint8_t mac[6];
+    // esp_read_mac(mac, ESP_MAC_WIFI_STA);
+    // printf("MAC_ADDR=");
+    // for (uint16_t i = 0; i < 6; i++)//15
+    // {
+    //     printf("%02X",mac[i]);
+    // }
+    // printf(",MAC_TYPE=%d,CHIP_TYPE=esp32",ESP_MAC_WIFI_STA);
+    // printf("\n");
+    
+    // const esp_partition_t *running = esp_ota_get_running_partition();
+    // esp_app_desc_t running_app_info;
+    // if (esp_ota_get_partition_description(running, &running_app_info) == ESP_OK) {
+    //     // ESP_LOGI(TAG, "Running firmware version: %s", running_app_info.version);
+    //     printf("RUN_FIRM=%s\n", running_app_info.version);
+    // }
+    // else
+    // {
+    //     printf("get firmware version err\n");
+    // }
+    
+
+
+
+
 
 
 
