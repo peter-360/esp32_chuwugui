@@ -76,6 +76,10 @@
 #include "esp_flash_partitions.h"
 #include "esp_partition.h"
 
+
+
+#include "esp_wifi.h"
+
 static void smartconfig_example_task(void * parm);
 static void lock_all_open_task();
 static void lock_all_clear_task();
@@ -9596,14 +9600,37 @@ void key_trigger(void *arg) {
 
 		case KEY_LONG_PRESS:
 			printf("----long--------长按触发回调 ... \r\n");
-            if(0==wifi_peiwang_over_flag)
+            DB_PR("------------peiwang gai wifimima-----------\r\n");
+            // if(0==wifi_peiwang_over_flag)
+            {
+                // ESP_ERROR_CHECK( esp_wifi_disconnect() );
+                // ESP_ERROR_CHECK(esp_wifi_stop());
+
+
+
+                char ssid[33] = { 0 };
+                char password[65] = { 0 };//wifi_passwd
+                wifi_config_t wifi_config;
+                bzero(&wifi_config, sizeof(wifi_config_t)); /* 将结构体数据清零 */
+                memcpy(wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
+                memcpy(wifi_config.sta.password, password, sizeof(wifi_config.sta.password));
+                ESP_ERROR_CHECK( esp_wifi_disconnect() );
+                ESP_ERROR_CHECK( esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
+
+                // esp_wifi_stop();
+                // esp_wifi_restore();
+                // initialise_wifi();
+                // esp_wifi_deinit();
+                // xEventGroupWaitBits(wifi_event_group, DISCONNECTED_BIT, 0, 1, portTICK_RATE_MS);
+                // esp_wifi_stop
                 //esp_event_handler_unregister
                 //ESP_ERROR_CHECK( esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler) );
                 xTaskCreate(smartconfig_example_task, "smartconfig_example_task", 4096, NULL, 3, NULL);
-			else
-            {
-                printf("-------yi peiwang -------- \r\n");
             }
+			// else
+            // {
+            //     printf("-------yi peiwang -------- \r\n");
+            // }
             
             break;
 
@@ -9748,8 +9775,12 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 {
     static int retry_num = 0;           /* 记录wifi重连次数 */
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
-        esp_wifi_connect();
-        DB_PR( "wifi start\r\n");
+        if(wifi_peiwang_over_flag==0)
+        {
+            esp_wifi_connect();
+            DB_PR( "wifi start connect\r\n");
+        }
+        DB_PR( "wifi start-2\r\n");
         // xTaskCreate(smartconfig_example_task, "smartconfig_example_task", 4096, NULL, 3, NULL);
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         wifi_connected_flag =0;
@@ -9765,12 +9796,18 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         // }
         xEventGroupClearBits(s_wifi_event_group, CONNECTED_BIT);
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        wifi_connected_flag =1;
+        DB_PR("-1-wifi_connected_flag =%d-----.\r\n",wifi_connected_flag);
+        //todo pic
+
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data; /* 获取IP地址信息*/
-        printf("---------got ip:%d.%d.%d.%d \n" , IP2STR(&event->ip_info.ip));  /* 打印ip地址*/
+        printf("--------------got ip:%d.%d.%d.%d--------------\n\n\n" , IP2STR(&event->ip_info.ip));  /* 打印ip地址*/
         retry_num = 0;                                              /* WiFi重连次数清零 */
         xEventGroupSetBits(s_wifi_event_group, CONNECTED_BIT);
     } else if (event_base == SC_EVENT && event_id == SC_EVENT_SCAN_DONE) {
         DB_PR( "Scan done\r\n");
+        //todo pic  app cando
+
     } else if (event_base == SC_EVENT && event_id == SC_EVENT_FOUND_CHANNEL) {
         DB_PR( "Found channel\r\n");
     } else if (event_base == SC_EVENT && event_id == SC_EVENT_GOT_SSID_PSWD) {
@@ -9780,8 +9817,8 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         wifi_config_t wifi_config;
         //uint8_t ssid[33] = { 0 };
         //uint8_t password[65] = { 0 };
-        char ssid[33] = { 0 };
-        char password[65] = { 0 };
+        // char ssid[33] = { 0 };
+        // char password[65] = { 0 };//wifi_passwd
 
         bzero(&wifi_config, sizeof(wifi_config_t));
         memcpy(wifi_config.sta.ssid, evt->ssid, sizeof(wifi_config.sta.ssid));
@@ -9927,8 +9964,8 @@ static void smartconfig_example_task(void * parm)
             }
             
             xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_WIFI_CON, 10, (TaskHandle_t* )&taskhandle_mp3);
-            wifi_connected_flag =1;
-            DB_PR("-1-wifi_connected_flag =%d-----.\r\n",wifi_connected_flag);
+            // wifi_connected_flag =1;
+            // DB_PR("-1-wifi_connected_flag =%d-----.\r\n",wifi_connected_flag);
 
             // xTaskCreate(&simple_ota_example_task, "ota_example_task", 8192, NULL, 5, NULL);
         }
