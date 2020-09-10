@@ -96,7 +96,10 @@ TaskHandle_t taskhandle_mp3 = NULL;
 TaskHandle_t taskhandle_uart2 = NULL;
 esp_timer_handle_t oneshot_timer;
 bool wifi_connected_flag;
-bool wifi_peiwang_over_flag;
+u8 wifi_peiwang_over_flag;
+
+u16 wifi_led_duration_time=300;
+
 
 u8 audio_play_mp3_over;
 
@@ -329,6 +332,9 @@ uint16_t shengyu_all_max=0;//shengyu max admin, guding
     uint16_t shengyu_xiao_max=0;
 
 
+
+char wifi_ssid[33] = { 0 };     /* 定义一个数组用来存储ssid*/
+char wifi_passwd[65] = { 0 };   /* 定义一个数组用来存储passwd */
 
 
 
@@ -829,7 +835,7 @@ esp_err_t save_str_value(const char* name,char* key, char* out_value)
         // ESP_ERROR_CHECK( nvs_set_str(wificfg_nvs_handler,"wifi_passwd",password) );
         // ESP_ERROR_CHECK( nvs_commit(wificfg_nvs_handler) ); /* 提交 */
         // nvs_close(wificfg_nvs_handler);                     /* 关闭 */ 
-        // printf("smartconfig save wifi_cfg to NVS .\n");
+        // DB_PR("smartconfig save wifi_cfg to NVS .\n");
 }
 
 //todo--out_value---
@@ -1796,9 +1802,22 @@ void inputBox_clear(void)
 
 void default_factory_set(void)
 {
+    //wifi mima erase
+    bzero(wifi_ssid, sizeof(wifi_ssid));
+    bzero(wifi_passwd, sizeof(wifi_passwd));
+
+    DB_PR( "-w-SSID:%s\r\n", wifi_ssid);
+    DB_PR( "-w-PASSWORD:%s\r\n", wifi_passwd);
+    /* 将得到的WiFi名称和密码存入NVS*/
+    esp_err_t err = save_str_value(STORAGE_NAMESPACE,"wifi_ssid",wifi_ssid );
+    if (err != ESP_OK) DB_PR("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+    err = save_str_value(STORAGE_NAMESPACE,"wifi_passwd",wifi_passwd );
+    if (err != ESP_OK) DB_PR("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
     u8  ensure;
 	ensure=PS_Empty();//清空指纹库
-
 	if(ensure==0)
 	{
 		//LCD_Fill(0,120,lcddev.width,160,WHITE);
@@ -1929,9 +1948,23 @@ void default_factory_set(void)
 
 void default_factory_set_first(void)
 {
+    //wifi mima erase
+    bzero(wifi_ssid, sizeof(wifi_ssid));
+    bzero(wifi_passwd, sizeof(wifi_passwd));
+
+    DB_PR( "-w-SSID:%s\r\n", wifi_ssid);
+    DB_PR( "-w-PASSWORD:%s\r\n", wifi_passwd);
+    /* 将得到的WiFi名称和密码存入NVS*/
+    esp_err_t err = save_str_value(STORAGE_NAMESPACE,"wifi_ssid",wifi_ssid );
+    if (err != ESP_OK) DB_PR("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+    err = save_str_value(STORAGE_NAMESPACE,"wifi_passwd",wifi_passwd );
+    if (err != ESP_OK) DB_PR("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+
+
     u8  ensure;
 	ensure=PS_Empty();//清空指纹库
-
 	if(ensure==0)
 	{
 		//LCD_Fill(0,120,lcddev.width,160,WHITE);
@@ -9583,7 +9616,7 @@ void key_trigger(void *arg) {
 
 		switch (ret) {
 		case KEY_SHORT_PRESS:
-			printf("----short-------短按触发回调 ... \r\n");
+			DB_PR("----short-------短按触发回调 ... \r\n");
             DB_PR("------------admin mode-----------\r\n");// no print???
             send_cmd_to_lcd_pic(0x0011);
             vTaskDelay(500 / portTICK_PERIOD_MS);
@@ -9599,7 +9632,7 @@ void key_trigger(void *arg) {
 			break;
 
 		case KEY_LONG_PRESS:
-			printf("----long--------长按触发回调 ... \r\n");
+			DB_PR("----long--------长按触发回调 ... \r\n");
             DB_PR("------------peiwang gai wifimima-----------\r\n");
             // if(0==wifi_peiwang_over_flag)
             {
@@ -9614,8 +9647,8 @@ void key_trigger(void *arg) {
                 bzero(&wifi_config, sizeof(wifi_config_t)); /* 将结构体数据清零 */
                 memcpy(wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
                 memcpy(wifi_config.sta.password, password, sizeof(wifi_config.sta.password));
-                ESP_ERROR_CHECK( esp_wifi_disconnect() );
-                ESP_ERROR_CHECK( esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
+                esp_wifi_disconnect() ;//ESP_ERROR_CHECK
+                esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) ;
 
                 // esp_wifi_stop();
                 // esp_wifi_restore();
@@ -9629,7 +9662,7 @@ void key_trigger(void *arg) {
             }
 			// else
             // {
-            //     printf("-------yi peiwang -------- \r\n");
+            //     DB_PR("-------yi peiwang -------- \r\n");
             // }
             
             break;
@@ -9706,21 +9739,67 @@ void key_trigger(void *arg) {
 static void gpio_task_example1(void* arg)
 {
     uint32_t io_num;
+    uint32_t tick_times=0;
+    bool led_green_state=0;
+    bool led_blue_state=0;
     for(;;) 
     {
         
-        DB_PR("------------system heart-----------\r\n");
+        // DB_PR("------------system heart-----------\r\n");
+        tick_times++;
+        vTaskDelay(10 / portTICK_PERIOD_MS);//on 
+		if(tick_times%100==0)
+		{
+            DB_PR("------------system heart-----------\r\n");
+            if(led_green_state == 0)
+            {
+                DB_PR("------------gr led on-----------\r\n");
+                led_green_state =1;
+                //---------system state----------
+                // vTaskDelay(1000 / portTICK_PERIOD_MS);//on 
+                // gpio_set_level(LED_BLUE, 0);
+                gpio_set_level(LED_GRREN, 0);
+                // gpio_set_level(LED_RED, 0);
+            }
+            else if(led_green_state == 1)
+            {
+                DB_PR("------------gr led off-----------\r\n");
+                led_green_state =0;
+                // vTaskDelay(1000 / portTICK_PERIOD_MS);//off del
+                // gpio_set_level(LED_BLUE, 1);
+                gpio_set_level(LED_GRREN, 1);
+                // gpio_set_level(LED_RED, 1);
+            }
+            DB_PR("\r\n");
 
-        vTaskDelay(1000 / portTICK_PERIOD_MS);//on 
-        // gpio_set_level(LED_BLUE, 0);
-        gpio_set_level(LED_GRREN, 0);
-        // gpio_set_level(LED_RED, 0);
+		}
 
 
-        // vTaskDelay(100 / portTICK_PERIOD_MS);//off del
-        // // gpio_set_level(LED_BLUE, 1);
-        // gpio_set_level(LED_GRREN, 1);
-        // // gpio_set_level(LED_RED, 1);
+		if(tick_times%wifi_led_duration_time==0)
+        {
+            if(led_blue_state == 0)
+            {
+                DB_PR("------------bl led on-----------\r\n");
+                led_blue_state =1;
+                //---------wifi state----------
+                // vTaskDelay(wifi_led_duration_time / portTICK_PERIOD_MS);//on 
+                gpio_set_level(LED_BLUE, 0);
+                // gpio_set_level(LED_GRREN, 0);
+                // gpio_set_level(LED_RED, 0);
+            }
+            else if(led_blue_state == 1)
+            {
+                DB_PR("------------bl led off-----------\r\n");
+                led_blue_state =0;
+                // vTaskDelay(wifi_led_duration_time / portTICK_PERIOD_MS);//off del
+                gpio_set_level(LED_BLUE, 1);
+                // gpio_set_level(LED_GRREN, 1);
+                // gpio_set_level(LED_RED, 1);
+            }
+            DB_PR("\r\n");
+
+        }
+
 
     }
     vTaskDelete(NULL);
@@ -9755,9 +9834,6 @@ static void gpio_task_example1(void* arg)
 
 
 
-char wifi_ssid[33] = { 0 };     /* 定义一个数组用来存储ssid*/
-char wifi_passwd[65] = { 0 };   /* 定义一个数组用来存储passwd */
-
 
 /* FreeRTOS event group to signal when we are connected & ready to make a request */
 static EventGroupHandle_t s_wifi_event_group;
@@ -9775,7 +9851,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 {
     static int retry_num = 0;           /* 记录wifi重连次数 */
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
-        if(wifi_peiwang_over_flag==0)
+        // if(wifi_peiwang_over_flag==0)
         {
             esp_wifi_connect();
             DB_PR( "wifi start connect\r\n");
@@ -9783,12 +9859,13 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         DB_PR( "wifi start-2\r\n");
         // xTaskCreate(smartconfig_example_task, "smartconfig_example_task", 4096, NULL, 3, NULL);
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        wifi_led_duration_time =500;
         wifi_connected_flag =0;
         DB_PR("-2-wifi_connected_flag =%d-----.\r\n",wifi_connected_flag);
         esp_wifi_connect();
 
 		retry_num++;
-        printf("retry to connect to the AP %d times. \n",retry_num);
+        DB_PR("retry to connect to the AP %d times. \n",retry_num);
         // if (retry_num > 10)  /* WiFi重连次数大于10 */
         // {
         //     /* 将WiFi连接事件标志组的WiFi连接失败事件位置1 */
@@ -9796,14 +9873,33 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         // }
         xEventGroupClearBits(s_wifi_event_group, CONNECTED_BIT);
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data; /* 获取IP地址信息*/
+        DB_PR("--------------got ip:%d.%d.%d.%d--------------\n\n\n" , IP2STR(&event->ip_info.ip));  /* 打印ip地址*/
+        retry_num = 0;                                              /* WiFi重连次数清零 */
+        xEventGroupSetBits(s_wifi_event_group, CONNECTED_BIT);
+
+        wifi_led_duration_time =50;
         wifi_connected_flag =1;
         DB_PR("-1-wifi_connected_flag =%d-----.\r\n",wifi_connected_flag);
         //todo pic
+        if(audio_play_mp3_task!=0)
+        {
+            audio_play_mp3_task =0;
+            vTaskDelay(20 / portTICK_PERIOD_MS);
+            DB_PR("----111111 -a-----.\r\n");
+            vTaskDelete(taskhandle_mp3);
+            // taskhandle_mp3 =NULL;
+            DB_PR("----111111 -b-----.\r\n");
+            // vTaskDelay(500 / portTICK_PERIOD_MS);
+        }
+        else
+        {
+            DB_PR("----222222 =NULL-----.\r\n");
+        }
+        
+        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_WIFI_CON, 10, (TaskHandle_t* )&taskhandle_mp3);
+        
 
-        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data; /* 获取IP地址信息*/
-        printf("--------------got ip:%d.%d.%d.%d--------------\n\n\n" , IP2STR(&event->ip_info.ip));  /* 打印ip地址*/
-        retry_num = 0;                                              /* WiFi重连次数清零 */
-        xEventGroupSetBits(s_wifi_event_group, CONNECTED_BIT);
     } else if (event_base == SC_EVENT && event_id == SC_EVENT_SCAN_DONE) {
         DB_PR( "Scan done\r\n");
         //todo pic  app cando
@@ -9848,13 +9944,13 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         if (err != ESP_OK) DB_PR("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
         
-        //todo del
-        size_t len;
-        err = read_str_value(STORAGE_NAMESPACE,"wifi_ssid",wifi_ssid , &len);
-        if (err != ESP_OK) DB_PR("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+        // //todo del
+        // size_t len;
+        // err = read_str_value(STORAGE_NAMESPACE,"wifi_ssid",wifi_ssid , &len);
+        // if (err != ESP_OK) DB_PR("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
-        err = read_str_value(STORAGE_NAMESPACE,"wifi_passwd",wifi_passwd , &len);
-        if (err != ESP_OK) DB_PR("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+        // err = read_str_value(STORAGE_NAMESPACE,"wifi_passwd",wifi_passwd , &len);
+        // if (err != ESP_OK) DB_PR("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
 
         // nvs_handle_t wificfg_nvs_handler;
         // ESP_ERROR_CHECK( nvs_open(STORAGE_NAMESPACE_ADM, NVS_READWRITE, &wificfg_nvs_handler) );
@@ -9862,7 +9958,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         // ESP_ERROR_CHECK( nvs_set_str(wificfg_nvs_handler,"wifi_passwd",password) );
         // ESP_ERROR_CHECK( nvs_commit(wificfg_nvs_handler) ); /* 提交 */
         // nvs_close(wificfg_nvs_handler);                     /* 关闭 */ 
-        printf("smartconfig save wifi_cfg to NVS .\n");
+        DB_PR("smartconfig save wifi_cfg to NVS .\n");
 
 
 
@@ -9926,14 +10022,14 @@ static void initialise_wifi(void)
     memcpy(wifi_config.sta.ssid, wifi_ssid, sizeof(wifi_config.sta.ssid));
     memcpy(wifi_config.sta.password, wifi_passwd, sizeof(wifi_config.sta.password));
 
-	printf("1-initialise_wifi. \n");
+	DB_PR("1-initialise_wifi. \n");
     ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
     /* 设置WiFi连接的参数，主要是ssid和password */
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));//add
 	
     ESP_ERROR_CHECK( esp_wifi_start() );
 	
-	printf("2-initialise_wifi finished. \n");
+	DB_PR("2-initialise_wifi finished. \n");
 
 }
 
@@ -9948,22 +10044,7 @@ static void smartconfig_example_task(void * parm)
         uxBits = xEventGroupWaitBits(s_wifi_event_group, CONNECTED_BIT | ESPTOUCH_DONE_BIT, true, false, portMAX_DELAY); 
         if(uxBits & CONNECTED_BIT) {
             DB_PR( "WiFi Connected to ap\r\n");
-            if(audio_play_mp3_task!=0)
-            {
-                audio_play_mp3_task =0;
-                vTaskDelay(20 / portTICK_PERIOD_MS);
-                DB_PR("----111111 -a-----.\r\n");
-                vTaskDelete(taskhandle_mp3);
-                // taskhandle_mp3 =NULL;
-                DB_PR("----111111 -b-----.\r\n");
-                // vTaskDelay(500 / portTICK_PERIOD_MS);
-            }
-            else
-            {
-                DB_PR("----222222 =NULL-----.\r\n");
-            }
-            
-            xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_WIFI_CON, 10, (TaskHandle_t* )&taskhandle_mp3);
+
             // wifi_connected_flag =1;
             // DB_PR("-1-wifi_connected_flag =%d-----.\r\n",wifi_connected_flag);
 
@@ -9993,7 +10074,7 @@ static void http_rest_with_hostname_path()
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
 
-	printf("\r\n\r\n\r\n");
+	DB_PR("\r\n\r\n\r\n");
     esp_err_t err;
 
 
@@ -10009,37 +10090,37 @@ static void http_rest_with_hostname_path()
     esp_flash_t* chip=NULL;
     esp_err_t ret = esp_flash_read_id(chip, &flash_id);
     // TEST_ESP_OK(ret);
-    printf("ret=%X \n",ret);
-    printf("CHIP_ID=%08X\n",flash_id);
+    DB_PR("ret=%X \n",ret);
+    DB_PR("CHIP_ID=%08X\n",flash_id);
     // if ((flash_id >> 16) == 0xEF) {
-    //     printf("111111111111 \n");
+    //     DB_PR("111111111111 \n");
     //     // return true;
     // } else {
-    //     printf("222222222222 \n");
+    //     DB_PR("222222222222 \n");
     //     // return false;
     // }
 
-    // printf("esp_read_mac(mac, ESP_MAC_WIFI_STA) =%s \n",platform_create_id_string());
+    // DB_PR("esp_read_mac(mac, ESP_MAC_WIFI_STA) =%s \n",platform_create_id_string());
 
     uint8_t mac[6];
     esp_read_mac(mac, ESP_MAC_WIFI_STA);
-    printf("MAC_ADDR=");
+    DB_PR("MAC_ADDR=");
     for (uint16_t i = 0; i < 6; i++)//15
     {
-        printf("%02X",mac[i]);
+        DB_PR("%02X",mac[i]);
     }
-    printf(",MAC_TYPE=%d,CHIP_TYPE=esp32",ESP_MAC_WIFI_STA);
-    printf("\n");
+    DB_PR(",MAC_TYPE=%d,CHIP_TYPE=esp32",ESP_MAC_WIFI_STA);
+    DB_PR("\n");
     
     const esp_partition_t *running = esp_ota_get_running_partition();
     esp_app_desc_t running_app_info;
     if (esp_ota_get_partition_description(running, &running_app_info) == ESP_OK) {
         // ESP_LOGI(TAG, "Running firmware version: %s", running_app_info.version);
-        printf("RUN_FIRM=%s\n", running_app_info.version);
+        DB_PR("RUN_FIRM=%s\n", running_app_info.version);
     }
     else
     {
-        printf("get firmware version err\n");
+        DB_PR("get firmware version err\n");
     }
     
 
@@ -10054,7 +10135,7 @@ static void http_rest_with_hostname_path()
             ESP_MAC_WIFI_STA,
             running_app_info.version);
 
-    printf("----------post_data=%s---------------",post_data);
+    DB_PR("----------post_data=%s---------------",post_data);
 
 
     // POST
@@ -10073,12 +10154,12 @@ static void http_rest_with_hostname_path()
         int read_len = 0;
         char buf[2048] = {0};
         read_len = esp_http_client_read(client, buf, 500);
-        printf("----2----recv data len:%d,content_length: %d,\r\n%s\r\n",read_len,len,buf);
+        DB_PR("----2----recv data len:%d,content_length: %d,\r\n%s\r\n",read_len,len,buf);
     } else {
         ESP_LOGE(TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
     }
 
-    printf("\r\n");
+    DB_PR("\r\n");
     esp_http_client_cleanup(client);
 }
 
@@ -10349,7 +10430,7 @@ void app_main(void)
 
 
 
-    printf("-----gpio init----- ... \r\n");
+    DB_PR("-----gpio init----- ... \r\n");
 
     xTaskCreate(key_trigger, "key_trigger", 1024 * 2, NULL, 10,NULL);
 
@@ -10513,37 +10594,37 @@ void app_main(void)
     // esp_flash_t* chip=NULL;
     // esp_err_t ret = esp_flash_read_id(chip, &flash_id);
     // // TEST_ESP_OK(ret);
-    // printf("ret=%X \n",ret);
-    // printf("CHIP_ID=%08X\n",flash_id);
+    // DB_PR("ret=%X \n",ret);
+    // DB_PR("CHIP_ID=%08X\n",flash_id);
     // // if ((flash_id >> 16) == 0xEF) {
-    // //     printf("111111111111 \n");
+    // //     DB_PR("111111111111 \n");
     // //     // return true;
     // // } else {
-    // //     printf("222222222222 \n");
+    // //     DB_PR("222222222222 \n");
     // //     // return false;
     // // }
 
-    // // printf("esp_read_mac(mac, ESP_MAC_WIFI_STA) =%s \n",platform_create_id_string());
+    // // DB_PR("esp_read_mac(mac, ESP_MAC_WIFI_STA) =%s \n",platform_create_id_string());
 
     // uint8_t mac[6];
     // esp_read_mac(mac, ESP_MAC_WIFI_STA);
-    // printf("MAC_ADDR=");
+    // DB_PR("MAC_ADDR=");
     // for (uint16_t i = 0; i < 6; i++)//15
     // {
-    //     printf("%02X",mac[i]);
+    //     DB_PR("%02X",mac[i]);
     // }
-    // printf(",MAC_TYPE=%d,CHIP_TYPE=esp32",ESP_MAC_WIFI_STA);
-    // printf("\n");
+    // DB_PR(",MAC_TYPE=%d,CHIP_TYPE=esp32",ESP_MAC_WIFI_STA);
+    // DB_PR("\n");
     
     // const esp_partition_t *running = esp_ota_get_running_partition();
     // esp_app_desc_t running_app_info;
     // if (esp_ota_get_partition_description(running, &running_app_info) == ESP_OK) {
     //     // ESP_LOGI(TAG, "Running firmware version: %s", running_app_info.version);
-    //     printf("RUN_FIRM=%s\n", running_app_info.version);
+    //     DB_PR("RUN_FIRM=%s\n", running_app_info.version);
     // }
     // else
     // {
-    //     printf("get firmware version err\n");
+    //     DB_PR("get firmware version err\n");
     // }
     
 
