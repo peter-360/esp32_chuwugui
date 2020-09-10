@@ -286,7 +286,7 @@ uint8_t flag_rx2;
 
 
 //288//300//310//all kong   480    432
-#define SHENYU_GEZI_MAX 288//50
+#define SHENYU_GEZI_MAX 48//288//50
 
 //300//all kong
 #define ZHIWEN_PAGE_ID_MAX 120
@@ -777,6 +777,103 @@ esp_err_t read_u64_value(const char* name,char* key, uint64_t* out_value)
 }
 
 
+
+//str todo
+esp_err_t save_str_value(const char* name,char* key, char* out_value)
+{
+    nvs_handle_t my_handle;
+    esp_err_t err;
+
+    // DB_PR("-----0------%s\r\n",key);
+    // Open
+    err = nvs_open(name, NVS_READWRITE, &my_handle);
+    if (err != ESP_OK) return err;
+
+    // DB_PR("-----1------%s\r\n",key);
+
+    // // Read
+    // char* out_value_t=NULL; // value will default to 0, if not set yet in NVS
+    // size_t* len=NULL;
+    // err = nvs_get_str(my_handle, key, out_value_t,len);
+    // if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+
+    // DB_PR("1_to_wr_str-%s=%s\r\n",key,(out_value_t));
+
+    DB_PR("2_to_rw_str-%s=%s\r\n",key,out_value);
+    // Write
+    err = nvs_set_str(my_handle, key, out_value);
+    if (err != ESP_OK) return err;
+
+
+    // DB_PR("-----2------%s\r\n",key);
+    // Commit written value.
+    // After setting any values, nvs_commit() must be called to ensure changes are written
+    // to flash storage. Implementations may write to storage at other times,
+    // but this is not guaranteed.
+    err = nvs_commit(my_handle);
+    if (err != ESP_OK) return err;
+
+
+    // DB_PR("-----3------%s\r\n",key);
+    // Close
+    nvs_close(my_handle);
+    return ESP_OK;
+
+        // nvs_handle_t wificfg_nvs_handler;
+        // ESP_ERROR_CHECK( nvs_open(STORAGE_NAMESPACE_ADM, NVS_READWRITE, &wificfg_nvs_handler) );
+        // ESP_ERROR_CHECK( nvs_set_str(wificfg_nvs_handler,"wifi_ssid",ssid) );
+        // ESP_ERROR_CHECK( nvs_set_str(wificfg_nvs_handler,"wifi_passwd",password) );
+        // ESP_ERROR_CHECK( nvs_commit(wificfg_nvs_handler) ); /* 提交 */
+        // nvs_close(wificfg_nvs_handler);                     /* 关闭 */ 
+        // printf("smartconfig save wifi_cfg to NVS .\n");
+}
+
+//todo--out_value---
+esp_err_t read_str_value(const char* name,char* key, char* out_value,  size_t* len)
+{
+    nvs_handle_t my_handle;
+
+    esp_err_t err;
+
+    // Open
+    err = nvs_open(name, NVS_READWRITE, &my_handle);
+    if (err != ESP_OK) return err;
+
+    // Read
+    //int32_t restart_counter = 0; // value will default to 0, if not set yet in NVS
+    // size_t required_size;
+    err =nvs_get_str(my_handle, key, NULL,len);
+    if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+    out_value = malloc(*len);
+
+    err = nvs_get_str(my_handle, key, out_value,len);
+    if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) return err;
+
+
+    DB_PR("rdstr-%s=%s\r\n\r\n",key,out_value);
+
+    // Close
+    nvs_close(my_handle);
+    return ESP_OK;
+
+
+
+
+    // /* 打开一个NVS命名空间 */
+    // ESP_ERROR_CHECK( nvs_open(STORAGE_NAMESPACE_ADM, NVS_READWRITE, &wificfg_nvs_handler) );
+    // len = sizeof(wifi_ssid);    /* 从NVS中获取ssid */
+    // ESP_ERROR_CHECK( nvs_get_str(wificfg_nvs_handler,"wifi_ssid",wifi_ssid,&len) );
+    // len = sizeof(wifi_passwd);      /* 从NVS中获取ssid */
+    // ESP_ERROR_CHECK( nvs_get_str(wificfg_nvs_handler,"wifi_passwd",wifi_passwd,&len) );
+    // ESP_ERROR_CHECK( nvs_commit(wificfg_nvs_handler) ); /* 提交 */
+    // nvs_close(wificfg_nvs_handler);                     /* 关闭 */
+
+
+
+
+
+
+}
 
 
 
@@ -9500,6 +9597,8 @@ void key_trigger(void *arg) {
 		case KEY_LONG_PRESS:
 			printf("----long--------长按触发回调 ... \r\n");
             if(0==wifi_peiwang_over_flag)
+                //esp_event_handler_unregister
+                //ESP_ERROR_CHECK( esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler) );
                 xTaskCreate(smartconfig_example_task, "smartconfig_example_task", 4096, NULL, 3, NULL);
 			else
             {
@@ -9627,6 +9726,12 @@ static void gpio_task_example1(void* arg)
 #include "esp_smartconfig.h"
 
 
+
+
+char wifi_ssid[33] = { 0 };     /* 定义一个数组用来存储ssid*/
+char wifi_passwd[65] = { 0 };   /* 定义一个数组用来存储passwd */
+
+
 /* FreeRTOS event group to signal when we are connected & ready to make a request */
 static EventGroupHandle_t s_wifi_event_group;
 
@@ -9641,15 +9746,28 @@ static const int ESPTOUCH_DONE_BIT = BIT1;
 static void event_handler(void* arg, esp_event_base_t event_base, 
                                 int32_t event_id, void* event_data)
 {
+    static int retry_num = 0;           /* 记录wifi重连次数 */
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+        esp_wifi_connect();
         DB_PR( "wifi start\r\n");
         // xTaskCreate(smartconfig_example_task, "smartconfig_example_task", 4096, NULL, 3, NULL);
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         wifi_connected_flag =0;
         DB_PR("-2-wifi_connected_flag =%d-----.\r\n",wifi_connected_flag);
         esp_wifi_connect();
+
+		retry_num++;
+        printf("retry to connect to the AP %d times. \n",retry_num);
+        // if (retry_num > 10)  /* WiFi重连次数大于10 */
+        // {
+        //     /* 将WiFi连接事件标志组的WiFi连接失败事件位置1 */
+        //     xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);//add
+        // }
         xEventGroupClearBits(s_wifi_event_group, CONNECTED_BIT);
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data; /* 获取IP地址信息*/
+        printf("---------got ip:%d.%d.%d.%d \n" , IP2STR(&event->ip_info.ip));  /* 打印ip地址*/
+        retry_num = 0;                                              /* WiFi重连次数清零 */
         xEventGroupSetBits(s_wifi_event_group, CONNECTED_BIT);
     } else if (event_base == SC_EVENT && event_id == SC_EVENT_SCAN_DONE) {
         DB_PR( "Scan done\r\n");
@@ -9660,8 +9778,10 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 
         smartconfig_event_got_ssid_pswd_t *evt = (smartconfig_event_got_ssid_pswd_t *)event_data;
         wifi_config_t wifi_config;
-        uint8_t ssid[33] = { 0 };
-        uint8_t password[65] = { 0 };
+        //uint8_t ssid[33] = { 0 };
+        //uint8_t password[65] = { 0 };
+        char ssid[33] = { 0 };
+        char password[65] = { 0 };
 
         bzero(&wifi_config, sizeof(wifi_config_t));
         memcpy(wifi_config.sta.ssid, evt->ssid, sizeof(wifi_config.sta.ssid));
@@ -9671,10 +9791,43 @@ static void event_handler(void* arg, esp_event_base_t event_base,
             memcpy(wifi_config.sta.bssid, evt->bssid, sizeof(wifi_config.sta.bssid));
         }
 
-        memcpy(ssid, evt->ssid, sizeof(evt->ssid));
-        memcpy(password, evt->password, sizeof(evt->password));
-        DB_PR( "SSID:%s\r\n", ssid);
-        DB_PR( "PASSWORD:%s\r\n", password);
+
+        bzero(wifi_ssid, sizeof(wifi_ssid));
+        bzero(wifi_passwd, sizeof(wifi_passwd));
+
+        memcpy(wifi_ssid, evt->ssid, sizeof(evt->ssid));
+        memcpy(wifi_passwd, evt->password, sizeof(evt->password));
+        DB_PR( "peiwang-w-SSID:%s\r\n", wifi_ssid);
+        DB_PR( "peiwang-w-PASSWORD:%s\r\n", wifi_passwd);
+
+
+        /* 将得到的WiFi名称和密码存入NVS*/
+
+
+        esp_err_t err = save_str_value(STORAGE_NAMESPACE,"wifi_ssid",wifi_ssid );
+        if (err != ESP_OK) DB_PR("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+        err = save_str_value(STORAGE_NAMESPACE,"wifi_passwd",wifi_passwd );
+        if (err != ESP_OK) DB_PR("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+        
+        //todo del
+        size_t len;
+        err = read_str_value(STORAGE_NAMESPACE,"wifi_ssid",wifi_ssid , &len);
+        if (err != ESP_OK) DB_PR("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+        err = read_str_value(STORAGE_NAMESPACE,"wifi_passwd",wifi_passwd , &len);
+        if (err != ESP_OK) DB_PR("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+        // nvs_handle_t wificfg_nvs_handler;
+        // ESP_ERROR_CHECK( nvs_open(STORAGE_NAMESPACE_ADM, NVS_READWRITE, &wificfg_nvs_handler) );
+        // ESP_ERROR_CHECK( nvs_set_str(wificfg_nvs_handler,"wifi_ssid",ssid) );
+        // ESP_ERROR_CHECK( nvs_set_str(wificfg_nvs_handler,"wifi_passwd",password) );
+        // ESP_ERROR_CHECK( nvs_commit(wificfg_nvs_handler) ); /* 提交 */
+        // nvs_close(wificfg_nvs_handler);                     /* 关闭 */ 
+        printf("smartconfig save wifi_cfg to NVS .\n");
+
+
 
         ESP_ERROR_CHECK( esp_wifi_disconnect() );
         ESP_ERROR_CHECK( esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
@@ -9683,6 +9836,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         xEventGroupSetBits(s_wifi_event_group, ESPTOUCH_DONE_BIT);
     }
 }
+
 
 static void initialise_wifi(void)
 {
@@ -9697,8 +9851,53 @@ static void initialise_wifi(void)
     ESP_ERROR_CHECK( esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL) );
     ESP_ERROR_CHECK( esp_event_handler_register(SC_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL) );
 
+    // ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
+    // ESP_ERROR_CHECK( esp_wifi_start() );
+
+
+    nvs_handle_t wificfg_nvs_handler; /* 定义一个NVS操作句柄 */
+    //char wifi_ssid[32] = { 0 };     /* 定义一个数组用来存储ssid*/
+    //char wifi_passwd[64] = { 0 };   /* 定义一个数组用来存储passwd */
+
+
+    size_t len;
+    // esp_err_t err;
+
+    // err = read_str_value(STORAGE_NAMESPACE,"wifi_ssid",wifi_ssid , &len);
+    // if (err != ESP_OK) DB_PR("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+    // err = read_str_value(STORAGE_NAMESPACE,"wifi_passwd",wifi_passwd , &len);
+    // if (err != ESP_OK) DB_PR("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
+
+    DB_PR( "---r SSID:%s\r\n", wifi_ssid);
+    DB_PR( "---r PASSWORD:%s\r\n", wifi_passwd);
+    /* 打开一个NVS命名空间 */
+    nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &wificfg_nvs_handler) ;
+    len = sizeof(wifi_ssid);    /* 从NVS中获取ssid */
+    nvs_get_str(wificfg_nvs_handler,"wifi_ssid",wifi_ssid,&len) ;
+    len = sizeof(wifi_passwd);      /* 从NVS中获取ssid */
+    nvs_get_str(wificfg_nvs_handler,"wifi_passwd",wifi_passwd,&len) ;
+    nvs_commit(wificfg_nvs_handler) ; /* 提交 */
+    nvs_close(wificfg_nvs_handler);                     /* 关闭 */
+
+
+    DB_PR( "2---r SSID:%s\r\n", wifi_ssid);
+    DB_PR( "2---r PASSWORD:%s\r\n", wifi_passwd);
+    /* 设置WiFi连接的ssid和password参数 */
+    wifi_config_t wifi_config;
+    bzero(&wifi_config, sizeof(wifi_config_t)); /* 将结构体数据清零 */
+    memcpy(wifi_config.sta.ssid, wifi_ssid, sizeof(wifi_config.sta.ssid));
+    memcpy(wifi_config.sta.password, wifi_passwd, sizeof(wifi_config.sta.password));
+
+	printf("1-initialise_wifi. \n");
     ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
+    /* 设置WiFi连接的参数，主要是ssid和password */
+    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));//add
+	
     ESP_ERROR_CHECK( esp_wifi_start() );
+	
+	printf("2-initialise_wifi finished. \n");
+
 }
 
 static void smartconfig_example_task(void * parm)
