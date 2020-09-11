@@ -10067,8 +10067,10 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt);
 static void http_rest_with_hostname_path()
 {
     esp_http_client_config_t config = {
+        // .host = "express.admin.modoubox.com",
+        // .path = "/api_cabinet/order/checkPaid",
         .host = "express.admin.modoubox.com",
-        .path = "/api_cabinet/order/checkPaid",
+        .path = "/mission/Aptest/test",
         .transport_type = HTTP_TRANSPORT_OVER_TCP,
         .event_handler = _http_event_handler,
     };
@@ -10127,13 +10129,14 @@ static void http_rest_with_hostname_path()
 
 
 
-    char post_data[200]={0};//15
+    char post_data[500]={0};//15
     // esp_err_t err;
-    sprintf(post_data, "CHIP_ID=%08X&MAC_ADDR=%02X%02X%02X%02X%02X%02X&MAC_TYPE=%02d&CHIP_TYPE=ESP32&RUN_FIRM=%s",
+    sprintf(post_data, "RUN_FIRM=%s&CHIP_ID=%08X&MAC_ADDR=%02X%02X%02X%02X%02X%02X&MAC_TYPE=%02d&CHIP_TYPE=ESP32&type=%d",
+            running_app_info.version,
             flash_id,
             mac[0],mac[1],mac[2],mac[3],mac[4],mac[5],
             ESP_MAC_WIFI_STA,
-            running_app_info.version);
+            audio_play_mp3_stop);//audio_play_mp3_stop
 
     DB_PR("----------post_data=%s---------------",post_data);
 
@@ -10142,7 +10145,7 @@ static void http_rest_with_hostname_path()
     //const char *post_data = "field1=value1&field2=value2";
 	// const char *post_data = "order_code=8268780-1809-32834373";
     // const char *post_data = "field1=value1&field2=value2";
-    esp_http_client_set_url(client, "/api_cabinet/order/checkPaid");///post
+    esp_http_client_set_url(client, "/mission/Aptest/test");///post
     esp_http_client_set_method(client, HTTP_METHOD_POST);
     esp_http_client_set_post_field(client, post_data, strlen(post_data));
     err = esp_http_client_perform(client);
@@ -10153,8 +10156,15 @@ static void http_rest_with_hostname_path()
         int len =  esp_http_client_get_content_length(client);
         int read_len = 0;
         char buf[2048] = {0};
-        read_len = esp_http_client_read(client, buf, 500);
-        DB_PR("----2----recv data len:%d,content_length: %d,\r\n%s\r\n",read_len,len,buf);
+        read_len = esp_http_client_read(client, buf, 2000);
+        DB_PR("----2----recv data len:%d,content_length: %d,\r\n---buf=%s\r\n",read_len,len,buf);
+
+        DB_PR("rcv_buf=");
+        for (uint16_t i = 0; i < 500; i++)//15
+        {
+            DB_PR("%c",buf[i]);
+        }
+        DB_PR("\r\n");
     } else {
         ESP_LOGE(TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
     }
@@ -10265,7 +10275,8 @@ void simple_ota_example_task(void *pvParameter)
     send_cmd_to_lcd_pic(0x0057);
 
     esp_http_client_config_t config = {
-        .url = "http://192.168.10.101:7800/hello-world.bin",//CONFIG_EXAMPLE_FIRMWARE_UPGRADE_URL,//"192.168.10.108",//
+        // .url = "http://192.168.10.101:7800/hello-world.bin",//CONFIG_EXAMPLE_FIRMWARE_UPGRADE_URL,//"192.168.10.108",//
+        .url = "http://express.admin.modoubox.com/play_mp3.bin",
         .cert_pem = (char *)server_cert_pem_start,
         .event_handler = _http_event_handler,
     };
@@ -10582,51 +10593,6 @@ void app_main(void)
 
     // xTaskCreate(&simple_ota_example_task, "ota_example_task", 8192, NULL, 5, NULL);
 
-
-
-
-
-
-
-
-
-    // uint32_t flash_id;
-    // esp_flash_t* chip=NULL;
-    // esp_err_t ret = esp_flash_read_id(chip, &flash_id);
-    // // TEST_ESP_OK(ret);
-    // DB_PR("ret=%X \n",ret);
-    // DB_PR("CHIP_ID=%08X\n",flash_id);
-    // // if ((flash_id >> 16) == 0xEF) {
-    // //     DB_PR("111111111111 \n");
-    // //     // return true;
-    // // } else {
-    // //     DB_PR("222222222222 \n");
-    // //     // return false;
-    // // }
-
-    // // DB_PR("esp_read_mac(mac, ESP_MAC_WIFI_STA) =%s \n",platform_create_id_string());
-
-    // uint8_t mac[6];
-    // esp_read_mac(mac, ESP_MAC_WIFI_STA);
-    // DB_PR("MAC_ADDR=");
-    // for (uint16_t i = 0; i < 6; i++)//15
-    // {
-    //     DB_PR("%02X",mac[i]);
-    // }
-    // DB_PR(",MAC_TYPE=%d,CHIP_TYPE=esp32",ESP_MAC_WIFI_STA);
-    // DB_PR("\n");
-    
-    // const esp_partition_t *running = esp_ota_get_running_partition();
-    // esp_app_desc_t running_app_info;
-    // if (esp_ota_get_partition_description(running, &running_app_info) == ESP_OK) {
-    //     // ESP_LOGI(TAG, "Running firmware version: %s", running_app_info.version);
-    //     DB_PR("RUN_FIRM=%s\n", running_app_info.version);
-    // }
-    // else
-    // {
-    //     DB_PR("get firmware version err\n");
-    // }
-    
 
 
 
