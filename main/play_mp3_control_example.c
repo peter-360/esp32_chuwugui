@@ -5586,7 +5586,7 @@ done_mima_nosame:
                                 else
                                 {
                                     DB_PR("---wifi discon---.\r\n");   
-                                    send_cmd_to_lcd_pic(0x0054);
+                                    send_cmd_to_lcd_pic(0x005c);//0x0054
                                 }
                                 
                                 
@@ -9061,14 +9061,17 @@ void audio_init(void)
 
     if(audio_play_mp3_stop ==0)
     {
+        vTaskDelay(100 / portTICK_PERIOD_MS);
         DB_PR("[2.6] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)\r\n");
         audio_element_set_uri(tone_stream_reader, tone_uri[TONE_TYPE_KAIJI]);//kaji
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 
     if(audio_play_mp3_stop ==0)
     {
         DB_PR("[ 4 ] Start audio_pipeline\r\n");
         audio_pipeline_run(pipeline);
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
     DB_PR("[ 4 ] Listen for all pipeline events\r\n");
 
@@ -9634,7 +9637,7 @@ void key_trigger(void *arg) {
 		case KEY_LONG_PRESS:
 			DB_PR("----long--------长按触发回调 ... \r\n");
             DB_PR("------------peiwang gai wifimima-----------\r\n");
-            // if(0==wifi_peiwang_over_flag)
+            if(0==wifi_peiwang_over_flag)
             {
                 // ESP_ERROR_CHECK( esp_wifi_disconnect() );
                 // ESP_ERROR_CHECK(esp_wifi_stop());
@@ -9660,10 +9663,10 @@ void key_trigger(void *arg) {
                 //ESP_ERROR_CHECK( esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler) );
                 xTaskCreate(smartconfig_example_task, "smartconfig_example_task", 4096, NULL, 3, NULL);
             }
-			// else
-            // {
-            //     DB_PR("-------yi peiwang -------- \r\n");
-            // }
+			else
+            {
+                DB_PR("-------yi peiwang -------- \r\n");
+            }
             
             break;
 
@@ -9882,6 +9885,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         wifi_connected_flag =1;
         DB_PR("-1-wifi_connected_flag =%d-----.\r\n",wifi_connected_flag);
         //todo pic
+        vTaskDelay(3000 / portTICK_PERIOD_MS);//on 
         if(audio_play_mp3_task!=0)
         {
             audio_play_mp3_task =0;
@@ -9902,10 +9906,27 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 
     } else if (event_base == SC_EVENT && event_id == SC_EVENT_SCAN_DONE) {
         DB_PR( "Scan done\r\n");
-        //todo pic  app cando
-
+        //todo yuyin  app cando     扫描wifi完毕
+        if(audio_play_mp3_task!=0)
+        {
+            audio_play_mp3_task =0;
+            vTaskDelay(20 / portTICK_PERIOD_MS);
+            DB_PR("----111111 -a-----.\r\n");
+            vTaskDelete(taskhandle_mp3);
+            // taskhandle_mp3 =NULL;
+            DB_PR("----111111 -b-----.\r\n");
+            // vTaskDelay(500 / portTICK_PERIOD_MS);
+        }
+        else
+        {
+            DB_PR("----222222 =NULL-----.\r\n");
+        }
+        
+        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_WIFI_SCPASS, 10, (TaskHandle_t* )&taskhandle_mp3);
+        
     } else if (event_base == SC_EVENT && event_id == SC_EVENT_FOUND_CHANNEL) {
         DB_PR( "Found channel\r\n");
+        send_cmd_to_lcd_pic(0x005A);//
     } else if (event_base == SC_EVENT && event_id == SC_EVENT_GOT_SSID_PSWD) {
         DB_PR( "Got SSID and password\r\n");
 
@@ -10035,6 +10056,7 @@ static void initialise_wifi(void)
 
 static void smartconfig_example_task(void * parm)
 {
+    send_cmd_to_lcd_pic(0x0059);//
     wifi_peiwang_over_flag =1;
     EventBits_t uxBits;
     ESP_ERROR_CHECK( esp_smartconfig_set_type(SC_TYPE_ESPTOUCH) );
@@ -10053,6 +10075,7 @@ static void smartconfig_example_task(void * parm)
         if(uxBits & ESPTOUCH_DONE_BIT) {
             DB_PR( "smartconfig over\r\n");
             wifi_peiwang_over_flag =0;
+            send_cmd_to_lcd_pic(0x005B);//
 
             esp_smartconfig_stop();
             vTaskDelete(NULL);
@@ -10128,15 +10151,15 @@ static void http_rest_with_hostname_path()
 
 
 
-
+//RUN_FIRM=%s&CHIP_ID=%08X&MAC_ADDR=%02X%02X%02X%02X%02X%02X&MAC_TYPE=%02d&CHIP_TYPE=ESP32&type=%d
     char post_data[500]={0};//15
     // esp_err_t err;
-    sprintf(post_data, "RUN_FIRM=%s&CHIP_ID=%08X&MAC_ADDR=%02X%02X%02X%02X%02X%02X&MAC_TYPE=%02d&CHIP_TYPE=ESP32&type=%d",
+    sprintf(post_data, "MAC_TYPE=%02d&CHIP_TYPE=ESP32&type=%d&RUN_FIRM=%s&CHIP_ID=%08X&MAC_ADDR=%02X%02X%02X%02X%02X%02X",
+            ESP_MAC_WIFI_STA,
+            audio_play_mp3_stop,
             running_app_info.version,
             flash_id,
-            mac[0],mac[1],mac[2],mac[3],mac[4],mac[5],
-            ESP_MAC_WIFI_STA,
-            audio_play_mp3_stop);//audio_play_mp3_stop
+            mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);//audio_play_mp3_stop
 
     DB_PR("----------post_data=%s---------------",post_data);
 
@@ -10241,7 +10264,25 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
     switch (evt->event_id) {
     case HTTP_EVENT_ERROR:
         DB_PR(  "HTTP_EVENT_ERROR\r\n");
-        send_cmd_to_lcd_pic(0x0054);
+        send_cmd_to_lcd_pic(0x0054);//todo
+        //语音 服务器连接失败 声音
+        if(audio_play_mp3_task!=0)
+        {
+            audio_play_mp3_task =0;
+            vTaskDelay(20 / portTICK_PERIOD_MS);
+            DB_PR("----111111 -a-----.\r\n");
+            vTaskDelete(taskhandle_mp3);
+            // taskhandle_mp3 =NULL;
+            DB_PR("----111111 -b-----.\r\n");
+            // vTaskDelay(500 / portTICK_PERIOD_MS);
+        }
+        else
+        {
+            DB_PR("----222222 =NULL-----.\r\n");
+        }
+        
+        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_SERVER_CONFAIL, 10, (TaskHandle_t* )&taskhandle_mp3);
+        
         break;
     case HTTP_EVENT_ON_CONNECTED:
         DB_PR(  "HTTP_EVENT_ON_CONNECTED\r\n");
@@ -10260,6 +10301,7 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
         break;
     case HTTP_EVENT_DISCONNECTED:
         DB_PR(  "HTTP_EVENT_DISCONNECTED\r\n");
+        //语音 服务器已断开 声音
         break;
     }
     return ESP_OK;
@@ -10304,7 +10346,24 @@ void simple_ota_example_task(void *pvParameter)
     esp_err_t ret = esp_https_ota(&config);
     if (ret == ESP_OK) {
         send_cmd_to_lcd_pic(0x0058);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        if(audio_play_mp3_task!=0)
+        {
+            audio_play_mp3_task =0;
+            vTaskDelay(20 / portTICK_PERIOD_MS);
+            DB_PR("----111111 -a-----.\r\n");
+            vTaskDelete(taskhandle_mp3);
+            // taskhandle_mp3 =NULL;
+            DB_PR("----111111 -b-----.\r\n");
+            // vTaskDelay(500 / portTICK_PERIOD_MS);
+        }
+        else
+        {
+            DB_PR("----222222 =NULL-----.\r\n");
+        }
+        
+        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_FIRM_UPOK, 10, (TaskHandle_t* )&taskhandle_mp3);
+        
+        vTaskDelay(3000 / portTICK_PERIOD_MS);
         DB_PR(  "Firmware upgrade ok\r\n");
         esp_restart();
     } else {
@@ -10569,7 +10628,16 @@ void app_main(void)
 
 
 
-    // ESP_ERROR_CHECK( nvs_flash_init() );
+
+
+
+    // audio_init();
+    xTaskCreate(audio_init, "audio_init0", 2048, NULL, 3, NULL);   
+
+
+
+
+
     initialise_wifi();
 
 
@@ -10592,16 +10660,6 @@ void app_main(void)
 #endif // CONFIG_EXAMPLE_CONNECT_WIFI
 
     // xTaskCreate(&simple_ota_example_task, "ota_example_task", 8192, NULL, 5, NULL);
-
-
-
-
-
-
-
-
-    audio_init();
-    //xTaskCreate(audio_init, "audio_init0", 2048, NULL, 3, NULL);   
 
 
 }
