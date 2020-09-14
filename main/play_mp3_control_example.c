@@ -5581,7 +5581,7 @@ done_mima_nosame:
                                 DB_PR("---firmware shengji request---.\r\n");   
                                 if(1==wifi_connected_flag)
                                 {
-                                    xTaskCreate(&simple_ota_example_task, "ota_example_task", 8192, NULL, 5, NULL);
+                                    xTaskCreate(&simple_ota_example_task, "ota_example_task", 8192, NULL, 5, NULL);//8192
                                 }
                                 else
                                 {
@@ -10087,132 +10087,395 @@ static void smartconfig_example_task(void * parm)
 #include "esp_http_client.h"
 esp_err_t _http_event_handler(esp_http_client_event_t *evt);
 
-static void http_rest_with_hostname_path()
+// static void http_rest_with_hostname_path()
+// {
+//     esp_http_client_config_t config = {
+//         // .host = "express.admin.modoubox.com",
+//         // .path = "/api_cabinet/order/checkPaid",
+//         .host = "express.admin.modoubox.com",
+//         .path = "/mission/Aptest/test",
+//         .transport_type = HTTP_TRANSPORT_OVER_TCP,
+//         .event_handler = _http_event_handler,
+//     };
+//     esp_http_client_handle_t client = esp_http_client_init(&config);
+
+// 	DB_PR("\r\n\r\n\r\n");
+//     esp_err_t err;
+
+
+
+
+
+//     uint32_t flash_id;
+//     esp_flash_t* chip=NULL;
+//     esp_err_t ret = esp_flash_read_id(chip, &flash_id);
+//     // TEST_ESP_OK(ret);
+//     DB_PR("ret=%X \n",ret);
+//     DB_PR("CHIP_ID=%08X\n",flash_id);
+//     // if ((flash_id >> 16) == 0xEF) {
+//     //     DB_PR("111111111111 \n");
+//     //     // return true;
+//     // } else {
+//     //     DB_PR("222222222222 \n");
+//     //     // return false;
+//     // }
+
+//     // DB_PR("esp_read_mac(mac, ESP_MAC_WIFI_STA) =%s \n",platform_create_id_string());
+
+//     uint8_t mac[6];
+//     esp_read_mac(mac, ESP_MAC_WIFI_STA);
+//     DB_PR("MAC_ADDR=");
+//     for (uint16_t i = 0; i < 6; i++)//15
+//     {
+//         DB_PR("%02X",mac[i]);
+//     }
+//     DB_PR(",MAC_TYPE=%d,CHIP_TYPE=esp32",ESP_MAC_WIFI_STA);
+//     DB_PR("\n");
+    
+//     const esp_partition_t *running = esp_ota_get_running_partition();
+//     esp_app_desc_t running_app_info;
+//     if (esp_ota_get_partition_description(running, &running_app_info) == ESP_OK) {
+//         // DB_PR( "Running firmware version: %s", running_app_info.version);
+//         DB_PR("RUN_FIRM=%s\n", running_app_info.version);
+//     }
+//     else
+//     {
+//         DB_PR("get firmware version err\n");
+//     }
+    
+
+
+
+// //RUN_FIRM=%s&CHIP_ID=%08X&MAC_ADDR=%02X%02X%02X%02X%02X%02X&MAC_TYPE=%02d&CHIP_TYPE=ESP32&type=%d
+//     char post_data[500]={0};//15
+//     // esp_err_t err;
+//     sprintf(post_data, "MAC_TYPE=%02d&CHIP_TYPE=ESP32&type=%d&RUN_FIRM=%s&CHIP_ID=%08X&MAC_ADDR=%02X%02X%02X%02X%02X%02X",
+//             ESP_MAC_WIFI_STA,
+//             audio_play_mp3_stop,
+//             running_app_info.version,
+//             flash_id,
+//             mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);//audio_play_mp3_stop
+
+//     DB_PR("----------post_data=%s---------------",post_data);
+
+
+//     // POST
+//     //const char *post_data = "field1=value1&field2=value2";
+// 	// const char *post_data = "order_code=8268780-1809-32834373";
+//     // const char *post_data = "field1=value1&field2=value2";
+//     esp_http_client_set_url(client, "/mission/Aptest/test");///post
+//     esp_http_client_set_method(client, HTTP_METHOD_POST);
+//     esp_http_client_set_post_field(client, post_data, strlen(post_data));
+//     err = esp_http_client_perform(client);
+//     if (err == ESP_OK) {
+//         DB_PR( "HTTP POST Status = %d, content_length = %d",
+//                 esp_http_client_get_status_code(client),
+//                 esp_http_client_get_content_length(client));
+//         int len =  esp_http_client_get_content_length(client);
+//         int read_len = 0;
+//         char buf[2048] = {0};
+//         read_len = esp_http_client_read(client, buf, 2000);
+//         DB_PR("----2----recv data len:%d,content_length: %d,\r\n---buf=%s\r\n",read_len,len,buf);
+
+//         DB_PR("rcv_buf=");
+//         for (uint16_t i = 0; i < 500; i++)//15
+//         {
+//             DB_PR("%c",buf[i]);
+//         }
+//         DB_PR("\r\n");
+//     } else {
+//         ESP_LOGE(TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
+//     }
+
+//     DB_PR("\r\n");
+//     esp_http_client_cleanup(client);
+// }
+
+
+
+
+
+
+
+
+
+// static void http_test_task(void *pvParameters)
+// {
+//             // http_rest_with_url();
+//     http_rest_with_hostname_path();
+
+
+//     DB_PR( "Finish http example");
+//     vTaskDelete(NULL);
+// }
+
+
+
+
+
+
+#include <string.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "esp_system.h"
+#include "esp_wifi.h"
+#include "esp_event.h"
+#include "esp_log.h"
+#include "nvs_flash.h"
+#include "protocol_examples_common.h"
+
+#include "lwip/err.h"
+#include "lwip/sockets.h"
+#include "lwip/sys.h"
+#include "lwip/netdb.h"
+#include "lwip/dns.h"
+
+/* Constants that aren't configurable in menuconfig */
+#define WEB_SERVER "express.admin.modoubox.com"
+// #define WEB_SERVER "example.com"
+#define WEB_PORT 80
+// #define WEB_URL "api_cabinet/order/checkPaid" http://express.admin.modoubox.com/mission/Aptest/test
+// #define WEB_URL "http://express.admin.modoubox.com/api_cabinet/order/checkPaid"
+// http://express.admin.modoubox.com/mission/Aptest/test
+#define WEB_URL "/mission/Aptest/test"
+
+// static const char *TAG = "example";
+
+
+// static const char *REQUEST = "GET " WEB_URL " HTTP/1.0\r\n"
+//     "Host: "WEB_SERVER"\r\n"
+//     "User-Agent: esp-idf/1.0 esp32\r\n"
+//     "\r\n";
+
+
+
+#define http_upload_head "POST /mission/Aptest/test HTTP/1.0\r\n"\
+    "Host:"WEB_SERVER"\r\n"\
+    "Content-Length:%d\r\n\r\n"\
+
+
+#define http_upload_data     "{\"type\":%d, \
+        \"firm_run_version\":\"v1.0.2\", \
+        \"CHIP_ID\":\"v1.0.2\", \
+        \"MAC_ADDR\":\"240AC4E0ECA0\", \
+        \"PARTITION_MODE\":1, \
+        \"MAC_TYPE\":0, \
+        \"CHIP_TYPE\":\"esp32\", \
+        \"GUIZI_TYPE\":\"chuwugui\"}"
+
+static char REQUEST[1500]= {0};
+char recv_buf[1064];
+
+void send_packetto_server()
 {
-    esp_http_client_config_t config = {
-        // .host = "express.admin.modoubox.com",
-        // .path = "/api_cabinet/order/checkPaid",
-        .host = "express.admin.modoubox.com",
-        .path = "/mission/Aptest/test",
-        .transport_type = HTTP_TRANSPORT_OVER_TCP,
-        .event_handler = _http_event_handler,
-    };
-    esp_http_client_handle_t client = esp_http_client_init(&config);
+    int len=0;
+    int lux=2;
+    // char buf[512] = {0};
+    char buf_data[1200]={0};
+    sprintf(buf_data,http_upload_data,lux);
+    len = strlen(buf_data);
+    DB_PR("--------len=%d\n",len);
+    sprintf(REQUEST,http_upload_head,len);
+    strcat(REQUEST,buf_data);
+    DB_PR("--------buf=%s\n",REQUEST);
 
-	DB_PR("\r\n\r\n\r\n");
-    esp_err_t err;
-
-
-
-
-
-
-
-
-
-
-    uint32_t flash_id;
-    esp_flash_t* chip=NULL;
-    esp_err_t ret = esp_flash_read_id(chip, &flash_id);
-    // TEST_ESP_OK(ret);
-    DB_PR("ret=%X \n",ret);
-    DB_PR("CHIP_ID=%08X\n",flash_id);
-    // if ((flash_id >> 16) == 0xEF) {
-    //     DB_PR("111111111111 \n");
-    //     // return true;
-    // } else {
-    //     DB_PR("222222222222 \n");
-    //     // return false;
-    // }
-
-    // DB_PR("esp_read_mac(mac, ESP_MAC_WIFI_STA) =%s \n",platform_create_id_string());
-
-    uint8_t mac[6];
-    esp_read_mac(mac, ESP_MAC_WIFI_STA);
-    DB_PR("MAC_ADDR=");
-    for (uint16_t i = 0; i < 6; i++)//15
-    {
-        DB_PR("%02X",mac[i]);
-    }
-    DB_PR(",MAC_TYPE=%d,CHIP_TYPE=esp32",ESP_MAC_WIFI_STA);
-    DB_PR("\n");
-    
-    const esp_partition_t *running = esp_ota_get_running_partition();
-    esp_app_desc_t running_app_info;
-    if (esp_ota_get_partition_description(running, &running_app_info) == ESP_OK) {
-        // ESP_LOGI(TAG, "Running firmware version: %s", running_app_info.version);
-        DB_PR("RUN_FIRM=%s\n", running_app_info.version);
-    }
-    else
-    {
-        DB_PR("get firmware version err\n");
-    }
-    
-
-
-
-//RUN_FIRM=%s&CHIP_ID=%08X&MAC_ADDR=%02X%02X%02X%02X%02X%02X&MAC_TYPE=%02d&CHIP_TYPE=ESP32&type=%d
-    char post_data[500]={0};//15
-    // esp_err_t err;
-    sprintf(post_data, "MAC_TYPE=%02d&CHIP_TYPE=ESP32&type=%d&RUN_FIRM=%s&CHIP_ID=%08X&MAC_ADDR=%02X%02X%02X%02X%02X%02X",
-            ESP_MAC_WIFI_STA,
-            audio_play_mp3_stop,
-            running_app_info.version,
-            flash_id,
-            mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);//audio_play_mp3_stop
-
-    DB_PR("----------post_data=%s---------------",post_data);
-
-
-    // POST
-    //const char *post_data = "field1=value1&field2=value2";
-	// const char *post_data = "order_code=8268780-1809-32834373";
-    // const char *post_data = "field1=value1&field2=value2";
-    esp_http_client_set_url(client, "/mission/Aptest/test");///post
-    esp_http_client_set_method(client, HTTP_METHOD_POST);
-    esp_http_client_set_post_field(client, post_data, strlen(post_data));
-    err = esp_http_client_perform(client);
-    if (err == ESP_OK) {
-        ESP_LOGI(TAG, "HTTP POST Status = %d, content_length = %d",
-                esp_http_client_get_status_code(client),
-                esp_http_client_get_content_length(client));
-        int len =  esp_http_client_get_content_length(client);
-        int read_len = 0;
-        char buf[2048] = {0};
-        read_len = esp_http_client_read(client, buf, 2000);
-        DB_PR("----2----recv data len:%d,content_length: %d,\r\n---buf=%s\r\n",read_len,len,buf);
-
-        DB_PR("rcv_buf=");
-        for (uint16_t i = 0; i < 500; i++)//15
-        {
-            DB_PR("%c",buf[i]);
-        }
-        DB_PR("\r\n");
-    } else {
-        ESP_LOGE(TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
-    }
-
-    DB_PR("\r\n");
-    esp_http_client_cleanup(client);
 }
 
-
-
-
-
-
-
-
-
-static void http_test_task(void *pvParameters)
+static void http_get_task(void *pvParameters)//
 {
-    // http_rest_with_url();
-    http_rest_with_hostname_path();
+    const struct addrinfo hints = {
+        .ai_family = AF_INET,
+        .ai_socktype = SOCK_STREAM,
+    };
+    struct addrinfo *res;
+    struct in_addr *addr;
+    int s, r;
 
 
-    ESP_LOGI(TAG, "Finish http example");
+    // while(1) 
+    {
+        int err = getaddrinfo(WEB_SERVER, "80", &hints, &res);
+
+        if(err != 0 || res == NULL) {
+            ESP_LOGE(TAG, "DNS lookup failed err=%d res=%p", err, res);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            // continue;
+            // vTaskDelete(NULL);
+        }
+
+        /* Code to print the resolved IP.
+
+           Note: inet_ntoa is non-reentrant, look at ipaddr_ntoa_r for "real" code */
+        addr = &((struct sockaddr_in *)res->ai_addr)->sin_addr;
+        DB_PR( "DNS lookup succeeded. IP=%s", inet_ntoa(*addr));
+
+        s = socket(res->ai_family, res->ai_socktype, 0);
+        if(s < 0) {
+            ESP_LOGE(TAG, "... Failed to allocate socket.");
+            freeaddrinfo(res);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            // continue;
+            // vTaskDelete(NULL);
+        }
+        DB_PR( "... allocated socket");
+
+        if(connect(s, res->ai_addr, res->ai_addrlen) != 0) {
+            ESP_LOGE(TAG, "... socket connect failed errno=%d", errno);
+            close(s);
+            freeaddrinfo(res);
+            vTaskDelay(4000 / portTICK_PERIOD_MS);
+            // continue;
+            // vTaskDelete(NULL);
+        }
+
+        DB_PR( "... connected");
+        freeaddrinfo(res);
+
+
+        //-------------------------------------------------
+        send_packetto_server();
+        DB_PR( "-------------REQUEST=\r\n%s\r\n",REQUEST);
+
+
+        if (write(s, REQUEST, strlen(REQUEST)) < 0) {
+            ESP_LOGE(TAG, "... socket send failed");
+            close(s);
+            vTaskDelay(4000 / portTICK_PERIOD_MS);
+            // continue;
+            // vTaskDelete(NULL);
+        }
+        DB_PR( "... socket send success");
+
+        struct timeval receiving_timeout;
+        receiving_timeout.tv_sec = 5;
+        receiving_timeout.tv_usec = 0;
+        if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &receiving_timeout,
+                sizeof(receiving_timeout)) < 0) {
+            ESP_LOGE(TAG, "... failed to set socket receiving timeout");
+            close(s);
+            vTaskDelay(4000 / portTICK_PERIOD_MS);
+            // continue;
+            // vTaskDelete(NULL);
+        }
+        DB_PR( "... set socket receiving timeout success");
+
+        DB_PR("---------rev_data=\r\n");
+        /* Read HTTP response */
+        do {
+            
+            bzero(recv_buf, sizeof(recv_buf));
+            r = read(s, recv_buf, sizeof(recv_buf)-1);
+            for(int i = 0; i < r; i++) {
+                vTaskDelay(10 / portTICK_PERIOD_MS);
+                putchar(recv_buf[i]);//-------
+            }
+        } while(r > 0);
+        
+        DB_PR("\n\n");
+
+        DB_PR( "... done reading from socket. Last read return=%d errno=%d.", r, errno);
+        close(s);
+        // for(int countdown = 10; countdown >= 0; countdown--) {
+        //     DB_PR( "%d... ", countdown);//idx-----------
+        //     vTaskDelay(1000 / portTICK_PERIOD_MS);
+        // }
+        DB_PR( "Starting again!");
+    }
+
     vTaskDelete(NULL);
 }
+
+
+#include "cJSON.h"
+
+void cjson_to_struct_info(char *text)
+{
+
+    cJSON *root,*psub;
+
+    cJSON *arrayItem;
+
+    //截取有效json
+
+    char *index=strchr(text,'{');
+    // char *index=strstr(text,"{\"post_data\":{");
+    // bzero(text, sizeof(text));
+    strcpy(text,index);
+
+    DB_PR("--------text=\n%s\n",text);
+
+    root = cJSON_Parse(text);
+
+    
+
+    if(root!=NULL)
+
+    {
+
+        psub = cJSON_GetObjectItem(root, "results");
+
+        arrayItem = cJSON_GetArrayItem(psub,0);
+
+ 
+
+        cJSON *locat = cJSON_GetObjectItem(arrayItem, "location");
+
+        cJSON *now = cJSON_GetObjectItem(arrayItem, "now");
+
+        if((locat!=NULL)&&(now!=NULL))
+
+        {
+
+            // psub=cJSON_GetObjectItem(locat,"name");
+
+            // sprintf(weathe.cit,"%s",psub->valuestring);
+
+            // ESP_LOGI(HTTP_TAG,"city:%s",weathe.cit);
+
+ 
+
+            // psub=cJSON_GetObjectItem(now,"text");
+
+            // sprintf(weathe.weather_text,"%s",psub->valuestring);
+
+            // ESP_LOGI(HTTP_TAG,"weather:%s",weathe.weather_text);
+
+            
+
+            // psub=cJSON_GetObjectItem(now,"code");
+
+            // sprintf(weathe.weather_code,"%s",psub->valuestring);
+
+            // //ESP_LOGI(HTTP_TAG,"%s",weathe.weather_code);
+
+ 
+
+            // psub=cJSON_GetObjectItem(now,"temperature");
+
+            // sprintf(weathe.temperatur,"%s",psub->valuestring);
+
+            // ESP_LOGI(HTTP_TAG,"temperatur:%s",weathe.temperatur);
+
+ 
+
+            //ESP_LOGI(HTTP_TAG,"--->city %s,weather %s,temperature %s<---\r\n",weathe.cit,weathe.weather_text,weathe.temperatur);
+
+        }
+
+    }
+
+    //ESP_LOGI(HTTP_TAG,"%s 222",__func__);
+
+    cJSON_Delete(root);
+
+}
+
+
+
+
+
+
+
 
 
 
@@ -10309,8 +10572,12 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
 
 void simple_ota_example_task(void *pvParameter)
 {
-
-    xTaskCreate(&http_test_task, "http_test_task", 8192, NULL, 5, NULL);
+    // vTaskDelay(2000 / portTICK_PERIOD_MS);
+    // xTaskCreate(&http_test_task, "http_test_task", 8192, NULL, 5, NULL);
+    xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
+    // http_get_task();
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    cjson_to_struct_info(recv_buf);
 
 
     DB_PR(  "Starting OTA example\r\n");
@@ -10661,5 +10928,6 @@ void app_main(void)
 
     // xTaskCreate(&simple_ota_example_task, "ota_example_task", 8192, NULL, 5, NULL);
 
-
+    // vTaskDelay(4000 / portTICK_PERIOD_MS);
+    // xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
 }
