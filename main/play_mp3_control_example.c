@@ -10264,8 +10264,8 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt);
         \"GUIZI_TYPE\":\"chuwugui\"}"
 
 static char REQUEST[1500]= {0};
-char recv_buf[1064];
 
+char mid_buf[1000];
 void send_packetto_server()
 {
     int len=0;
@@ -10290,8 +10290,9 @@ static void http_get_task(void *pvParameters)//
     struct addrinfo *res;
     struct in_addr *addr;
     int s, r;
+    char recv_buf[64];
 
-
+    vTaskDelay(10 / portTICK_PERIOD_MS);
     // while(1) 
     {
         int err = getaddrinfo(WEB_SERVER, "80", &hints, &res);
@@ -10334,7 +10335,7 @@ static void http_get_task(void *pvParameters)//
 
         //-------------------------------------------------
         send_packetto_server();
-        DB_PR( "-------------REQUEST=\r\n%s\r\n",REQUEST);
+        DB_PR( "-------------REQUEST=\r\n%s\r\n\r\n",REQUEST);
 
 
         if (write(s, REQUEST, strlen(REQUEST)) < 0) {
@@ -10359,16 +10360,21 @@ static void http_get_task(void *pvParameters)//
         }
         DB_PR( "... set socket receiving timeout success");
 
+
+        memset(mid_buf,0,sizeof(mid_buf));
         DB_PR("---------rev_data=\r\n");
         /* Read HTTP response */
         do {
-            
+            vTaskDelay(10 / portTICK_PERIOD_MS);
             bzero(recv_buf, sizeof(recv_buf));
             r = read(s, recv_buf, sizeof(recv_buf)-1);
-            for(int i = 0; i < r; i++) {
-                vTaskDelay(10 / portTICK_PERIOD_MS);
-                putchar(recv_buf[i]);//-------
-            }
+            printf("\n------------r=%d------------\n",r);
+            strcat(mid_buf,recv_buf);
+            // vTaskDelay(1000 / portTICK_PERIOD_MS);
+            // for(int i = 0; i < r; i++) {
+            //     vTaskDelay(10 / portTICK_PERIOD_MS);
+            //     putchar(recv_buf[i]);//-------
+            // }
         } while(r > 0);
         
         DB_PR("\n\n");
@@ -10396,13 +10402,13 @@ void cjson_to_struct_info(char *text)
     cJSON *arrayItem;
 
     //截取有效json
-
+    DB_PR("\n----1----text=\n%s\n",text);
     char *index=strchr(text,'{');
     // char *index=strstr(text,"{\"post_data\":{");
     // bzero(text, sizeof(text));
     strcpy(text,index);
 
-    DB_PR("--------text=\n%s\n",text);
+    DB_PR("\n----2----text=\n%s\n",text);
 
     root = cJSON_Parse(text);
 
@@ -10576,8 +10582,9 @@ void simple_ota_example_task(void *pvParameter)
     // xTaskCreate(&http_test_task, "http_test_task", 8192, NULL, 5, NULL);
     xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
     // http_get_task();
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
-    cjson_to_struct_info(recv_buf);
+    vTaskDelay(4000 / portTICK_PERIOD_MS);
+    // cjson_to_struct_info(recv_buf);
+    cjson_to_struct_info(mid_buf);
 
 
     DB_PR(  "Starting OTA example\r\n");
