@@ -10253,26 +10253,76 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt);
     "Host:"WEB_SERVER"\r\n"\
     "Content-Length:%d\r\n\r\n"\
 
-
+// RUN_FIRM=%s&CHIP_ID=%08X&MAC_ADDR=%02X%02X%02X%02X%02X%02X&MAC_TYPE=%02d&CHIP_TYPE=ESP32&type=%d
 #define http_upload_data     "{\"type\":%d, \
-        \"firm_run_version\":\"v1.0.2\", \
-        \"CHIP_ID\":\"v1.0.2\", \
-        \"MAC_ADDR\":\"240AC4E0ECA0\", \
-        \"PARTITION_MODE\":1, \
-        \"MAC_TYPE\":0, \
-        \"CHIP_TYPE\":\"esp32\", \
-        \"GUIZI_TYPE\":\"chuwugui\"}"
+    \"firm_run_version\":\"%s\", \
+    \"CHIP_ID\":\"%08X\", \
+    \"MAC_ADDR\":\"%02X%02X%02X%02X%02X%02X\", \
+    \"MAC_TYPE\":%d, \
+    \"CHIP_TYPE\":\"esp32\", \
+    \"PARTITION_MODE\":1, \
+    \"GUIZI_TYPE\":\"chuwugui\"}"
 
 static char REQUEST[1500]= {0};
 
 char mid_buf[1000];
 void send_packetto_server()
 {
+    uint32_t flash_id;
+    esp_flash_t* chip=NULL;
+    esp_err_t ret = esp_flash_read_id(chip, &flash_id);
+    // TEST_ESP_OK(ret);
+    DB_PR("ret=%X \n",ret);
+    DB_PR("CHIP_ID=%08X\n",flash_id);
+    // if ((flash_id >> 16) == 0xEF) {
+    //     DB_PR("111111111111 \n");
+    //     // return true;
+    // } else {
+    //     DB_PR("222222222222 \n");
+    //     // return false;
+    // }
+
+    // DB_PR("esp_read_mac(mac, ESP_MAC_WIFI_STA) =%s \n",platform_create_id_string());
+
+    uint8_t mac[6];
+    esp_read_mac(mac, ESP_MAC_WIFI_STA);
+    DB_PR("MAC_ADDR=");
+    for (uint16_t i = 0; i < 6; i++)//15
+    {
+        DB_PR("%02X",mac[i]);
+    }
+    DB_PR(",MAC_TYPE=%d,CHIP_TYPE=esp32",ESP_MAC_WIFI_STA);
+    DB_PR("\n");
+    
+    const esp_partition_t *running = esp_ota_get_running_partition();
+    esp_app_desc_t running_app_info;
+    if (esp_ota_get_partition_description(running, &running_app_info) == ESP_OK) {
+        // DB_PR( "Running firmware version: %s", running_app_info.version);
+        DB_PR("RUN_FIRM=%s\n", running_app_info.version);
+    }
+    else
+    {
+        DB_PR("get firmware version err\n");
+    }
+    
+
+
     int len=0;
-    int lux=3;
+    int type_t= 1 ;//type--------------
+
+
+
+
     // char buf[512] = {0};
     char buf_data[1200]={0};
-    sprintf(buf_data,http_upload_data,lux);
+
+    //5 zhong canshu
+    sprintf(buf_data,http_upload_data,
+        type_t,
+        running_app_info.version,
+        flash_id,
+        mac[0],mac[1],mac[2],mac[3],mac[4],mac[5],
+        ESP_MAC_WIFI_STA);
     len = strlen(buf_data);
     DB_PR("--------len=%d\n",len);
     sprintf(REQUEST,http_upload_head,len);
@@ -10481,20 +10531,30 @@ u16 cjson_to_struct_info(char *update_ip_ret,char *text)
         printf("update_status=%d\n", update_status);
 
 
-        //---------------------
-        printf("\n%s\n", "--3--一步一步的获取url 键值对:");
-        printf("%s\n", "获取result下的cjson对象:");
-        item = cJSON_GetObjectItem(root, "result");//
-        printf("%s\n", cJSON_Print(item));
 
-        printf("%s\n", "获取post_data下的cjson对象");
-        item = cJSON_GetObjectItem(item, "url");
-        printf("%s\n", cJSON_Print(item));
-        printf("%s:", item->string);   //看一下cjson对象的结构体中这两个成员的意思
-        printf("%s\n", item->valuestring);
+        if(update_status !=0)
+        {
+            //---------------------
+            printf("\n%s\n", "--3--一步一步的获取url 键值对:");
+            printf("%s\n", "获取result下的cjson对象:");
+            item = cJSON_GetObjectItem(root, "result");//
+            printf("%s\n", cJSON_Print(item));
 
-        memcpy(update_ip_ret,item->valuestring,strlen(item->valuestring));
-        printf("update_ip_ret=%s\n", update_ip_ret);
+            printf("%s\n", "获取post_data下的cjson对象");
+            item = cJSON_GetObjectItem(item, "url");
+            printf("%s\n", cJSON_Print(item));
+            printf("%s:", item->string);   //看一下cjson对象的结构体中这两个成员的意思
+            printf("%s\n", item->valuestring);
+
+            memcpy(update_ip_ret,item->valuestring,strlen(item->valuestring));
+            printf("update_ip_ret=%s\n", update_ip_ret);
+        }
+        else
+        {
+            printf("---noip-----update_status=%d\n", update_status);
+        }
+        
+
 
 
         // printf("\n%s\n", "打印json所有最内层键值对:");
@@ -10617,8 +10677,8 @@ void simple_ota_example_task(void *pvParameter)
     http_get_task();
     // vTaskDelay(4000 / portTICK_PERIOD_MS);
     update_sta = cjson_to_struct_info(ip_buff_dst,mid_buf);
-    printf("update_sta=%d\n", update_sta);
-    printf("ip_buff_dst=%s\n", ip_buff_dst);
+    printf("---------update_sta=%d\n", update_sta);
+    printf("---------ip_buff_dst=%s\n", ip_buff_dst);
 
     // if(audio_play_mp3_stop == 0)//audio_play_mp3_stop debug
     if(update_sta == 1)//audio_play_mp3_stop
@@ -10691,7 +10751,7 @@ void simple_ota_example_task(void *pvParameter)
     }
     else
     {
-        send_cmd_to_lcd_pic(0x0054);
+        send_cmd_to_lcd_pic(0x0056);//version cant be updated
         DB_PR( "--------http ota reject-------------\n\n");
         vTaskDelete(NULL);
     }
