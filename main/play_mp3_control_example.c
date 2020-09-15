@@ -7613,7 +7613,17 @@ void Add_FR()
                 DB_PR("AS608Para.PS_max=%d, ValidN =%d \r\n",AS608Para.PS_max, ValidN);
                 DB_PR("库容量:%d     对比等级: %d\r\n",AS608Para.PS_max-ValidN,AS608Para.PS_level);
 
-
+                if(AS608Para.PS_max == 0)
+                {
+                    send_cmd_to_lcd_pic(0x004C);
+                    DB_PR("--fail--PS_max ==0 \r\n");
+                    vTaskDelete(NULL);
+                }
+                else
+                {
+                    DB_PR("--ok--PS_max !=0 \r\n");
+                }
+                
 
 
                 //AS608Para.PS_max-ValidN
@@ -8223,7 +8233,17 @@ void Add_FR_CQ()
                 DB_PR("AS608Para.PS_max=%d, ValidN =%d \r\n",AS608Para.PS_max, ValidN);
                 DB_PR("库容量:%d     对比等级: %d\r\n",AS608Para.PS_max-ValidN,AS608Para.PS_level);
 
-
+                if(AS608Para.PS_max == 0)
+                {
+                    send_cmd_to_lcd_pic(0x004C);
+                    DB_PR("--fail--PS_max ==0 \r\n");
+                    vTaskDelete(NULL);
+                }
+                else
+                {
+                    DB_PR("--ok--PS_max !=0 \r\n");
+                }
+                
 
 
                 //AS608Para.PS_max-ValidN
