@@ -10409,9 +10409,14 @@ void printJson(cJSON * root)//以递归的方式打印json的最内层键值对
     }
 }
 
-void cjson_to_struct_info(char *text)
+u16 cjson_to_struct_info(char *update_ip_ret,char *text)
 {
 
+    if(update_ip_ret == NULL || text == NULL)
+    {
+        DB_PR("\n----1 err----text=\n%s\n",text);
+        return 0;
+    }
     // cJSON *root,*psub;
 
     // cJSON *arrayItem;
@@ -10425,6 +10430,8 @@ void cjson_to_struct_info(char *text)
 
     DB_PR("\n----2----text=\n%s\n",text);
 
+
+    u16 update_status=0;
 
     cJSON * root = NULL;
     cJSON * item = NULL;//cjson对象
@@ -10470,6 +10477,8 @@ void cjson_to_struct_info(char *text)
         printf("%s\n", cJSON_Print(item));
         printf("%s:", item->string);   //看一下cjson对象的结构体中这两个成员的意思
         printf("%d\n", item->valueint);
+        update_status = item->valueint;
+        printf("update_status=%d\n", update_status);
 
 
         //---------------------
@@ -10484,75 +10493,18 @@ void cjson_to_struct_info(char *text)
         printf("%s:", item->string);   //看一下cjson对象的结构体中这两个成员的意思
         printf("%s\n", item->valuestring);
 
+        memcpy(update_ip_ret,item->valuestring,strlen(item->valuestring));
+        printf("update_ip_ret=%s\n", update_ip_ret);
 
 
-        printf("\n%s\n", "打印json所有最内层键值对:");
-        printJson(root);
+        // printf("\n%s\n", "打印json所有最内层键值对:");
+        // printJson(root);
     }
 
 
 
-    // root = cJSON_Parse(text);
-
-    // if(root!=NULL)
-
-    // {
-
-    //     psub = cJSON_GetObjectItem(root, "result");
-
-    //     arrayItem = cJSON_GetArrayItem(psub,0);
-
- 
-
-    //     cJSON *locat = cJSON_GetObjectItem(arrayItem, "location");
-
-    //     cJSON *now = cJSON_GetObjectItem(arrayItem, "now");
-
-    //     if((locat!=NULL)&&(now!=NULL))
-
-    //     {
-
-    //         // psub=cJSON_GetObjectItem(locat,"name");
-
-    //         // sprintf(weathe.cit,"%s",psub->valuestring);
-
-    //         // ESP_LOGI(HTTP_TAG,"city:%s",weathe.cit);
-
- 
-
-    //         // psub=cJSON_GetObjectItem(now,"text");
-
-    //         // sprintf(weathe.weather_text,"%s",psub->valuestring);
-
-    //         // ESP_LOGI(HTTP_TAG,"weather:%s",weathe.weather_text);
-
-            
-
-    //         // psub=cJSON_GetObjectItem(now,"code");
-
-    //         // sprintf(weathe.weather_code,"%s",psub->valuestring);
-
-    //         // //ESP_LOGI(HTTP_TAG,"%s",weathe.weather_code);
-
- 
-
-    //         // psub=cJSON_GetObjectItem(now,"temperature");
-
-    //         // sprintf(weathe.temperatur,"%s",psub->valuestring);
-
-    //         // ESP_LOGI(HTTP_TAG,"temperatur:%s",weathe.temperatur);
-
- 
-
-    //         //ESP_LOGI(HTTP_TAG,"--->city %s,weather %s,temperature %s<---\r\n",weathe.cit,weathe.weather_text,weathe.temperatur);
-
-    //     }
-
-    // }
-
-    //ESP_LOGI(HTTP_TAG,"%s 222",__func__);
-
     cJSON_Delete(root);
+    return update_status;
 
 }
 
@@ -10658,74 +10610,93 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
 
 void simple_ota_example_task(void *pvParameter)
 {
+    char ip_buff_dst[500]={0};
+    u16 update_sta=0;
     // xTaskCreate(&http_test_task, "http_test_task", 8192, NULL, 5, NULL);
     // xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
     http_get_task();
     // vTaskDelay(4000 / portTICK_PERIOD_MS);
-    // cjson_to_struct_info(recv_buf);
-    cjson_to_struct_info(mid_buf);
+    update_sta = cjson_to_struct_info(ip_buff_dst,mid_buf);
+    printf("update_sta=%d\n", update_sta);
+    printf("ip_buff_dst=%s\n", ip_buff_dst);
+
+    // if(audio_play_mp3_stop == 0)//audio_play_mp3_stop debug
+    if(update_sta == 1)//audio_play_mp3_stop
+    {
+        DB_PR(  "Starting OTA example\r\n");
+        send_cmd_to_lcd_pic(0x0057);
+
+        esp_http_client_config_t config = {
+            // .url = "http://192.168.10.101:7800/hello-world.bin",//CONFIG_EXAMPLE_FIRMWARE_UPGRADE_URL,//"192.168.10.108",//
+            .url = ip_buff_dst,//"http://express.admin.modoubox.com/play_mp3.bin",
+            .cert_pem = (char *)server_cert_pem_start,
+            .event_handler = _http_event_handler,
+        };
+        memcpy(config.url,ip_buff_dst,strlen(ip_buff_dst));
+        printf("config.url=%s\n", config.url);
+
+        DB_PR("----CONFIG_EXAMPLE_FIRMWARE_UPGRADE_URL=%s\r\n",CONFIG_EXAMPLE_FIRMWARE_UPGRADE_URL);
+
+    #ifdef CONFIG_EXAMPLE_FIRMWARE_UPGRADE_URL_FROM_STDIN
+        char url_buf[OTA_URL_SIZE];
+        if (strcmp(config.url, "FROM_STDIN") == 0) {
+            example_configure_stdin_stdout();
+            fgets(url_buf, OTA_URL_SIZE, stdin);
+            int len = strlen(url_buf);
+            url_buf[len - 1] = '\0';
+            config.url = url_buf;
+        } else {
+            DB_PR(  "Configuration mismatch: wrong firmware upgrade image url\r\n");
+            abort();
+        }
+    #endif
+
+    #ifdef CONFIG_EXAMPLE_SKIP_COMMON_NAME_CHECK
+        config.skip_cert_common_name_check = true;
+    #endif
+
+        esp_err_t ret = esp_https_ota(&config);
+        if (ret == ESP_OK) {
+            send_cmd_to_lcd_pic(0x0058);
+            if(audio_play_mp3_task!=0)
+            {
+                audio_play_mp3_task =0;
+                vTaskDelay(20 / portTICK_PERIOD_MS);
+                DB_PR("----111111 -a-----.\r\n");
+                vTaskDelete(taskhandle_mp3);
+                // taskhandle_mp3 =NULL;
+                DB_PR("----111111 -b-----.\r\n");
+                // vTaskDelay(500 / portTICK_PERIOD_MS);
+            }
+            else
+            {
+                DB_PR("----222222 =NULL-----.\r\n");
+            }
+            
+            xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_FIRM_UPOK, 10, (TaskHandle_t* )&taskhandle_mp3);
+            
+            vTaskDelay(3000 / portTICK_PERIOD_MS);
+            DB_PR(  "Firmware upgrade ok\r\n");
+            esp_restart();
+        } else {
+            send_cmd_to_lcd_pic(0x0054);
+            DB_PR(  "Firmware upgrade failed\r\n");
+        }
+        while (1) {
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            DB_PR(  "---ota_heart---\r\n");
+        }
 
 
-    DB_PR(  "Starting OTA example\r\n");
-    send_cmd_to_lcd_pic(0x0057);
-
-    esp_http_client_config_t config = {
-        // .url = "http://192.168.10.101:7800/hello-world.bin",//CONFIG_EXAMPLE_FIRMWARE_UPGRADE_URL,//"192.168.10.108",//
-        .url = "http://express.admin.modoubox.com/play_mp3.bin",
-        .cert_pem = (char *)server_cert_pem_start,
-        .event_handler = _http_event_handler,
-    };
-
-    DB_PR("----CONFIG_EXAMPLE_FIRMWARE_UPGRADE_URL=%s\r\n",CONFIG_EXAMPLE_FIRMWARE_UPGRADE_URL);
-
-#ifdef CONFIG_EXAMPLE_FIRMWARE_UPGRADE_URL_FROM_STDIN
-    char url_buf[OTA_URL_SIZE];
-    if (strcmp(config.url, "FROM_STDIN") == 0) {
-        example_configure_stdin_stdout();
-        fgets(url_buf, OTA_URL_SIZE, stdin);
-        int len = strlen(url_buf);
-        url_buf[len - 1] = '\0';
-        config.url = url_buf;
-    } else {
-        DB_PR(  "Configuration mismatch: wrong firmware upgrade image url\r\n");
-        abort();
     }
-#endif
-
-#ifdef CONFIG_EXAMPLE_SKIP_COMMON_NAME_CHECK
-    config.skip_cert_common_name_check = true;
-#endif
-
-    esp_err_t ret = esp_https_ota(&config);
-    if (ret == ESP_OK) {
-        send_cmd_to_lcd_pic(0x0058);
-        if(audio_play_mp3_task!=0)
-        {
-            audio_play_mp3_task =0;
-            vTaskDelay(20 / portTICK_PERIOD_MS);
-            DB_PR("----111111 -a-----.\r\n");
-            vTaskDelete(taskhandle_mp3);
-            // taskhandle_mp3 =NULL;
-            DB_PR("----111111 -b-----.\r\n");
-            // vTaskDelay(500 / portTICK_PERIOD_MS);
-        }
-        else
-        {
-            DB_PR("----222222 =NULL-----.\r\n");
-        }
-        
-        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_FIRM_UPOK, 10, (TaskHandle_t* )&taskhandle_mp3);
-        
-        vTaskDelay(3000 / portTICK_PERIOD_MS);
-        DB_PR(  "Firmware upgrade ok\r\n");
-        esp_restart();
-    } else {
+    else
+    {
         send_cmd_to_lcd_pic(0x0054);
-        DB_PR(  "Firmware upgrade failed\r\n");
+        DB_PR( "--------http ota reject-------------\n\n");
+        vTaskDelete(NULL);
     }
-    while (1) {
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
+    
+    
 }
 
 
