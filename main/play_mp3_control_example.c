@@ -10269,7 +10269,7 @@ char mid_buf[1000];
 void send_packetto_server()
 {
     int len=0;
-    int lux=2;
+    int lux=3;
     // char buf[512] = {0};
     char buf_data[1200]={0};
     sprintf(buf_data,http_upload_data,lux);
@@ -10281,7 +10281,8 @@ void send_packetto_server()
 
 }
 
-static void http_get_task(void *pvParameters)//
+// static void http_get_task(void *pvParameters)//
+static void http_get_task()//
 {
     const struct addrinfo hints = {
         .ai_family = AF_INET,
@@ -10388,21 +10389,35 @@ static void http_get_task(void *pvParameters)//
         DB_PR( "Starting again!");
     }
 
-    vTaskDelete(NULL);
+    // vTaskDelete(NULL);
 }
 
 
 #include "cJSON.h"
+void printJson(cJSON * root)//以递归的方式打印json的最内层键值对
+{
+    for(int i=0; i<cJSON_GetArraySize(root); i++)   //遍历最外层json键值对
+    {
+        cJSON * item = cJSON_GetArrayItem(root, i);        
+        if(cJSON_Object == item->type)      //如果对应键的值仍为cJSON_Object就递归调用printJson
+            printJson(item);
+        else                                //值不为json对象就直接打印出键和值
+        {
+            printf("%s->", item->string);
+            printf("%s\n", cJSON_Print(item));
+        }
+    }
+}
 
 void cjson_to_struct_info(char *text)
 {
 
-    cJSON *root,*psub;
+    // cJSON *root,*psub;
 
-    cJSON *arrayItem;
+    // cJSON *arrayItem;
 
     //截取有效json
-    DB_PR("\n----1----text=\n%s\n",text);
+    // DB_PR("\n----1----text=\n%s\n",text);
     char *index=strchr(text,'{');
     // char *index=strstr(text,"{\"post_data\":{");
     // bzero(text, sizeof(text));
@@ -10410,65 +10425,130 @@ void cjson_to_struct_info(char *text)
 
     DB_PR("\n----2----text=\n%s\n",text);
 
-    root = cJSON_Parse(text);
 
-    
+    cJSON * root = NULL;
+    cJSON * item = NULL;//cjson对象
 
-    if(root!=NULL)
-
+    root = cJSON_Parse(text);     
+    if (!root) 
     {
+        printf("Error before: [%s]\n",cJSON_GetErrorPtr());
+    }
+    else
+    {
+        printf("%s\n", "有格式的方式打印Json:");           
+        printf("%s\n\n", cJSON_Print(root));
+        printf("%s\n", "无格式方式打印json：");
+        printf("%s\n\n", cJSON_PrintUnformatted(root));
 
-        psub = cJSON_GetObjectItem(root, "results");
+        //---------------------
+        printf("\n%s\n", "--1--一步一步的获取firm_run_version 键值对:");
+        printf("%s\n", "获取result下的cjson对象:");
+        item = cJSON_GetObjectItem(root, "result");//
+        printf("%s\n", cJSON_Print(item));
 
-        arrayItem = cJSON_GetArrayItem(psub,0);
+        printf("%s\n", "获取post_data下的cjson对象");
+        item = cJSON_GetObjectItem(item, "post_data");
+        printf("%s\n", cJSON_Print(item));
+
+        printf("%s\n", "获取firm_run_version下的cjson对象");
+        item = cJSON_GetObjectItem(item, "firm_run_version");
+        printf("%s\n", cJSON_Print(item));
+
+        printf("%s:", item->string);   //看一下cjson对象的结构体中这两个成员的意思
+        printf("%s\n", item->valuestring);
+                        
+
+        //---------------------
+        printf("\n%s\n", "--2--一步一步的获取status 键值对:");
+        printf("%s\n", "获取result下的cjson对象:");
+        item = cJSON_GetObjectItem(root, "result");//
+        printf("%s\n", cJSON_Print(item));
+
+        printf("%s\n", "获取post_data下的cjson对象");
+        item = cJSON_GetObjectItem(item, "status");
+        printf("%s\n", cJSON_Print(item));
+        printf("%s:", item->string);   //看一下cjson对象的结构体中这两个成员的意思
+        printf("%d\n", item->valueint);
+
+
+        //---------------------
+        printf("\n%s\n", "--3--一步一步的获取url 键值对:");
+        printf("%s\n", "获取result下的cjson对象:");
+        item = cJSON_GetObjectItem(root, "result");//
+        printf("%s\n", cJSON_Print(item));
+
+        printf("%s\n", "获取post_data下的cjson对象");
+        item = cJSON_GetObjectItem(item, "url");
+        printf("%s\n", cJSON_Print(item));
+        printf("%s:", item->string);   //看一下cjson对象的结构体中这两个成员的意思
+        printf("%s\n", item->valuestring);
+
+
+
+        printf("\n%s\n", "打印json所有最内层键值对:");
+        printJson(root);
+    }
+
+
+
+    // root = cJSON_Parse(text);
+
+    // if(root!=NULL)
+
+    // {
+
+    //     psub = cJSON_GetObjectItem(root, "result");
+
+    //     arrayItem = cJSON_GetArrayItem(psub,0);
 
  
 
-        cJSON *locat = cJSON_GetObjectItem(arrayItem, "location");
+    //     cJSON *locat = cJSON_GetObjectItem(arrayItem, "location");
 
-        cJSON *now = cJSON_GetObjectItem(arrayItem, "now");
+    //     cJSON *now = cJSON_GetObjectItem(arrayItem, "now");
 
-        if((locat!=NULL)&&(now!=NULL))
+    //     if((locat!=NULL)&&(now!=NULL))
 
-        {
+    //     {
 
-            // psub=cJSON_GetObjectItem(locat,"name");
+    //         // psub=cJSON_GetObjectItem(locat,"name");
 
-            // sprintf(weathe.cit,"%s",psub->valuestring);
+    //         // sprintf(weathe.cit,"%s",psub->valuestring);
 
-            // ESP_LOGI(HTTP_TAG,"city:%s",weathe.cit);
+    //         // ESP_LOGI(HTTP_TAG,"city:%s",weathe.cit);
 
  
 
-            // psub=cJSON_GetObjectItem(now,"text");
+    //         // psub=cJSON_GetObjectItem(now,"text");
 
-            // sprintf(weathe.weather_text,"%s",psub->valuestring);
+    //         // sprintf(weathe.weather_text,"%s",psub->valuestring);
 
-            // ESP_LOGI(HTTP_TAG,"weather:%s",weathe.weather_text);
+    //         // ESP_LOGI(HTTP_TAG,"weather:%s",weathe.weather_text);
 
             
 
-            // psub=cJSON_GetObjectItem(now,"code");
+    //         // psub=cJSON_GetObjectItem(now,"code");
 
-            // sprintf(weathe.weather_code,"%s",psub->valuestring);
+    //         // sprintf(weathe.weather_code,"%s",psub->valuestring);
 
-            // //ESP_LOGI(HTTP_TAG,"%s",weathe.weather_code);
-
- 
-
-            // psub=cJSON_GetObjectItem(now,"temperature");
-
-            // sprintf(weathe.temperatur,"%s",psub->valuestring);
-
-            // ESP_LOGI(HTTP_TAG,"temperatur:%s",weathe.temperatur);
+    //         // //ESP_LOGI(HTTP_TAG,"%s",weathe.weather_code);
 
  
 
-            //ESP_LOGI(HTTP_TAG,"--->city %s,weather %s,temperature %s<---\r\n",weathe.cit,weathe.weather_text,weathe.temperatur);
+    //         // psub=cJSON_GetObjectItem(now,"temperature");
 
-        }
+    //         // sprintf(weathe.temperatur,"%s",psub->valuestring);
 
-    }
+    //         // ESP_LOGI(HTTP_TAG,"temperatur:%s",weathe.temperatur);
+
+ 
+
+    //         //ESP_LOGI(HTTP_TAG,"--->city %s,weather %s,temperature %s<---\r\n",weathe.cit,weathe.weather_text,weathe.temperatur);
+
+    //     }
+
+    // }
 
     //ESP_LOGI(HTTP_TAG,"%s 222",__func__);
 
@@ -10578,11 +10658,10 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
 
 void simple_ota_example_task(void *pvParameter)
 {
-    // vTaskDelay(2000 / portTICK_PERIOD_MS);
     // xTaskCreate(&http_test_task, "http_test_task", 8192, NULL, 5, NULL);
-    xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
-    // http_get_task();
-    vTaskDelay(4000 / portTICK_PERIOD_MS);
+    // xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
+    http_get_task();
+    // vTaskDelay(4000 / portTICK_PERIOD_MS);
     // cjson_to_struct_info(recv_buf);
     cjson_to_struct_info(mid_buf);
 
