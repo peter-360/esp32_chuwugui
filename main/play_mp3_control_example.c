@@ -8517,6 +8517,7 @@ done_zwc_fail_cq:
 //刷指纹
 void press_FR(void)
 {
+    return_cause_zw =0;//add
     if(HandShakeFlag ==1)
     {
         return_cause_zw_handshake_fail =2;
@@ -9069,6 +9070,13 @@ void audio_init(void)
 
 
 
+    if(audio_play_mp3_stop ==0)
+    {
+        // vTaskDelay(100 / portTICK_PERIOD_MS);
+        DB_PR("[2.6] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)\r\n");
+        audio_element_set_uri(tone_stream_reader, tone_uri[TONE_TYPE_KAIJI]);//kaji
+        // vTaskDelay(100 / portTICK_PERIOD_MS);
+    }
 
     DB_PR("[ 3 ] Set up event listener\r\n");
     audio_event_iface_cfg_t evt_cfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
@@ -9079,38 +9087,31 @@ void audio_init(void)
     audio_pipeline_set_listener(pipeline, m_audio_evt);
 
 
-    if(audio_play_mp3_stop ==0)
-    {
-        vTaskDelay(100 / portTICK_PERIOD_MS);
-        DB_PR("[2.6] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)\r\n");
-        audio_element_set_uri(tone_stream_reader, tone_uri[TONE_TYPE_KAIJI]);//kaji
-        vTaskDelay(100 / portTICK_PERIOD_MS);
-    }
 
     if(audio_play_mp3_stop ==0)
     {
         DB_PR("[ 4 ] Start audio_pipeline\r\n");
         audio_pipeline_run(pipeline);
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+        // vTaskDelay(100 / portTICK_PERIOD_MS);
     }
     DB_PR("[ 4 ] Listen for all pipeline events\r\n");
 
     int j=0;
     while (1) {
-        j++;
-        DB_PR("-------- heart1---------\r\n");
-        if(j%5 ==0)
-        {
-            DB_PR("-------- heart2---------\r\n");
-        }
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        // j++;
+        // // DB_PR("-------- heart1---------\r\n");
+        // if(j%50 ==0)
+        // {
+        //     DB_PR("-------- heart2---------\r\n");
+        // }
+        // vTaskDelay(10 / portTICK_PERIOD_MS);
         audio_event_iface_msg_t msg = { 0 };
         esp_err_t ret = audio_event_iface_listen(m_audio_evt, &msg, portMAX_DELAY);
         if (ret != ESP_OK) {
             DB_PR( "[ * ] Event interface error : %d\r\n", ret);
             continue;
         }
-        DB_PR("-------- heart3---------\r\n");
+        // DB_PR("-------- heart3---------\r\n");
 
         if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT && msg.source == (void *) mp3_decoder
             && msg.cmd == AEL_MSG_CMD_REPORT_MUSIC_INFO) {
@@ -9488,6 +9489,10 @@ void zhiwen_init(void )
 			// Show_Str(0,80,240,16,(u8*)str,16,0);
         DB_PR("3-AS608Para.PS_max=%d, ValidN =%d ",AS608Para.PS_max, ValidN);
         DB_PR("3-库容量:%d     对比等级: %d",AS608Para.PS_max-ValidN,AS608Para.PS_level);
+        if(0==AS608Para.PS_max)
+        {
+            DB_PR("------------fail   AS608Para.PS_max ==0-----------\r\n");
+        }
 	}
 	else
     {
@@ -9905,6 +9910,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         wifi_connected_flag =1;
         DB_PR("-1-wifi_connected_flag =%d-----.\r\n",wifi_connected_flag);
         //todo pic
+        
         vTaskDelay(3000 / portTICK_PERIOD_MS);//on 
         if(audio_play_mp3_task!=0)
         {
@@ -11041,7 +11047,6 @@ void app_main(void)
 
 
 
-
     initialise_wifi();
 
 
@@ -11067,4 +11072,8 @@ void app_main(void)
 
     // vTaskDelay(4000 / portTICK_PERIOD_MS);
     // xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
+
+
+
+
 }
