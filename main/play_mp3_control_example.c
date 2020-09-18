@@ -98,7 +98,7 @@ esp_timer_handle_t oneshot_timer;
 bool wifi_connected_flag;
 u8 wifi_peiwang_over_flag;
 
-u16 wifi_led_duration_time=300;
+u16 wifi_led_duration_time=500;
 
 
 u8 audio_play_mp3_over;
@@ -293,13 +293,13 @@ uint8_t flag_rx2;
 
 
 //288//300//310//all kong   480    432
-#define SHENYU_GEZI_MAX 480//288//50
+#define SHENYU_GEZI_MAX 600//288//50
 
-//300//all kong
-#define ZHIWEN_PAGE_ID_MAX 120
+//300//all kong   //120
+#define ZHIWEN_PAGE_ID_MAX 300
 
-//35//25//all kong   18
-#define BOARD_GK_MAX 12
+//35//25//all kong   18    12
+#define BOARD_GK_MAX 25
 int16_t hang_shu_max;
 
 // #define GUIMENX_GK_MAX 24//all kong
@@ -7307,7 +7307,7 @@ void Add_FR_First()
 					{
                         delay_ms(120);
                         DB_PR("--0-ok1--指纹正常\r\n");
-                        ensure = PS_Search(CharBuffer1, 0x0000, ZHIWEN_PAGE_ID_MAX, &p_rsp);//0x02 0x00AA
+                        ensure = PS_Search(CharBuffer1, 0x0000,AS608Para.PS_max , &p_rsp);//0x02 0x00AA ZHIWEN_PAGE_ID_MAX
                         //delay_ms(50);
                         DB_PR("--0--ensure=%d\r\n",ensure);
                         if(ensure==0x00)
@@ -7493,7 +7493,7 @@ void Add_FR()
 					{
                         delay_ms(120);
                         DB_PR("--1-ok1--指纹正常 \r\n");
-                        ensure = PS_Search(CharBuffer2, 0x0000, ZHIWEN_PAGE_ID_MAX, &p_rsp);//0x02
+                        ensure = PS_Search(CharBuffer2, 0x0000, AS608Para.PS_max, &p_rsp);//0x02ZHIWEN_PAGE_ID_MAX
                         if(ensure==0x00)
                         {
                             ////LCD_Fill(0,120,lcddev.width,160,WHITE);
@@ -7544,7 +7544,7 @@ void Add_FR()
 					{
                         delay_ms(120);
                         DB_PR("--2-ok--指纹正常 \r\n");
-                        ensure = PS_Search(CharBuffer3, 0x0000, ZHIWEN_PAGE_ID_MAX, &p_rsp);//0x02
+                        ensure = PS_Search(CharBuffer3, 0x0000, AS608Para.PS_max, &p_rsp);//0x02ZHIWEN_PAGE_ID_MAX
                         if(ensure==0x00)
                         {
                             ////LCD_Fill(0,120,lcddev.width,160,WHITE);
@@ -8048,6 +8048,7 @@ done_zwc_fail:
                         send_cmd_to_lcd_pic(0x0001);
                         return_cause_zanwu_kx =8;
                         ShowErrMessage(ensure);
+                        vTaskDelete(NULL);
                     }		
 
                 }			
@@ -8117,7 +8118,7 @@ void Add_FR_CQ()
 					{
                         delay_ms(120);
                         DB_PR("--1-ok1--指纹正常 \r\n");
-                        ensure = PS_Search(CharBuffer2, 0x0000, ZHIWEN_PAGE_ID_MAX, &p_rsp);//0x02
+                        ensure = PS_Search(CharBuffer2, 0x0000, AS608Para.PS_max, &p_rsp);//0x02ZHIWEN_PAGE_ID_MAX
                         if(ensure==0x00)
                         {
                             ////LCD_Fill(0,120,lcddev.width,160,WHITE);
@@ -8166,7 +8167,7 @@ void Add_FR_CQ()
 					{
                         delay_ms(120);
                         DB_PR("--2-ok--指纹正常 \r\n");
-                        ensure = PS_Search(CharBuffer3, 0x0000, ZHIWEN_PAGE_ID_MAX, &p_rsp);//0x02
+                        ensure = PS_Search(CharBuffer3, 0x0000,AS608Para.PS_max , &p_rsp);//0x02ZHIWEN_PAGE_ID_MAX
                         if(ensure==0x00)
                         {
                             ////LCD_Fill(0,120,lcddev.width,160,WHITE);
@@ -8480,6 +8481,7 @@ done_zwc_fail_cq:
                     send_cmd_to_lcd_pic(0x0001);
                     return_cause_zanwu_kx =9;
                     ShowErrMessage(ensure);
+                    vTaskDelete(NULL);
                 }
                 			
 				break;	
@@ -9820,7 +9822,7 @@ static void gpio_task_example1(void* arg)
             DB_PR("------------system heart-----------\r\n");
             if(led_green_state == 0)
             {
-                DB_PR("------------gr led on-----------\r\n");
+                // DB_PR("------------gr led on-----------\r\n");
                 led_green_state =1;
                 //---------system state----------
                 // vTaskDelay(1000 / portTICK_PERIOD_MS);//on 
@@ -9830,14 +9832,14 @@ static void gpio_task_example1(void* arg)
             }
             else if(led_green_state == 1)
             {
-                DB_PR("------------gr led off-----------\r\n");
+                // DB_PR("------------gr led off-----------\r\n");
                 led_green_state =0;
                 // vTaskDelay(1000 / portTICK_PERIOD_MS);//off del
                 // gpio_set_level(LED_BLUE, 1);
                 gpio_set_level(LED_GRREN, 1);
                 // gpio_set_level(LED_RED, 1);
             }
-            DB_PR("\r\n");
+            // DB_PR("\r\n");
 
 		}
 
@@ -9846,7 +9848,7 @@ static void gpio_task_example1(void* arg)
         {
             if(led_blue_state == 0)
             {
-                DB_PR("------------bl led on-----------\r\n");
+                // DB_PR("------------bl led on-----------\r\n");
                 led_blue_state =1;
                 //---------wifi state----------
                 // vTaskDelay(wifi_led_duration_time / portTICK_PERIOD_MS);//on 
@@ -9856,14 +9858,14 @@ static void gpio_task_example1(void* arg)
             }
             else if(led_blue_state == 1)
             {
-                DB_PR("------------bl led off-----------\r\n");
+                // DB_PR("------------bl led off-----------\r\n");
                 led_blue_state =0;
                 // vTaskDelay(wifi_led_duration_time / portTICK_PERIOD_MS);//off del
                 gpio_set_level(LED_BLUE, 1);
                 // gpio_set_level(LED_GRREN, 1);
                 // gpio_set_level(LED_RED, 1);
             }
-            DB_PR("\r\n");
+            // DB_PR("\r\n");
 
         }
 
@@ -9945,7 +9947,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         retry_num = 0;                                              /* WiFi重连次数清零 */
         xEventGroupSetBits(s_wifi_event_group, CONNECTED_BIT);
 
-        wifi_led_duration_time =50;
+        wifi_led_duration_time =20;
         wifi_connected_flag =1;
         DB_PR("-1-wifi_connected_flag =%d-----.\r\n",wifi_connected_flag);
         //todo pic
@@ -10748,6 +10750,7 @@ void simple_ota_example_task(void *pvParameter)
     // if(audio_play_mp3_stop == 0)//audio_play_mp3_stop debug
     if(update_sta == 1)//audio_play_mp3_stop
     {
+        wifi_led_duration_time =8;
         DB_PR(  "Starting OTA example\r\n");
         send_cmd_to_lcd_pic(0x0057);
 

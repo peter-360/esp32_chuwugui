@@ -214,7 +214,7 @@ u8 PS_GenChar(u8 BufferID)
 	SendCheck(temp);
 	flag_rx2 =0;
 	DB_PR("-----0----flag_rx2=%u\r\n", flag_rx2);
-	delay_ms(100);//---------------------
+	delay_ms(300);//----------100-----------
 	data=JudgeStr(4000);//2000
 	if(data)
 		ensure=data[9];
@@ -353,7 +353,7 @@ u8 PS_StoreChar(u8 BufferID,u16 PageID)
 	SendCheck(temp);
 	flag_rx2 =0;
 	DB_PR("-----0----flag_rx2=%u\r\n", flag_rx2);
-	delay_ms(150);//---------------------
+	delay_ms(300);//----------150-----------
 	data=JudgeStr(4000);//2000
 	if(data)
 		ensure=data[9];
@@ -468,7 +468,7 @@ u8 PS_ReadSysPara(SysPara *p)
 	SendCheck(temp);
 	flag_rx2 =0;
 	DB_PR("-----0----flag_rx2=%u\r\n", flag_rx2);
-	delay_ms(100);//---------------------
+	delay_ms(300);//----------100-----------
 	data=JudgeStr(3000);//1000
 	if(data)
 	{
@@ -642,7 +642,7 @@ u8 PS_ValidTempleteNum(u16 *ValidN)
 
 	flag_rx2 =0;
 	DB_PR("-----0----flag_rx2=%u\r\n", flag_rx2);
-	delay_ms(50);//---------------------
+	delay_ms(250);//--------- 50------------
   	data=JudgeStr(4000);//2000
 
 	// DB_PR("\r\n-----data--Ö¸ÎÆ¸öÊý=%d",(u32)data);
