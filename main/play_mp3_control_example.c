@@ -122,7 +122,7 @@ audio_element_handle_t tone_stream_reader, i2s_stream_writer, mp3_decoder;
 audio_pipeline_handle_t pipeline;
 audio_event_iface_handle_t m_audio_evt;
 
-
+void es7134_pa_power(bool enable);
 
 
 
@@ -8932,6 +8932,14 @@ void uart_init_all(void)
 }
 
 
+
+
+
+
+#define PLAYBACK_RATE       16000
+#define PLAYBACK_CHANNEL    1
+#define PLAYBACK_BITS       16
+
 void audio_play_one_mp3(int num)
 {
     audio_play_mp3_task =1;
@@ -8957,6 +8965,9 @@ void audio_play_one_mp3(int num)
                 // audio_pipeline_reset_ringbuffer(pipeline);
                 // audio_pipeline_reset_elements(pipeline);
                 // DB_PR("[2.6-b2] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)\r\n");
+                es7134_pa_power(0);
+                i2s_stream_set_clk(i2s_stream_writer, PLAYBACK_RATE, PLAYBACK_BITS, PLAYBACK_CHANNEL);
+                es7134_pa_power(1);
                 audio_element_set_uri(tone_stream_reader, tone_uri[num]);//TONE_TYPE_OPEN
                 audio_pipeline_run(pipeline);  
 
@@ -9030,6 +9041,28 @@ void audio_play_one_mp3(int num)
 
 // }
 
+
+
+// 8388
+void es7134_pa_power(bool enable)
+{
+    gpio_config_t  io_conf;
+    memset(&io_conf, 0, sizeof(io_conf));
+    io_conf.intr_type = GPIO_PIN_INTR_DISABLE;
+    io_conf.mode = GPIO_MODE_OUTPUT;
+    io_conf.pin_bit_mask = BIT64(GPIO_NUM_4);
+    io_conf.pull_down_en = 0;
+    io_conf.pull_up_en = 0;
+    gpio_config(&io_conf);
+    if (enable) {
+        gpio_set_level(GPIO_NUM_4, 1);
+    } else {
+        gpio_set_level(GPIO_NUM_4, 0);
+    }
+}
+
+
+
 void audio_init(void)
 {
 
@@ -9039,6 +9072,9 @@ void audio_init(void)
     // DB_PR("[ 1 ] Start codec chip");
     // audio_board_handle_t board_handle = audio_board_init();
     // audio_hal_ctrl_codec(board_handle->audio_hal, AUDIO_HAL_CODEC_MODE_DECODE, AUDIO_HAL_CTRL_START);
+
+
+
 
     DB_PR("[2.0] Create audio pipeline for playback\r\n");
     audio_pipeline_cfg_t pipeline_cfg = DEFAULT_AUDIO_PIPELINE_CONFIG();
@@ -9068,8 +9104,9 @@ void audio_init(void)
     const char *link_tag[3] = {"tone", "mp3", "i2s"};
     audio_pipeline_link(pipeline, &link_tag[0], 3);
 
-
-
+    es7134_pa_power(0);
+    i2s_stream_set_clk(i2s_stream_writer, PLAYBACK_RATE, PLAYBACK_BITS, PLAYBACK_CHANNEL);
+    es7134_pa_power(1);
     if(audio_play_mp3_stop ==0)
     {
         // vTaskDelay(100 / portTICK_PERIOD_MS);
@@ -9122,7 +9159,7 @@ void audio_init(void)
                     music_info.sample_rates, music_info.bits, music_info.channels);
 
             audio_element_setinfo(i2s_stream_writer, &music_info);
-            i2s_stream_set_clk(i2s_stream_writer, music_info.sample_rates, music_info.bits, music_info.channels);
+            // i2s_stream_set_clk(i2s_stream_writer, music_info.sample_rates, music_info.bits, music_info.channels);
             continue;
         }
 
