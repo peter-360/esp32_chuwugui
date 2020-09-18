@@ -214,7 +214,7 @@ u8 PS_GenChar(u8 BufferID)
 	SendCheck(temp);
 	flag_rx2 =0;
 	DB_PR("-----0----flag_rx2=%u\r\n", flag_rx2);
-	delay_ms(300);//----------100-----------
+	delay_ms(500);//----------100-----------
 	data=JudgeStr(4000);//2000
 	if(data)
 		ensure=data[9];

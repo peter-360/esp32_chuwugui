@@ -5443,7 +5443,7 @@ done_mima_nosame:
                                 {
                                     send_cmd_to_lcd_pic(CHANQI_CW_MODE_PIC);
                                 }
-                                
+                                return_cause_zw =1;//add
 
                                 break;
 
@@ -10486,7 +10486,7 @@ static void http_get_task()//
             vTaskDelay(10 / portTICK_PERIOD_MS);
             bzero(recv_buf, sizeof(recv_buf));
             r = read(s, recv_buf, sizeof(recv_buf)-1);
-            printf("\n------------r=%d------------\n",r);
+            DB_PR("\n------------r=%d------------\n",r);
             strcat(mid_buf,recv_buf);
             // vTaskDelay(1000 / portTICK_PERIOD_MS);
             // for(int i = 0; i < r; i++) {
@@ -10520,8 +10520,8 @@ void printJson(cJSON * root)//以递归的方式打印json的最内层键值对
             printJson(item);
         else                                //值不为json对象就直接打印出键和值
         {
-            printf("%s->", item->string);
-            printf("%s\n", cJSON_Print(item));
+            DB_PR("%s->", item->string);
+            DB_PR("%s\n", cJSON_Print(item));
         }
     }
 }
@@ -10556,75 +10556,75 @@ u16 cjson_to_struct_info(char *update_ip_ret,char *text)
     root = cJSON_Parse(text);     
     if (!root) 
     {
-        printf("Error before: [%s]\n",cJSON_GetErrorPtr());
+        DB_PR("Error before: [%s]\n",cJSON_GetErrorPtr());
     }
     else
     {
-        printf("%s\n", "有格式的方式打印Json:");           
-        printf("%s\n\n", cJSON_Print(root));
-        printf("%s\n", "无格式方式打印json：");
-        printf("%s\n\n", cJSON_PrintUnformatted(root));
+        DB_PR("%s\n", "有格式的方式打印Json:");           
+        DB_PR("%s\n\n", cJSON_Print(root));
+        DB_PR("%s\n", "无格式方式打印json：");
+        DB_PR("%s\n\n", cJSON_PrintUnformatted(root));
 
         //---------------------
-        printf("\n%s\n", "--1--一步一步的获取firm_run_version 键值对:");
-        printf("%s\n", "获取result下的cjson对象:");
+        DB_PR("\n%s\n", "--1--一步一步的获取firm_run_version 键值对:");
+        DB_PR("%s\n", "获取result下的cjson对象:");
         item = cJSON_GetObjectItem(root, "result");//
-        printf("%s\n", cJSON_Print(item));
+        DB_PR("%s\n", cJSON_Print(item));
 
-        printf("%s\n", "获取post_data下的cjson对象");
+        DB_PR("%s\n", "获取post_data下的cjson对象");
         item = cJSON_GetObjectItem(item, "post_data");
-        printf("%s\n", cJSON_Print(item));
+        DB_PR("%s\n", cJSON_Print(item));
 
-        printf("%s\n", "获取firm_run_version下的cjson对象");
+        DB_PR("%s\n", "获取firm_run_version下的cjson对象");
         item = cJSON_GetObjectItem(item, "firm_run_version");
-        printf("%s\n", cJSON_Print(item));
+        DB_PR("%s\n", cJSON_Print(item));
 
-        printf("%s:", item->string);   //看一下cjson对象的结构体中这两个成员的意思
-        printf("%s\n", item->valuestring);
+        DB_PR("%s:", item->string);   //看一下cjson对象的结构体中这两个成员的意思
+        DB_PR("%s\n", item->valuestring);
                         
 
         //---------------------
-        printf("\n%s\n", "--2--一步一步的获取status 键值对:");
-        printf("%s\n", "获取result下的cjson对象:");
+        DB_PR("\n%s\n", "--2--一步一步的获取status 键值对:");
+        DB_PR("%s\n", "获取result下的cjson对象:");
         item = cJSON_GetObjectItem(root, "result");//
-        printf("%s\n", cJSON_Print(item));
+        DB_PR("%s\n", cJSON_Print(item));
 
-        printf("%s\n", "获取post_data下的cjson对象");
+        DB_PR("%s\n", "获取post_data下的cjson对象");
         item = cJSON_GetObjectItem(item, "status");
-        printf("%s\n", cJSON_Print(item));
-        printf("%s:", item->string);   //看一下cjson对象的结构体中这两个成员的意思
-        printf("%d\n", item->valueint);
+        DB_PR("%s\n", cJSON_Print(item));
+        DB_PR("%s:", item->string);   //看一下cjson对象的结构体中这两个成员的意思
+        DB_PR("%d\n", item->valueint);
         update_status = item->valueint;
-        printf("update_status=%d\n", update_status);
+        DB_PR("update_status=%d\n", update_status);
 
 
 
         if(update_status !=0)
         {
             //---------------------
-            printf("\n%s\n", "--3--一步一步的获取url 键值对:");
-            printf("%s\n", "获取result下的cjson对象:");
+            DB_PR("\n%s\n", "--3--一步一步的获取url 键值对:");
+            DB_PR("%s\n", "获取result下的cjson对象:");
             item = cJSON_GetObjectItem(root, "result");//
-            printf("%s\n", cJSON_Print(item));
+            DB_PR("%s\n", cJSON_Print(item));
 
-            printf("%s\n", "获取post_data下的cjson对象");
+            DB_PR("%s\n", "获取post_data下的cjson对象");
             item = cJSON_GetObjectItem(item, "url");
-            printf("%s\n", cJSON_Print(item));
-            printf("%s:", item->string);   //看一下cjson对象的结构体中这两个成员的意思
-            printf("%s\n", item->valuestring);
+            DB_PR("%s\n", cJSON_Print(item));
+            DB_PR("%s:", item->string);   //看一下cjson对象的结构体中这两个成员的意思
+            DB_PR("%s\n", item->valuestring);
 
             memcpy(update_ip_ret,item->valuestring,strlen(item->valuestring));
-            printf("update_ip_ret=%s\n", update_ip_ret);
+            DB_PR("update_ip_ret=%s\n", update_ip_ret);
         }
         else
         {
-            printf("---noip-----update_status=%d\n", update_status);
+            DB_PR("---noip-----update_status=%d\n", update_status);
         }
         
 
 
 
-        // printf("\n%s\n", "打印json所有最内层键值对:");
+        // DB_PR("\n%s\n", "打印json所有最内层键值对:");
         // printJson(root);
     }
 
@@ -10744,8 +10744,8 @@ void simple_ota_example_task(void *pvParameter)
     http_get_task();
     // vTaskDelay(4000 / portTICK_PERIOD_MS);
     update_sta = cjson_to_struct_info(ip_buff_dst,mid_buf);
-    printf("---------update_sta=%d\n", update_sta);
-    printf("---------ip_buff_dst=%s\n", ip_buff_dst);
+    DB_PR("---------update_sta=%d\n", update_sta);
+    DB_PR("---------ip_buff_dst=%s\n", ip_buff_dst);
 
     // if(audio_play_mp3_stop == 0)//audio_play_mp3_stop debug
     if(update_sta == 1)//audio_play_mp3_stop
@@ -10761,7 +10761,7 @@ void simple_ota_example_task(void *pvParameter)
             .event_handler = _http_event_handler,
         };
         memcpy(config.url,ip_buff_dst,strlen(ip_buff_dst));
-        printf("config.url=%s\n", config.url);
+        DB_PR("config.url=%s\n", config.url);
 
         DB_PR("----CONFIG_EXAMPLE_FIRMWARE_UPGRADE_URL=%s\r\n",CONFIG_EXAMPLE_FIRMWARE_UPGRADE_URL);
 
