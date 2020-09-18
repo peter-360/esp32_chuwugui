@@ -293,7 +293,7 @@ uint8_t flag_rx2;
 
 
 //288//300//310//all kong   480    432
-#define SHENYU_GEZI_MAX 48//288//50
+#define SHENYU_GEZI_MAX 480//288//50
 
 //300//all kong
 #define ZHIWEN_PAGE_ID_MAX 120
@@ -9105,8 +9105,10 @@ void audio_init(void)
     audio_pipeline_link(pipeline, &link_tag[0], 3);
 
     es7134_pa_power(0);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
     i2s_stream_set_clk(i2s_stream_writer, PLAYBACK_RATE, PLAYBACK_BITS, PLAYBACK_CHANNEL);
     es7134_pa_power(1);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
     if(audio_play_mp3_stop ==0)
     {
         // vTaskDelay(100 / portTICK_PERIOD_MS);
