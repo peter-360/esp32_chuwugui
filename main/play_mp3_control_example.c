@@ -309,10 +309,10 @@ uint8_t flag_rx2;
 
 
 //35//25//all kong   18    12   20
-#define BOARD_GK_MAX 12
+#define BOARD_GK_MAX 10
 
 //288//300//310//all kong   480    432
-#define SHENYU_GEZI_MAX 288
+#define SHENYU_GEZI_MAX 240
 //288//50
 
 //300//all kong   //120
@@ -3901,7 +3901,7 @@ guimen_set_fail:
                                         DB_PR("----222222 =NULL-----.\r\n");
                                     }
                                     
-                                    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, (TaskHandle_t* )&taskhandle_mp3);
+                                    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 8196, (void*)TONE_TYPE_OPEN, 10, (TaskHandle_t* )&taskhandle_mp3);
 
 
                                 }
@@ -4094,7 +4094,7 @@ wuci_xmh:
                                         {
                                             DB_PR("----222222 =NULL-----.\r\n");
                                         }
-                                        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);
+                                        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 8196, (void*)TONE_TYPE_OPEN, 10, NULL);
                                         //update xianshi todo
                                         tongbu_changqi();
                                         //tongbu_locked();    
@@ -4303,7 +4303,7 @@ wuci_xmh_q:
                                         // }
 
                                     }
-                                    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_SUODING, 10, NULL);
+                                    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 8192, (void*)TONE_TYPE_SUODING, 10, NULL);
 
                                     //if(database_gz[database_cw.dIndx].changqi == 1)
                                     {
@@ -4499,7 +4499,7 @@ wuci_xmh_lk:
 
                                         
 
-                                        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_JIESUO, 10, NULL);
+                                        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 8192, (void*)TONE_TYPE_JIESUO, 10, NULL);
                                         
                                         tongbu_changqi();
                                         tongbu_locked();   
@@ -4930,7 +4930,7 @@ wuci_xmh_xinz:
                                     }
 
                                     DB_PR("-----2-----[ * ] Starting audio pipeline");
-                                    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);
+                                    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 8196, (void*)TONE_TYPE_OPEN, 10, NULL);
                                     //if(database_gz[database_cw_adm.dIndx].changqi == 0)
                                     {
                                         //update xianshi todo
@@ -5046,7 +5046,7 @@ done_longtime_2:
                                     send_cmd_to_lcd_bl(0x1120,database_gz[database_cw.dIndx].dIndx_gz);
 
                                     DB_PR("-----2-----[ * ] Starting audio pipeline");
-                                    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);
+                                    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 8196, (void*)TONE_TYPE_OPEN, 10, NULL);
                                     //send_cmd_to_lcd_pic(0x0024);
                                     send_cmd_to_lcd_pic(UN_CHANGQI_OK_PIC);
 
@@ -6172,7 +6172,7 @@ done_mima_nosame:
                                     }
 
                                     DB_PR("-----2-----[ * ] Starting audio pipeline");
-                                    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);
+                                    xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 8196, (void*)TONE_TYPE_OPEN, 10, NULL);
 
                                     DB_PR("----test--.\r\n");  
                                     if(0 != database_cw.dzx_mode)
@@ -6474,7 +6474,7 @@ done_2:
                                         send_cmd_to_lcd_bl(0x10a0,database_gz[database_cw.dIndx].dIndx_gz);//weishu bugou
                 
                                         DB_PR("-----2-----[ * ] Starting audio pipeline\r\n");
-                                        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);   
+                                        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 8196, (void*)TONE_TYPE_OPEN, 10, NULL);   
 
 
 
@@ -7363,7 +7363,7 @@ void Add_FR_First()
                             {
                                 xTaskCreate(Add_FR_CQ, "add_zhiwen_task2", 6* 1024, NULL, 2, NULL);//1024 10
                             }
-                            xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_CL, 10, NULL);
+                            xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 8196, (void*)TONE_TYPE_CL, 10, NULL);
                             
                             vTaskDelete(NULL);
 
@@ -7948,7 +7948,7 @@ void Add_FR()
                         }
 
                         DB_PR("-----2-----[ * ] Starting audio pipeline");
-                        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);
+                        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 8196, (void*)TONE_TYPE_OPEN, 10, NULL);
 
                         DB_PR("--11111111111--test--.\r\n");  
                         if(0 != database_cw.dzx_mode)
@@ -8369,7 +8369,7 @@ void Add_FR_CQ()
 
                         
                         DB_PR("-----2-----[ * ] Starting audio pipeline");
-                        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);
+                        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 8196, (void*)TONE_TYPE_OPEN, 10, NULL);
 
                         DB_PR( "database_gz[database_cw_adm.dIndx].state_gz = %d", database_gz[database_cw_adm.dIndx].state_gz);
                         if(0 == database_gz[database_cw_adm.dIndx].state_gz)
@@ -8758,7 +8758,7 @@ void del_zw_database(u16 num)
 
 
             DB_PR("-----2-----[ * ] Starting audio pipeline");
-            xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_OPEN, 10, NULL);
+            xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 8196, (void*)TONE_TYPE_OPEN, 10, NULL);
 
 
 
@@ -10021,7 +10021,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
             DB_PR("----222222 =NULL-----.\r\n");
         }
         
-        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_WIFI_CON, 10, (TaskHandle_t* )&taskhandle_mp3);
+        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 8196, (void*)TONE_TYPE_WIFI_CON, 10, (TaskHandle_t* )&taskhandle_mp3);
         
 
     } else if (event_base == SC_EVENT && event_id == SC_EVENT_SCAN_DONE) {
@@ -10042,7 +10042,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
             DB_PR("----222222 =NULL-----.\r\n");
         }
         
-        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_WIFI_SCPASS, 10, (TaskHandle_t* )&taskhandle_mp3);
+        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 8196, (void*)TONE_TYPE_WIFI_SCPASS, 10, (TaskHandle_t* )&taskhandle_mp3);
         
     } else if (event_base == SC_EVENT && event_id == SC_EVENT_FOUND_CHANNEL) {
         DB_PR( "Found channel\r\n");
@@ -10805,7 +10805,7 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
             DB_PR("----222222 =NULL-----.\r\n");
         }
         
-        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_SERVER_CONFAIL, 10, (TaskHandle_t* )&taskhandle_mp3);
+        xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 8196, (void*)TONE_TYPE_SERVER_CONFAIL, 10, (TaskHandle_t* )&taskhandle_mp3);
         
         break;
     case HTTP_EVENT_ON_CONNECTED:
@@ -10897,7 +10897,7 @@ void simple_ota_example_task(void *pvParameter)
                 DB_PR("----222222 =NULL-----.\r\n");
             }
             
-            xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 2048, (void*)TONE_TYPE_FIRM_UPOK, 10, (TaskHandle_t* )&taskhandle_mp3);
+            xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 8196, (void*)TONE_TYPE_FIRM_UPOK, 10, (TaskHandle_t* )&taskhandle_mp3);
             
             vTaskDelay(3000 / portTICK_PERIOD_MS);
             DB_PR(  "Firmware upgrade ok\r\n");
