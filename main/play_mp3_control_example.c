@@ -107,6 +107,21 @@ u8 audio_play_mp3_over;
 void audio_play_my_mp3(void);
 void audio_play_one_mp3(int num);
 void simple_ota_example_task(void *pvParameter);
+static void event_handler(void* arg, esp_event_base_t event_base, 
+                                int32_t event_id, void* event_data);
+
+
+/* FreeRTOS event group to signal when we are connected & ready to make a request */
+static EventGroupHandle_t s_wifi_event_group;
+
+/* The event group allows multiple bits for each event,
+   but we only care about one event - are we connected
+   to the AP with an IP? */
+static const int CONNECTED_BIT = BIT0;
+static const int ESPTOUCH_DONE_BIT = BIT1;
+static const int WIFI_FAIL_BIT =    BIT2;
+
+
 // static const char *TAG = "PLAY_MP3_FLASH";
 
 /*
@@ -292,14 +307,18 @@ uint8_t flag_rx2;
 #define DZ_ZW_PAGEID "_dz_zwpid"
 
 
+
+//35//25//all kong   18    12   20
+#define BOARD_GK_MAX 12
+
 //288//300//310//all kong   480    432
-#define SHENYU_GEZI_MAX 600//288//50
+#define SHENYU_GEZI_MAX 288
+//288//50
 
 //300//all kong   //120
 #define ZHIWEN_PAGE_ID_MAX 300
 
-//35//25//all kong   18    12
-#define BOARD_GK_MAX 25
+
 int16_t hang_shu_max;
 
 // #define GUIMENX_GK_MAX 24//all kong
@@ -8967,9 +8986,12 @@ void audio_play_one_mp3(int num)
                 // audio_pipeline_reset_ringbuffer(pipeline);
                 // audio_pipeline_reset_elements(pipeline);
                 // DB_PR("[2.6-b2] Set up  uri (file as tone_stream, mp3 as mp3 decoder, and default output is i2s)\r\n");
-                es7134_pa_power(0);
+                
+                // es7134_pa_power(0);
+                // vTaskDelay(100 / portTICK_PERIOD_MS);
                 i2s_stream_set_clk(i2s_stream_writer, PLAYBACK_RATE, PLAYBACK_BITS, PLAYBACK_CHANNEL);
-                es7134_pa_power(1);
+                // es7134_pa_power(1);
+                // vTaskDelay(100 / portTICK_PERIOD_MS);
                 audio_element_set_uri(tone_stream_reader, tone_uri[num]);//TONE_TYPE_OPEN
                 audio_pipeline_run(pipeline);  
 
@@ -9673,6 +9695,21 @@ esp_err_t alink_key_scan(TickType_t ticks_to_wait) {
 	}
 }
 
+
+
+#include <string.h>
+#include <stdlib.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/event_groups.h"
+#include "esp_wifi.h"
+#include "esp_wpa2.h"
+#include "esp_event.h"
+#include "esp_log.h"
+#include "esp_system.h"
+#include "nvs_flash.h"
+#include "tcpip_adapter.h"
+#include "esp_smartconfig.h"//sc_event
 void key_trigger(void *arg) {
 	esp_err_t ret = 0;
 	KeyInit(KEY_GPIO);
@@ -9727,11 +9764,21 @@ void key_trigger(void *arg) {
                 // esp_wifi_stop
                 //esp_event_handler_unregister
                 //ESP_ERROR_CHECK( esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler) );
+                
+                xEventGroupClearBits(s_wifi_event_group, WIFI_FAIL_BIT);
+
+                ESP_ERROR_CHECK( esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL) );
+                ESP_ERROR_CHECK( esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL) );
+                ESP_ERROR_CHECK( esp_event_handler_register(SC_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL) );
+
+
+                // ESP_ERROR_CHECK( esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL) );
                 xTaskCreate(smartconfig_example_task, "smartconfig_example_task", 4096, NULL, 3, NULL);
             }
 			else
             {
-                DB_PR("-------yi peiwang -------- \r\n");
+                send_cmd_to_lcd_pic(0x005c);//todo
+                DB_PR("-------peiwang wei jiesu -------- \r\n");
             }
             
             break;
@@ -9886,39 +9933,40 @@ static void gpio_task_example1(void* arg)
    CONDITIONS OF ANY KIND, either express or implied.
 */
 
-#include <string.h>
-#include <stdlib.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/event_groups.h"
-#include "esp_wifi.h"
-#include "esp_wpa2.h"
-#include "esp_event.h"
-#include "esp_log.h"
-#include "esp_system.h"
-#include "nvs_flash.h"
-#include "tcpip_adapter.h"
-#include "esp_smartconfig.h"
+// #include <string.h>
+// #include <stdlib.h>
+// #include "freertos/FreeRTOS.h"
+// #include "freertos/task.h"
+// #include "freertos/event_groups.h"
+// #include "esp_wifi.h"
+// #include "esp_wpa2.h"
+// #include "esp_event.h"
+// #include "esp_log.h"
+// #include "esp_system.h"
+// #include "nvs_flash.h"
+// #include "tcpip_adapter.h"
+// #include "esp_smartconfig.h"
 
 
 
 
 
-/* FreeRTOS event group to signal when we are connected & ready to make a request */
-static EventGroupHandle_t s_wifi_event_group;
+// /* FreeRTOS event group to signal when we are connected & ready to make a request */
+// static EventGroupHandle_t s_wifi_event_group;
 
-/* The event group allows multiple bits for each event,
-   but we only care about one event - are we connected
-   to the AP with an IP? */
-static const int CONNECTED_BIT = BIT0;
-static const int ESPTOUCH_DONE_BIT = BIT1;
+// /* The event group allows multiple bits for each event,
+//    but we only care about one event - are we connected
+//    to the AP with an IP? */
+// static const int CONNECTED_BIT = BIT0;
+// static const int ESPTOUCH_DONE_BIT = BIT1;
+// static const int WIFI_FAIL_BIT =    BIT2;
 //static const char *TAG = "smartconfig_example";
 
-
+static int retry_num = 0; 
 static void event_handler(void* arg, esp_event_base_t event_base, 
                                 int32_t event_id, void* event_data)
 {
-    static int retry_num = 0;           /* 记录wifi重连次数 */
+    // static int retry_num = 0;           /* 记录wifi重连次数 */
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         // if(wifi_peiwang_over_flag==0)
         {
@@ -9931,15 +9979,20 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         wifi_led_duration_time =500;
         wifi_connected_flag =0;
         DB_PR("-2-wifi_connected_flag =%d-----.\r\n",wifi_connected_flag);
-        esp_wifi_connect();
 
 		retry_num++;
         DB_PR("retry to connect to the AP %d times. \n",retry_num);
-        // if (retry_num > 10)  /* WiFi重连次数大于10 */
-        // {
-        //     /* 将WiFi连接事件标志组的WiFi连接失败事件位置1 */
-        //     xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);//add
-        // }
+
+        if (retry_num < 5)  /* WiFi重连次数小于5 */
+        {
+            esp_wifi_connect();
+        }
+        else  /* WiFi重连次数大于10 */
+        {
+            retry_num =0;//todo----------------
+            /* 将WiFi连接事件标志组的WiFi连接失败事件位置1 */
+            xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);//add
+        }
         xEventGroupClearBits(s_wifi_event_group, CONNECTED_BIT);
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data; /* 获取IP地址信息*/
@@ -10119,6 +10172,30 @@ static void initialise_wifi(void)
 	
 	DB_PR("2-initialise_wifi finished. \n");
 
+
+    /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
+     * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
+    EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,
+            WIFI_FAIL_BIT,
+            pdFALSE,
+            pdFALSE,
+            portMAX_DELAY);//WIFI_CONNECTED_BIT |
+
+    /* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually
+     * happened. */
+    if (bits & WIFI_FAIL_BIT) {
+        ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",
+                 wifi_ssid, wifi_passwd);
+    } else {
+        ESP_LOGE(TAG, "UNEXPECTED EVENT");
+    }
+
+ 
+    // ESP_ERROR_CHECK(esp_event_handler_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler));
+    ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler));
+    // ESP_ERROR_CHECK(esp_event_handler_unregister(SC_EVENT, ESP_EVENT_ANY_ID, &event_handler) );
+    // vEventGroupDelete(s_wifi_event_group);
+    DB_PR("3-initialise_wifi finished---. \n");
 }
 
 static void smartconfig_example_task(void * parm)
@@ -10130,7 +10207,9 @@ static void smartconfig_example_task(void * parm)
     smartconfig_start_config_t cfg = SMARTCONFIG_START_CONFIG_DEFAULT();
     ESP_ERROR_CHECK( esp_smartconfig_start(&cfg) );
     while (1) {
-        uxBits = xEventGroupWaitBits(s_wifi_event_group, CONNECTED_BIT | ESPTOUCH_DONE_BIT, true, false, portMAX_DELAY); 
+        uxBits = xEventGroupWaitBits(s_wifi_event_group, 
+                CONNECTED_BIT | ESPTOUCH_DONE_BIT |WIFI_FAIL_BIT, 
+                true, false, portMAX_DELAY); 
         if(uxBits & CONNECTED_BIT) {
             DB_PR( "WiFi Connected to ap\r\n");
 
@@ -10147,7 +10226,24 @@ static void smartconfig_example_task(void * parm)
             esp_smartconfig_stop();
             vTaskDelete(NULL);
         }
+
+        if(uxBits & WIFI_FAIL_BIT) {
+            DB_PR( "----WIFI_FAIL_BIT-------smartconfig over\r\n");
+            wifi_peiwang_over_flag =0;
+            send_cmd_to_lcd_pic(0x005c);//todo
+
+            esp_smartconfig_stop();
+
+
+            // ESP_ERROR_CHECK(esp_event_handler_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler));
+            ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler));
+            // ESP_ERROR_CHECK(esp_event_handler_unregister(SC_EVENT, ESP_EVENT_ANY_ID, &event_handler) );
+            // vEventGroupDelete(s_wifi_event_group);
+
+            vTaskDelete(NULL);
+        }
     }
+    retry_num =0;
 }
 
 
