@@ -309,10 +309,10 @@ uint8_t flag_rx2;
 
 
 //35//25//all kong   18    12   20
-#define BOARD_GK_MAX 6
+#define BOARD_GK_MAX 8
 
 //288//300//310//all kong   480    432
-#define SHENYU_GEZI_MAX 144
+#define SHENYU_GEZI_MAX 192
 //288//50
 
 //300//all kong   //120
@@ -7119,7 +7119,7 @@ static void echo_task()
             //vTaskDelay(2 / portTICK_PERIOD_MS);
 
 
-            xTaskCreate(echo_task2, "uart_echo_task2",10* 1024, NULL, 2, NULL);//uart1
+            xTaskCreate(echo_task2, "uart_echo_task2",6* 1024, NULL, 2, NULL);//uart1
 
         }
 	
