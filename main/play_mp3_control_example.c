@@ -309,10 +309,10 @@ uint8_t flag_rx2;
 
 
 //35//25//all kong   18    12   20
-#define BOARD_GK_MAX 10
+#define BOARD_GK_MAX 8
 
 //288//300//310//all kong   480    432
-#define SHENYU_GEZI_MAX 240
+#define SHENYU_GEZI_MAX 192
 //288//50
 
 //300//all kong   //120
@@ -9181,7 +9181,7 @@ void audio_init(void)
             audio_element_info_t music_info = {0};
             audio_element_getinfo(mp3_decoder, &music_info);
 
-            DB_PR("[ * ] Receive music info from mp3 decoder, sample_rates=%d, bits=%d, ch=%d\r\n",
+            DB_PR("\n[ * ] Receive music info from mp3 decoder, sample_rates=%d, bits=%d, ch=%d\n\n",
                     music_info.sample_rates, music_info.bits, music_info.channels);
 
             audio_element_setinfo(i2s_stream_writer, &music_info);
@@ -9989,7 +9989,25 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         }
         else  /* WiFi重连次数大于10 */
         {
-            retry_num =0;//todo----------------
+            //wifi have disconnected mp3
+            if(audio_play_mp3_task!=0)
+            {
+                audio_play_mp3_task =0;
+                vTaskDelay(20 / portTICK_PERIOD_MS);
+                DB_PR("----111111 -a-----.\r\n");
+                vTaskDelete(taskhandle_mp3);
+                // taskhandle_mp3 =NULL;
+                DB_PR("----111111 -b-----.\r\n");
+                // vTaskDelay(500 / portTICK_PERIOD_MS);
+            }
+            else
+            {
+                DB_PR("----222222 =NULL-----.\r\n");
+            }
+            xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 8196, (void*)TONE_TYPE_WIFI_DISCON, 10, (TaskHandle_t* )&taskhandle_mp3);
+        
+
+            // retry_num =0;//todo----------------
             /* 将WiFi连接事件标志组的WiFi连接失败事件位置1 */
             xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);//add
         }
@@ -10005,7 +10023,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         DB_PR("-1-wifi_connected_flag =%d-----.\r\n",wifi_connected_flag);
         //todo pic
         
-        vTaskDelay(3000 / portTICK_PERIOD_MS);//on 
+        // vTaskDelay(3000 / portTICK_PERIOD_MS);//on 
         if(audio_play_mp3_task!=0)
         {
             audio_play_mp3_task =0;
@@ -11182,12 +11200,11 @@ void app_main(void)
     // audio_init();
     xTaskCreate(audio_init, "audio_init0", 2048, NULL, 3, NULL);   
 
+    vTaskDelay(3000 / portTICK_PERIOD_MS);//on 
 
 
 
     initialise_wifi();
-
-
 
 
     // tcpip_adapter_init();
