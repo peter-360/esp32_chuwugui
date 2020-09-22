@@ -309,10 +309,10 @@ uint8_t flag_rx2;
 
 
 //35//25//all kong   18    12   20
-#define BOARD_GK_MAX 8
+#define BOARD_GK_MAX 10
 
 //288//300//310//all kong   480    432
-#define SHENYU_GEZI_MAX 192
+#define SHENYU_GEZI_MAX 240
 //288//50
 
 //300//all kong   //120
@@ -327,7 +327,7 @@ int16_t hang_shu_max;
 // int16_t guimen_x_gk_max[25]={12,10,10,16,16,16,16,16,16,16,
 //                            16,16,16,16,16,16,16,16,16};//600
 
-int16_t guimen_x_gk_max[BOARD_GK_MAX];//600=24*25   need save?
+// int16_t guimen_x_gk_max[BOARD_GK_MAX];//600=24*25   need save?
 
 
 
@@ -2665,10 +2665,10 @@ static void echo_task2()//lcd
                                         {
                                             DB_PR("2-------shengyu_all_max_temp=%03d\r\n",shengyu_all_max_temp);
                                             shengyu_all_max = shengyu_all_max_temp;
-                                            memcpy(guimen_x_gk_max,guimen_x_gk_max_temp,BOARD_GK_MAX);//????????
+                                            // memcpy(guimen_x_gk_max,guimen_x_gk_max_temp,BOARD_GK_MAX);//????????
 
-                                            DB_PR("2-hang_shu_max=%03d\r\n",hang_shu_max);
-                                            uart0_debug_data_d(guimen_x_gk_max,BOARD_GK_MAX);
+                                            // DB_PR("2-hang_shu_max=%03d\r\n",hang_shu_max);
+                                            // uart0_debug_data_d(guimen_x_gk_max,BOARD_GK_MAX);
                                             DB_PR("3-hang_shu_max=%03d\r\n",hang_shu_max);
                                             uart0_debug_data_d(guimen_x_gk_max_temp,BOARD_GK_MAX);
 
@@ -4679,7 +4679,7 @@ wuci_xmh_xinz:
                                     //baocun 1
                                     database_cw_adm.cunwu_mode = 1;
 									send_cmd_to_lcd_pic(0x0004);//0x001b
-                                    xTaskCreate(Add_FR_First, "add_zhiwen_task", 6* 1024, NULL, 2, NULL);//1024 10
+                                    xTaskCreate(Add_FR_First, "add_zhiwen_task", 8* 1024, NULL, 2, NULL);//1024 10
                                 }
                                 else if(02== data_rx_t[8])//mi ma
                                 {
@@ -5683,7 +5683,7 @@ done_mima_nosame:
                                         DB_PR("--2 zhiwen--.\r\n");  
                                         //baocun 1
                                         send_cmd_to_lcd_pic(0x0004);
-                                        xTaskCreate(Add_FR_First, "add_zhiwen_task1", 6* 1024, NULL, 2, &taskhandle1);//1024 10
+                                        xTaskCreate(Add_FR_First, "add_zhiwen_task1", 8* 1024, NULL, 2, &taskhandle1);//1024 10
                                     }
                                     else if(02== data_rx_t[8])//mi ma
                                     {
@@ -5776,7 +5776,7 @@ done_mima_nosame:
                                     else if(01 == database_cw.cunwu_mode)//2010 指纹 ->指纹判断 0005 todo
                                     {
                                         send_cmd_to_lcd_pic(0x0004);
-                                        xTaskCreate(Add_FR_First, "add_zhiwen_task1", 6* 1024, NULL, 2, &taskhandle1);//1024 10
+                                        xTaskCreate(Add_FR_First, "add_zhiwen_task1", 8* 1024, NULL, 2, &taskhandle1);//1024 10
                                     } 
                                 }
                                 else
@@ -6712,165 +6712,165 @@ done_kai_admin:
 }
 
 
-///command struct
-typedef struct
-{
-	//uint8_t type;
-	uint8_t len;
-	uint8_t opcode;
-	uint16_t sum;
-	uint8_t dIndx;
-	uint8_t data[256];
-	
-}command_struct;
-
-command_struct g_data;
-
-
-#define CMD_SUCCESS 0x01
-#define CMD_FAIL	     0x00
-
-/////start process the data in
-uint8_t uState = 0;
-// static void user_cmd_buffer_clear(void)
+// ///command struct
+// typedef struct
 // {
-// 	uState = 0;
-// 	g_data.len = 0;
-// 	g_data.type = 0;
-// 	g_data.opcode = 0;
-// 	g_data.sum = 0;
-// 	g_data.dIndx = 0;
+// 	//uint8_t type;
+// 	uint8_t len;
+// 	uint8_t opcode;
+// 	uint16_t sum;
+// 	uint8_t dIndx;
+// 	uint8_t data[256];
+	
+// }command_struct;
+
+// command_struct g_data;
+
+
+// #define CMD_SUCCESS 0x01
+// #define CMD_FAIL	     0x00
+
+// /////start process the data in
+// uint8_t uState = 0;
+// // static void user_cmd_buffer_clear(void)
+// // {
+// // 	uState = 0;
+// // 	g_data.len = 0;
+// // 	g_data.type = 0;
+// // 	g_data.opcode = 0;
+// // 	g_data.sum = 0;
+// // 	g_data.dIndx = 0;
+// // }
+
+// ///command enum
+// typedef enum
+// {
+// 	UART_IDLE =0,
+// 	UART_HEADER,
+// 	UART_HEADER2,
+// 	// UART_TYPE,
+// 	UART_LENGTH,
+// 	UART_OPCODE,
+// 	UART_PAYLOAD,
+// 	UART_CHECKSUM,
+// 	UART_RESERVE,
+// }UART_STATE_ENUM;
+
+// void user_send_cmd_response(uint8_t opCode, uint8_t rsp)
+// {
+// 	// uint8_t sum = 0;
+// 	// uint8_t responseBuffer[32] = {0};
+// 	// responseBuffer[0] = 0x55;
+// 	// responseBuffer[1] = 0x02;
+// 	// responseBuffer[2] = 4;
+// 	// responseBuffer[3] = opCode;
+// 	// responseBuffer[4] = rsp;
+
+// 	// sum += responseBuffer[2];
+// 	// sum += responseBuffer[3];
+// 	// sum += responseBuffer[4];
+
+// 	// responseBuffer[5] = sum;
+
+//     //uart_write_bytes(UART_NUM_1, (const char *) data_rx, len_rx);
+// 	//spear_uart_send_datas(responseBuffer, 6);
 // }
+// bool spear_uart_process_data(uint8_t byt)
+// {
+// 	bool r = false;
+//     uint8_t data_t[128];
+//     // uint8_t data_crc1=0;
+//     // uint8_t data_crc2=0;
+// 	DB_PR(" %x: ", byt);
+// 	switch(uState)
+// 	{
+// 		case UART_IDLE:
+// 		case UART_HEADER:
+// 			if(byt == 0x5A)
+// 			{
+// 				uState = UART_HEADER2;
+// 				//user_start_cmd_receive(true);
+// 			}
+// 			//DB_PR("header = %02x\r\n", byt);
+// 			break;
 
-///command enum
-typedef enum
-{
-	UART_IDLE =0,
-	UART_HEADER,
-	UART_HEADER2,
-	// UART_TYPE,
-	UART_LENGTH,
-	UART_OPCODE,
-	UART_PAYLOAD,
-	UART_CHECKSUM,
-	UART_RESERVE,
-}UART_STATE_ENUM;
+// 		case UART_HEADER2:
+// 			if(byt == 0xA5)
+// 			{
+// 				uState = UART_LENGTH;
+// 				//user_start_cmd_receive(true);
+// 			}
+// 			//DB_PR("header = %02x\r\n", byt);
+// 			break;
 
-void user_send_cmd_response(uint8_t opCode, uint8_t rsp)
-{
-	// uint8_t sum = 0;
-	// uint8_t responseBuffer[32] = {0};
-	// responseBuffer[0] = 0x55;
-	// responseBuffer[1] = 0x02;
-	// responseBuffer[2] = 4;
-	// responseBuffer[3] = opCode;
-	// responseBuffer[4] = rsp;
-
-	// sum += responseBuffer[2];
-	// sum += responseBuffer[3];
-	// sum += responseBuffer[4];
-
-	// responseBuffer[5] = sum;
-
-    //uart_write_bytes(UART_NUM_1, (const char *) data_rx, len_rx);
-	//spear_uart_send_datas(responseBuffer, 6);
-}
-bool spear_uart_process_data(uint8_t byt)
-{
-	bool r = false;
-    uint8_t data_t[128];
-    // uint8_t data_crc1=0;
-    // uint8_t data_crc2=0;
-	DB_PR(" %x: ", byt);
-	switch(uState)
-	{
-		case UART_IDLE:
-		case UART_HEADER:
-			if(byt == 0x5A)
-			{
-				uState = UART_HEADER2;
-				//user_start_cmd_receive(true);
-			}
-			//DB_PR("header = %02x\r\n", byt);
-			break;
-
-		case UART_HEADER2:
-			if(byt == 0xA5)
-			{
-				uState = UART_LENGTH;
-				//user_start_cmd_receive(true);
-			}
-			//DB_PR("header = %02x\r\n", byt);
-			break;
-
-		case UART_LENGTH:
-			g_data.len = byt;//-3   no jiaoyan len
-			g_data.dIndx = 0;
+// 		case UART_LENGTH:
+// 			g_data.len = byt;//-3   no jiaoyan len
+// 			g_data.dIndx = 0;
 			
-			uState++;
-			//DB_PR("length = %02x\r\n", byt);
-			break;
-		case UART_OPCODE:
-			g_data.opcode = byt;
-			//g_data.sum += byt;
-            //g_data.sum = byt;
-			uState++;
-			//DB_PR("opcode = %02x\r\n", byt);
-			break;
-		case UART_PAYLOAD:
+// 			uState++;
+// 			//DB_PR("length = %02x\r\n", byt);
+// 			break;
+// 		case UART_OPCODE:
+// 			g_data.opcode = byt;
+// 			//g_data.sum += byt;
+//             //g_data.sum = byt;
+// 			uState++;
+// 			//DB_PR("opcode = %02x\r\n", byt);
+// 			break;
+// 		case UART_PAYLOAD:
 
 
 
-            if(g_data.dIndx == g_data.len-3 )//crc1   2
-            {
-                g_data.data[g_data.dIndx] = byt;
-                //DB_PR("crc data[%d] = %02x\r\n",g_data.dIndx, byt);
-                g_data.dIndx++;
-            }
-			else if(g_data.dIndx < g_data.len-3 )//<   1
-			{
-				g_data.data[g_data.dIndx] = byt;
-				//g_data.sum += byt;
-				//DB_PR("data[%d] = %02x\r\n",g_data.dIndx, byt);
-                g_data.dIndx++;
-			}
-			else//crc2
-			{
-                g_data.data[g_data.dIndx] = byt;
-                // DB_PR("crc data[%d] = %02x\r\n",g_data.dIndx, byt);
-                g_data.dIndx++;
-				//user_start_cmd_receive(false);
-				uState = 0;
-                data_t[0] = g_data.opcode;
-                memcpy(data_t+1,g_data.data,g_data.len -3);
+//             if(g_data.dIndx == g_data.len-3 )//crc1   2
+//             {
+//                 g_data.data[g_data.dIndx] = byt;
+//                 //DB_PR("crc data[%d] = %02x\r\n",g_data.dIndx, byt);
+//                 g_data.dIndx++;
+//             }
+// 			else if(g_data.dIndx < g_data.len-3 )//<   1
+// 			{
+// 				g_data.data[g_data.dIndx] = byt;
+// 				//g_data.sum += byt;
+// 				//DB_PR("data[%d] = %02x\r\n",g_data.dIndx, byt);
+//                 g_data.dIndx++;
+// 			}
+// 			else//crc2
+// 			{
+//                 g_data.data[g_data.dIndx] = byt;
+//                 // DB_PR("crc data[%d] = %02x\r\n",g_data.dIndx, byt);
+//                 g_data.dIndx++;
+// 				//user_start_cmd_receive(false);
+// 				uState = 0;
+//                 data_t[0] = g_data.opcode;
+//                 memcpy(data_t+1,g_data.data,g_data.len -3);
 
-                g_data.sum = CRC16(data_t, g_data.len -3 +1);
-				// DB_PR("sum = %04x\r\n",g_data.sum);
+//                 g_data.sum = CRC16(data_t, g_data.len -3 +1);
+// 				// DB_PR("sum = %04x\r\n",g_data.sum);
 
-                // DB_PR("g_data.data[g_data.dIndx -2] = %02x, g_data.data[g_data.dIndx-1] = %02x\r\n",g_data.data[g_data.dIndx -2], g_data.data[g_data.dIndx-1]);
-                // DB_PR("g_data.sum &0xff = %02x, (g_data.sum>>8)&0xff = %02x\r\n",g_data.sum &0xff, (g_data.sum>>8)&0xff);
+//                 // DB_PR("g_data.data[g_data.dIndx -2] = %02x, g_data.data[g_data.dIndx-1] = %02x\r\n",g_data.data[g_data.dIndx -2], g_data.data[g_data.dIndx-1]);
+//                 // DB_PR("g_data.sum &0xff = %02x, (g_data.sum>>8)&0xff = %02x\r\n",g_data.sum &0xff, (g_data.sum>>8)&0xff);
 
 
-				if( ((g_data.sum &0xff) == g_data.data[g_data.dIndx -2])
-                    &&(((g_data.sum>>8)&0xff) == g_data.data[g_data.dIndx-1]) )//byt
-				{
-                    DB_PR("处理数据1-pass\r\n");
-					r = true;
-				}
-				else
-				{
-                    DB_PR("处理数据1-fail\r\n");
-					user_send_cmd_response(g_data.opcode, CMD_FAIL);
-				}
-			}
-			break;
-		case UART_RESERVE:
-		default:
-			break;
-	}
+// 				if( ((g_data.sum &0xff) == g_data.data[g_data.dIndx -2])
+//                     &&(((g_data.sum>>8)&0xff) == g_data.data[g_data.dIndx-1]) )//byt
+// 				{
+//                     DB_PR("处理数据1-pass\r\n");
+// 					r = true;
+// 				}
+// 				else
+// 				{
+//                     DB_PR("处理数据1-fail\r\n");
+// 					user_send_cmd_response(g_data.opcode, CMD_FAIL);
+// 				}
+// 			}
+// 			break;
+// 		case UART_RESERVE:
+// 		default:
+// 			break;
+// 	}
 
-	return r;
-}
+// 	return r;
+// }
 
 
 
@@ -7028,15 +7028,23 @@ static void lock_all_clear_task()
     vTaskDelete(NULL);
 }
 
+static void echo_task0()//zhiwen
+{
+    DB_PR("--echo_task0-- \n");
 
+
+    // vTaskDelay(1);
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+    vTaskDelete(NULL);
+}
 
 static void echo_task3()//zhiwen
 {
     DB_PR("--echo_task3-- \n");
 
 
-    vTaskDelay(1);
-    //vTaskDelay(10 / portTICK_PERIOD_MS);
+    // vTaskDelay(1);
+    vTaskDelay(10 / portTICK_PERIOD_MS);
     vTaskDelete(NULL);
 }
 
@@ -7083,7 +7091,8 @@ static void echo_task()
             // {
             //     DB_PR("--uart2--222222 =NULL-----.\r\n");
             // }
-            xTaskCreate(echo_task3, "uart_echo_task3",2* 1024, NULL, 2, &taskhandle_uart2);//uart2
+            
+            // xTaskCreate(echo_task3, "uart_echo_task3",2* 1024, NULL, 2, &taskhandle_uart2);//uart2
             //uart_write_bytes(UART_NUM_2, (const char *) data_rx2_m, len_rx2_m);
         }
 
@@ -7124,7 +7133,7 @@ static void echo_task()
             DB_PR("] \n");
 
             //vTaskDelay(2 / portTICK_PERIOD_MS);
-            //xTaskCreate(echo_task0, "uart_echo_task0",8* 1024, NULL, 2, NULL);//uart1
+            xTaskCreate(echo_task0, "uart_echo_task0",2* 1024, NULL, 2, NULL);//uart1
             // uart_write_bytes(UART_NUM_0, (const char *) data_rx0, len_rx0);//debug---------
 
         }
@@ -7357,11 +7366,11 @@ void Add_FR_First()
                             DB_PR("database_cw_adm.changqi_tmp= %d \r\n",database_cw_adm.changqi_tmp);
                             if(database_cw_adm.changqi_tmp == 0)
                             {
-                                xTaskCreate(Add_FR, "add_zhiwen_task2", 6* 1024, NULL, 2, NULL);//1024 10
+                                xTaskCreate(Add_FR, "add_zhiwen_task2", 4* 1024, NULL, 2, NULL);//1024 10
                             }
                             else
                             {
-                                xTaskCreate(Add_FR_CQ, "add_zhiwen_task2", 6* 1024, NULL, 2, NULL);//1024 10
+                                xTaskCreate(Add_FR_CQ, "add_zhiwen_task2", 4* 1024, NULL, 2, NULL);//1024 10
                             }
                             xTaskCreate(audio_play_one_mp3, "audio_play_my_mp3", 8196, (void*)TONE_TYPE_CL, 10, NULL);
                             
@@ -11198,7 +11207,7 @@ void app_main(void)
 
 
     // audio_init();
-    xTaskCreate(audio_init, "audio_init0", 2048, NULL, 3, NULL);   
+    xTaskCreate(audio_init, "audio_init0", 2*1024, NULL, 3, NULL);   
 
     vTaskDelay(3000 / portTICK_PERIOD_MS);//on 
 
